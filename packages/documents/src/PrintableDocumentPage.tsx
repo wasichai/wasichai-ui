@@ -41,10 +41,13 @@ export function PrintableDocumentPage() {
         </Button>
       </div>
 
-      <div className="document-sheet relative mx-auto my-8 w-[210mm] max-w-full bg-white p-[20mm] shadow-lg print:my-0 print:w-auto print:p-0 print:shadow-none">
+      <div
+        data-theme="light"
+        className="document-sheet relative mx-auto my-8 w-[210mm] max-w-full bg-surface p-[20mm] shadow-lg print:my-0 print:w-auto print:p-0 print:shadow-none"
+      >
         {doc.status === 'ARCHIVED' ? (
           // an archived document is still a real document handed to someone -- it must never read as valid on paper
-          <div className="document-sheet-archived mb-6 rounded-md bg-danger px-4 py-2 text-center text-base font-bold uppercase tracking-wide text-white">
+          <div className="document-sheet-archived mb-6 rounded-md bg-danger px-4 py-2 text-center text-base font-bold uppercase tracking-wide text-on-danger">
             {t('documents.print.archived')}
           </div>
         ) : null}

@@ -112,7 +112,7 @@ function ActionMock({ component }: { component: PageComponent }) {
     <div
       className={cn(
         'inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium',
-        component.style === 'PRIMARY' ? 'bg-brand text-white' : 'border border-border bg-surface text-ink'
+        component.style === 'PRIMARY' ? 'bg-brand text-on-brand' : 'border border-border bg-surface text-ink'
       )}
     >
       {label}

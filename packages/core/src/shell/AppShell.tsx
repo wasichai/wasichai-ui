@@ -8,7 +8,10 @@ import { useAuth } from '../auth/AuthProvider'
 import { changeLanguage } from '../i18n/createI18n'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  cn('flex items-center gap-2.5 rounded-md px-3 py-2 text-sm', isActive ? 'bg-white/12 text-white' : 'text-shell-muted hover:bg-white/8 hover:text-white')
+  cn(
+    'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm',
+    isActive ? 'bg-shell-ink/12 text-shell-ink' : 'text-shell-muted hover:bg-shell-ink/8 hover:text-shell-ink'
+  )
 
 // the sidebar is what the registered modules contribute. what is not built yet shows as disabled, not missing.
 export function AppShell() {
@@ -28,7 +31,7 @@ export function AppShell() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-60 shrink-0 flex-col bg-shell text-white">
+      <aside className="flex w-60 shrink-0 flex-col bg-shell text-shell-ink">
         <div className="px-5 py-5">
           <p className="text-lg font-semibold tracking-tight">{config.appName ?? t('app.name')}</p>
           <p className="mt-0.5 text-[11px] leading-tight text-shell-muted">{config.appTagline ?? t('app.tagline')}</p>
@@ -71,16 +74,16 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="border-t border-white/10 px-4 py-3">
-          <p className="truncate text-xs text-white">{user?.displayName}</p>
+        <div className="border-t border-shell-ink/10 px-4 py-3">
+          <p className="truncate text-xs text-shell-ink">{user?.displayName}</p>
           <p className="truncate text-[11px] text-shell-muted">{user?.email}</p>
           <div className="mt-2 flex items-center gap-1">
             {languages.length > 1 ? (
-              <Button variant="ghost" size="sm" className="text-shell-muted hover:text-white" onClick={() => void changeLanguage(i18n, keys.lang, next)}>
+              <Button variant="ghost" size="sm" className="text-shell-muted hover:text-shell-ink" onClick={() => void changeLanguage(i18n, keys.lang, next)}>
                 {next.toUpperCase()}
               </Button>
             ) : null}
-            <Button variant="ghost" size="sm" className="text-shell-muted hover:text-white" onClick={signOut}>
+            <Button variant="ghost" size="sm" className="text-shell-muted hover:text-shell-ink" onClick={signOut}>
               <LogOut className="h-4 w-4" />
               {t('auth.signOut')}
             </Button>
