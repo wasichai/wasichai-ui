@@ -44,21 +44,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.colorScheme = theme.colorScheme
   }, [theme])
 
-  // the api value refreshes the local copy, so the boot script and the login screen match it next load
+  // the api value refreshes the local copy, so the boot script and the login screen match it next load.
+  // one-way: reacts only to the api value, never to `local`, so an optimistic pick never bounces back
   useEffect(() => {
     const fromApi = stored.data?.theme
-    if (fromApi && fromApi !== local) {
+    if (fromApi) {
       localStorage.setItem(keys.theme, fromApi)
       setLocal(fromApi)
     }
-  }, [stored.data?.theme, local, keys.theme])
+  }, [stored.data?.theme, keys.theme])
 
   const setPreference = useCallback(
     async (id: string) => {
       const previous = local
       localStorage.setItem(keys.theme, id)
       setLocal(id)
-      if (!stored.data) return
+      // null = confirmed 404: stay browser-only. pending or errored still gets a try, so a pick made
+      // before the GET settles (or while it is failing) is not silently dropped once it does settle
+      if (stored.data === null) return
       try {
         await update.mutateAsync({ theme: id })
       } catch (cause) {
@@ -67,7 +70,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         throw cause
       }
     },
-    [local, keys.theme, stored.data, update]
+    [local, keys.theme, stored.data, update.mutateAsync]
   )
 
   const value = useMemo<ThemeContextValue>(

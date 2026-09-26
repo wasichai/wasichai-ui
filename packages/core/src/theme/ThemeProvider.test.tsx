@@ -10,7 +10,8 @@ function Probe() {
   return (
     <>
       <p>{`${preference}:${theme.id}`}</p>
-      <button onClick={() => void setPreference('dark')}>dark</button>
+      {/* setPreference now tries the PUT unless the GET already confirmed a 404; unmocked here, so it can reject for real */}
+      <button onClick={() => void setPreference('dark').catch(() => {})}>dark</button>
     </>
   )
 }

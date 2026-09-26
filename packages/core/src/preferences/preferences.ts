@@ -60,9 +60,17 @@ export function useSetLocale(): (language: string) => Promise<void> {
   const update = useUpdatePreferences()
   return useCallback(
     async (language: string) => {
+      const previous = i18n.language
       await changeLanguage(i18n, keys.lang, language)
-      if (preferences.data) await update.mutateAsync({ locale: language })
+      // null = confirmed 404: stay browser-only. pending or errored still gets a try, like the theme
+      if (preferences.data === null) return
+      try {
+        await update.mutateAsync({ locale: language })
+      } catch (cause) {
+        await changeLanguage(i18n, keys.lang, previous)
+        throw cause
+      }
     },
-    [i18n, keys.lang, preferences.data, update]
+    [i18n, keys.lang, preferences.data, update.mutateAsync]
   )
 }
