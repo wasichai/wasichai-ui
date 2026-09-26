@@ -29,6 +29,10 @@ jobs:
     needs: guards
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # job level, not only on the publish step: setup-node writes an .npmrc that reads ${NODE_AUTH_TOKEN} and, with
+    # cache: yarn, runs yarn right away. yarn 1 aborts on an unset variable in .npmrc
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -40,8 +44,6 @@ jobs:
           scope: '@wasichai'
       - run: yarn install --frozen-lockfile && yarn build
       - name: Publish every public @wasichai package
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="${GITHUB_REF_NAME#v}"
           # bumps every package's own version AND internal @wasichai/* dep ranges; plain
