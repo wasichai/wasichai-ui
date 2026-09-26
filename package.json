@@ -18,7 +18,7 @@
         "build": "node tooling/run-ordered.mjs build"
     },
     "devDependencies": {
-        "@commitlint/cli": "19.8.1",
+        "@commitlint/cli": "21.2.3",
         "@commitlint/config-conventional": "19.8.1",
         "husky": "9.1.7",
         "prettier": "3.8.2",
