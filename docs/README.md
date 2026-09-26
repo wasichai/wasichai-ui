@@ -54,5 +54,11 @@ One-time repository secrets (Settings → Secrets and variables → Actions):
 |---|---|---|
 | `RELEASE_PLEASE_TOKEN` | a release that runs `publish.yml` (one made with `GITHUB_TOKEN` runs nothing) | on this repo: Contents and Pull requests read/write |
 
+**After the first publish (once per package):** Organization → Packages → each `@wasichai/*` package → Package
+settings → "Manage Actions access" → add `simple-sample`, `documents-sample`, `gis-sample` and `full-sample` with
+the Read role. The alternative is a `WASICHAI_PACKAGES_TOKEN` secret, a classic PAT with `read:packages`, in each
+sample repository. The organization must allow members' workflows to publish packages (Organization settings →
+Packages).
+
 Consumers: `.npmrc` with `@wasichai:registry=https://npm.pkg.github.com` and `//npm.pkg.github.com/:_authToken=<PAT
 with read:packages>`.
