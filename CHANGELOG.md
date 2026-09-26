@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/wasichai/wasichai-ui/compare/v0.2.0...v0.2.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **ci:** expose NODE_AUTH_TOKEN to setup-node in publish ([#10](https://github.com/wasichai/wasichai-ui/issues/10)) ([ab11e9b](https://github.com/wasichai/wasichai-ui/commit/ab11e9ba763d797a3a7e152b2c474cd204754e1e))
+
 ## [0.2.0](https://github.com/wasichai/wasichai-ui/compare/v0.1.0...v0.2.0) (2026-09-26)
 
 
