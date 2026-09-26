@@ -33,6 +33,7 @@ export { AuthProvider, useAuth, type AuthContextValue, type AuthProviderProps } 
 export { WasichaiProviders, type WasichaiProvidersProps } from './app/WasichaiProviders'
 export { ThemeProvider, useTheme, type ThemeContextValue } from './theme/ThemeProvider'
 export { availableThemes, resolveTheme, BUILT_IN_THEMES, SYSTEM_THEME, type ThemeDefinition } from './theme/themes'
+export { usePreferences, useUpdatePreferences, useSetLocale, type UserPreferences } from './preferences/preferences'
 export { useObjectFlags } from './registry/hooks'
 export * from './queries'
 export { PageHeader } from './shell/PageHeader'

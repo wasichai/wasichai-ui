@@ -38,7 +38,8 @@ describe('record queries', () => {
     await userEvent.click(screen.getByRole('button', { name: 'save' }))
 
     await screen.findByText('saved')
-    expect(fetch.calls[0].body).toEqual({ attributes: { codigo: 'A' }, sketches: {} })
+    // find, not [0]: ThemeProvider's own preferences GET also lands in fetch.calls
+    expect(fetch.calls.find((call) => call.method === 'POST')?.body).toEqual({ attributes: { codigo: 'A' }, sketches: {} })
   })
 
   it('makes what modules cache about the object stale after a save', async () => {

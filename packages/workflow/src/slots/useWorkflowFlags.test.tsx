@@ -28,7 +28,8 @@ describe('workflow object flag', () => {
   it('says no for an object whose workflow answers 404', async () => {
     fetch = mockFetch([])
     renderWithProviders(<Probe />, { modules: [coreModule, workflowModule()] })
-    await waitFor(() => expect(fetch?.calls).toHaveLength(1))
+    // ThemeProvider's own preferences GET also lands in fetch.calls; only count the workflow one
+    await waitFor(() => expect(fetch?.calls.filter((call) => call.path !== '/auth/me/preferences')).toHaveLength(1))
     expect(screen.getByRole('status')).toHaveTextContent('{"workflow":false}')
   })
 })

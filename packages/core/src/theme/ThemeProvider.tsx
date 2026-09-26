@@ -1,5 +1,7 @@
-import { createContext, use, useCallback, useLayoutEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { createContext, use, useCallback, useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useApiClient, useWasichaiConfig } from '../app/context'
+import { LocaleSync } from '../preferences/LocaleSync'
+import { usePreferences, useUpdatePreferences } from '../preferences/preferences'
 import { availableThemes, resolveTheme, SYSTEM_THEME, type ThemeDefinition } from './themes'
 
 export interface ThemeContextValue {
@@ -29,7 +31,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const config = useWasichaiConfig()
   const { keys } = useApiClient()
   const themes = useMemo(() => availableThemes(config), [config])
-  const [preference, setLocal] = useState(() => localStorage.getItem(keys.theme) ?? SYSTEM_THEME)
+  const stored = usePreferences()
+  const update = useUpdatePreferences()
+  const [local, setLocal] = useState(() => localStorage.getItem(keys.theme) ?? SYSTEM_THEME)
+  const preference = stored.data?.theme ?? local
   const dark = useSyncExternalStore(subscribeSystem, systemDark, () => false)
   const theme = resolveTheme(preference, themes, dark)
 
@@ -39,19 +44,42 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.colorScheme = theme.colorScheme
   }, [theme])
 
+  // the api value refreshes the local copy, so the boot script and the login screen match it next load
+  useEffect(() => {
+    const fromApi = stored.data?.theme
+    if (fromApi && fromApi !== local) {
+      localStorage.setItem(keys.theme, fromApi)
+      setLocal(fromApi)
+    }
+  }, [stored.data?.theme, local, keys.theme])
+
   const setPreference = useCallback(
     async (id: string) => {
+      const previous = local
       localStorage.setItem(keys.theme, id)
       setLocal(id)
+      if (!stored.data) return
+      try {
+        await update.mutateAsync({ theme: id })
+      } catch (cause) {
+        localStorage.setItem(keys.theme, previous)
+        setLocal(previous)
+        throw cause
+      }
     },
-    [keys.theme]
+    [local, keys.theme, stored.data, update]
   )
 
   const value = useMemo<ThemeContextValue>(
     () => ({ preference, theme, colorScheme: theme.colorScheme, themes, setPreference }),
     [preference, theme, themes, setPreference]
   )
-  return <ThemeContext value={value}>{children}</ThemeContext>
+  return (
+    <ThemeContext value={value}>
+      <LocaleSync />
+      {children}
+    </ThemeContext>
+  )
 }
 
 export function useTheme(): ThemeContextValue {
