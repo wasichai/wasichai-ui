@@ -1,10 +1,13 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
-import { renderWithProviders } from '@wasichai/testing'
+import { afterEach, describe, expect, it } from 'vitest'
+import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
 import { coreModule } from '../app/coreModule'
 import type { WasichaiModule } from '../registry/contract'
 import { AppShell } from './AppShell'
+
+let fetch: FetchMock | null = null
+afterEach(() => fetch?.restore())
 
 const Sheets = () => <p>hojas</p>
 const plans: WasichaiModule = {
@@ -47,6 +50,8 @@ describe('AppShell', () => {
   })
 
   it('offers the next configured language and remembers the choice', async () => {
+    // the language button now goes through useSetLocale, which reads preferences: 404 keeps it browser-only
+    fetch = mockFetch([])
     renderWithProviders(<AppShell />, { modules: [coreModule] })
 
     await userEvent.click(screen.getByRole('button', { name: 'EN' }))
@@ -59,6 +64,27 @@ describe('AppShell', () => {
   it('has no language toggle in a one-language app', () => {
     renderWithProviders(<AppShell />, { modules: [coreModule], config: { languages: ['es'] } })
     expect(screen.queryByRole('button', { name: 'EN' })).not.toBeInTheDocument()
+  })
+
+  it('lets the user pick a theme', async () => {
+    // 404 on the GET: preferences stay browser-only, so the pick can't race a PUT
+    fetch = mockFetch([])
+    renderWithProviders(<AppShell />, { modules: [coreModule], language: 'en' })
+    const select = screen.getByRole('combobox', { name: 'Theme' })
+    expect(screen.getByRole('option', { name: 'System' })).toBeInTheDocument()
+    await userEvent.selectOptions(select, 'dark')
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(localStorage.getItem('wasichai-test.theme')).toBe('dark')
+  })
+
+  it('shows why a theme could not be saved', async () => {
+    fetch = mockFetch([
+      { path: '/auth/me/preferences', body: { theme: 'system', locale: null } },
+      { method: 'PUT', path: '/auth/me/preferences', status: 500, body: { title: 'Internal Server Error', detail: 'boom' } }
+    ])
+    renderWithProviders(<AppShell />, { modules: [coreModule], language: 'en' })
+    await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Theme' }), 'dark')
+    expect(await screen.findByText('boom')).toBeInTheDocument()
   })
 
   it('names the app from config, or from the strings when config says nothing', () => {
