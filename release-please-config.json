@@ -7,7 +7,6 @@
             "package-name": "wasichai-ui",
             "changelog-path": "CHANGELOG.md",
             "bump-minor-pre-major": true,
-            "release-as": "0.1.0",
             "extra-files": [
                 { "type": "json", "path": "packages/agent/package.json", "jsonpath": "$.version" },
                 { "type": "json", "path": "packages/automation/package.json", "jsonpath": "$.version" },

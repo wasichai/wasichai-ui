@@ -46,7 +46,7 @@ release-please (`node`) bumps the root `package.json` and every public `packages
 `CHANGELOG.md`; merging its PR tags `vX.Y.Z`, and the release runs `publish.yml`: `check-release.mjs --pack` (exactly
 the eleven public `@wasichai/*` packages, internal ranges pinned, entry points in every tarball), then
 `set-version.mjs` and `npm publish` to `https://npm.pkg.github.com`. The version is independent of the Maven
-libraries' (ADR-032). The first release is pinned with `"release-as": "0.1.0"`; delete that key after v0.1.0.
+libraries' (ADR-032). The first release, v0.1.0, was pinned with `"release-as"`; to pin another one, add it back.
 
 One-time repository secrets (Settings → Secrets and variables → Actions):
 
