@@ -1,0 +1,31 @@
+import { fileURLToPath, URL } from 'node:url'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vitest/config'
+import pkg from './package.json' with { type: 'json' }
+
+const external = [...Object.keys(pkg.dependencies), ...Object.keys(pkg.peerDependencies)]
+const here = (path: string) => fileURLToPath(new URL(path, import.meta.url))
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    lib: { entry: here('./src/index.ts'), formats: ['es'], fileName: 'index' },
+    rolldownOptions: {
+      // deep imports too (a library's css, its worker file): the consumer's bundler resolves them
+      external: (id: string) => external.some((dep) => id === dep || id.startsWith(`${dep}/`))
+    },
+    sourcemap: true
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.ts',
+    // tests run against sibling sources, so nothing has to be built first
+    alias: {
+      '@wasichai/ui': here('../ui/src/index.ts'),
+      '@wasichai/core': here('../core/src/index.ts'),
+      '@wasichai/testing': here('../testing/src/index.ts'),
+      '@wasichai/documents': here('./src/index.ts')
+    }
+  }
+})

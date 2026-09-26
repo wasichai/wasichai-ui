@@ -1,0 +1,153 @@
+{
+    "app": {
+        "name": "Wasichai",
+        "tagline": "Spatial Application Platform for GIS"
+    },
+    "nav": {
+        "home": "Inicio",
+        "data": "Datos",
+        "objects": "Objetos",
+        "records": "Registros",
+        "relationships": "Relaciones",
+        "builder": "App Builder",
+        "automation": "Automatización",
+        "administration": "Administración",
+        "users": "Usuarios",
+        "roles": "Roles",
+        "permissions": "Permisos",
+        "audit": "Auditoría"
+    },
+    "auth": {
+        "signIn": "Iniciar sesión",
+        "email": "Correo",
+        "password": "Contraseña",
+        "signOut": "Cerrar sesión",
+        "invalid": "Credenciales inválidas"
+    },
+    "common": {
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "close": "Cerrar",
+        "create": "Crear",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "search": "Buscar",
+        "loading": "Cargando…",
+        "empty": "Sin resultados",
+        "back": "Volver",
+        "actions": "Acciones",
+        "confirmDelete": "¿Eliminar este registro?",
+        "page": "Página {{page}} de {{total}}",
+        "results": "{{count}} resultados",
+        "yes": "Sí",
+        "no": "No",
+        "retry": "Reintentar"
+    },
+    "objects": {
+        "title": "Objetos",
+        "subtitle": "Define las entidades de negocio de tu plataforma",
+        "new": "Nuevo objeto",
+        "name": "Nombre técnico",
+        "nameHint": "minúsculas, sin espacios. Ej: predio",
+        "label": "Etiqueta",
+        "pluralLabel": "Etiqueta plural",
+        "description": "Descripción",
+        "fields": "Campos",
+        "addField": "Añadir campo",
+        "fieldName": "Nombre",
+        "fieldLabel": "Etiqueta",
+        "fieldType": "Tipo",
+        "fieldRequired": "Obligatorio",
+        "fieldUnique": "Único",
+        "enumOptions": "Opciones (separadas por coma)",
+        "relationTarget": "Objeto destino",
+        "empty": "Aún no hay objetos. Crea el primero.",
+        "openRecords": "Ver registros",
+        "edit": "Editar objeto",
+        "editSubtitle": "Cambia las etiquetas, gestiona los campos o retira el objeto",
+        "details": "Datos del objeto",
+        "immutableName": "El nombre técnico no se puede cambiar: sostiene la tabla y la ruta de la API.",
+        "enabled": "Activo",
+        "enabledHint": "Un objeto inactivo conserva sus datos, pero no admite altas ni cambios.",
+        "disabled": "Inactivo",
+        "saved": "Cambios guardados",
+        "fieldVisible": "Visible",
+        "fieldEditable": "Editable",
+        "fieldOptions": "Opciones",
+        "addFieldHint": "Se añade una columna a la tabla. El tipo no se puede cambiar después.",
+        "deleteField": "Eliminar campo",
+        "confirmDeleteField": "Se eliminará la columna «{{field}}» y todo lo que contiene. No se puede deshacer.",
+        "dangerZone": "Eliminar el objeto",
+        "deleteWarning": "Se borrarán la tabla, sus registros, sus vistas, formularios y automatizaciones. No se puede deshacer.",
+        "deleteConfirmHint": "Escribe «{{name}}» para confirmar.",
+        "deleteObject": "Eliminar objeto",
+        "preferDisable": "¿Solo quieres retirarlo? Desactívalo y conservarás los datos.",
+        "systemFieldsHint": "Los pone la plataforma en cada registro. No se pueden crear, editar ni borrar.",
+        "scopeALWAYS": "Sistema",
+        "scopeWORKFLOW": "Reservado · solo con flujo",
+        "scopeRESERVED": "Reservado",
+        "nameProblems": {
+            "SYSTEM": "«{{name}}» lo usa la plataforma. Elige otro nombre.",
+            "DUPLICATE": "Ya hay un campo «{{name}}»."
+        },
+        "showSystemFields": "Campos del sistema ({{n}})",
+        "hideSystemFields": "Ocultar los campos del sistema"
+    },
+    "records": {
+        "new": "Nuevo registro",
+        "detail": "Detalle",
+        "typeUnavailable": "El tipo de este campo no está disponible. Instala el módulo que lo provee."
+    },
+    "map": {
+        "selectObject": "Selecciona un objeto"
+    },
+    "dashboard": {
+        "title": "Inicio",
+        "objects": "Objetos",
+        "welcome": "Plataforma de aplicaciones geoespaciales configurables"
+    },
+    "relationships": {
+        "title": "Relaciones",
+        "subtitle": "Conecta objetos entre sí: un titular con sus predios, un predio con sus construcciones",
+        "new": "Nueva relación",
+        "label": "Etiqueta",
+        "inverseLabel": "Etiqueta inversa",
+        "type": "Tipo",
+        "source": "Objeto origen",
+        "target": "Objeto destino",
+        "fieldName": "Campo",
+        "fieldHint": "Campo que guarda la referencia. Por defecto, el nombre del objeto referenciado.",
+        "empty": "Aún no hay relaciones.",
+        "confirmDelete": "¿Eliminar la relación? También se elimina el campo o la tabla intermedia que creó.",
+        "link": "Vincular",
+        "unlink": "Desvincular",
+        "pick": "Selecciona un registro",
+        "with": "Con",
+        "backing": "Respaldo",
+        "outgoing": "desde aquí",
+        "incoming": "hacia aquí",
+        "emptyForObject": "«{{object}}» no participa en ninguna relación todavía.",
+        "columnHere": "La columna se añade a «{{object}}».",
+        "columnThere": "La columna se añade a «{{object}}», no a este objeto.",
+        "columnJoinTable": "Se crea una tabla intermedia; ningún objeto gana columna.",
+        "belongsTo": "Pertenece a la relación «{{name}}»: bórrala desde la tarjeta de relaciones.",
+        "labelOf": "Etiqueta de la relación «{{name}}»",
+        "inverseLabelOf": "Etiqueta inversa de la relación «{{name}}»"
+    },
+    "pages": {
+        "componentUnavailable": "El tipo de este componente no está disponible. Instala el módulo que lo provee.",
+        "tabs": {
+            "builderLabel": "Pestañas del lienzo",
+            "label": "Secciones de la página",
+            "page": "Página",
+            "DETAILS": "Detalles",
+            "MAP": "Mapa",
+            "RELATED": "Relacionados",
+            "HISTORY": "Historial"
+        }
+    },
+    "views": {
+        "pick": "Selecciona una vista",
+        "selector": "Vista"
+    }
+}

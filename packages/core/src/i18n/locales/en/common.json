@@ -1,0 +1,153 @@
+{
+    "app": {
+        "name": "Wasichai",
+        "tagline": "Spatial Application Platform for GIS"
+    },
+    "nav": {
+        "home": "Home",
+        "data": "Data",
+        "objects": "Objects",
+        "records": "Records",
+        "relationships": "Relationships",
+        "builder": "App Builder",
+        "automation": "Automation",
+        "administration": "Administration",
+        "users": "Users",
+        "roles": "Roles",
+        "permissions": "Permissions",
+        "audit": "Audit"
+    },
+    "auth": {
+        "signIn": "Sign in",
+        "email": "Email",
+        "password": "Password",
+        "signOut": "Sign out",
+        "invalid": "Invalid credentials"
+    },
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "close": "Close",
+        "create": "Create",
+        "edit": "Edit",
+        "delete": "Delete",
+        "search": "Search",
+        "loading": "Loading…",
+        "empty": "No results",
+        "back": "Back",
+        "actions": "Actions",
+        "confirmDelete": "Delete this record?",
+        "page": "Page {{page}} of {{total}}",
+        "results": "{{count}} results",
+        "yes": "Yes",
+        "no": "No",
+        "retry": "Retry"
+    },
+    "objects": {
+        "title": "Objects",
+        "subtitle": "Define the business entities of your platform",
+        "new": "New object",
+        "name": "Technical name",
+        "nameHint": "lower case, no spaces. e.g. predio",
+        "label": "Label",
+        "pluralLabel": "Plural label",
+        "description": "Description",
+        "fields": "Fields",
+        "addField": "Add field",
+        "fieldName": "Name",
+        "fieldLabel": "Label",
+        "fieldType": "Type",
+        "fieldRequired": "Required",
+        "fieldUnique": "Unique",
+        "enumOptions": "Options (comma separated)",
+        "relationTarget": "Target object",
+        "empty": "No objects yet. Create the first one.",
+        "openRecords": "View records",
+        "edit": "Edit object",
+        "editSubtitle": "Change the labels, manage the fields, or retire the object",
+        "details": "Object details",
+        "immutableName": "The technical name cannot change: it backs the table and the API path.",
+        "enabled": "Active",
+        "enabledHint": "An inactive object keeps its data but accepts no new or changed records.",
+        "disabled": "Inactive",
+        "saved": "Changes saved",
+        "fieldVisible": "Visible",
+        "fieldEditable": "Editable",
+        "fieldOptions": "Options",
+        "addFieldHint": "This adds a column to the table. The type cannot change afterwards.",
+        "deleteField": "Delete field",
+        "confirmDeleteField": "This removes the column “{{field}}” and everything in it. It cannot be undone.",
+        "dangerZone": "Delete the object",
+        "deleteWarning": "The table, its records, views, forms and automations will be destroyed. This cannot be undone.",
+        "deleteConfirmHint": "Type “{{name}}” to confirm.",
+        "deleteObject": "Delete object",
+        "preferDisable": "Only retiring it? Disable it instead and keep the data.",
+        "systemFieldsHint": "The platform puts these on every record. They cannot be created, edited or deleted.",
+        "scopeALWAYS": "System",
+        "scopeWORKFLOW": "Reserved · only with a workflow",
+        "scopeRESERVED": "Reserved",
+        "nameProblems": {
+            "SYSTEM": "«{{name}}» belongs to the platform. Pick another name.",
+            "DUPLICATE": "There is already a field «{{name}}»."
+        },
+        "showSystemFields": "System fields ({{n}})",
+        "hideSystemFields": "Hide the system fields"
+    },
+    "records": {
+        "new": "New record",
+        "detail": "Detail",
+        "typeUnavailable": "This field's type is not available. Install the module that provides it."
+    },
+    "map": {
+        "selectObject": "Select an object"
+    },
+    "dashboard": {
+        "title": "Home",
+        "objects": "Objects",
+        "welcome": "Configurable geospatial application platform"
+    },
+    "relationships": {
+        "title": "Relationships",
+        "subtitle": "Connect objects to each other: an owner with their plots, a plot with its buildings",
+        "new": "New relationship",
+        "label": "Label",
+        "inverseLabel": "Inverse label",
+        "type": "Type",
+        "source": "Source object",
+        "target": "Target object",
+        "fieldName": "Field",
+        "fieldHint": "Field holding the reference. Defaults to the referenced object's name.",
+        "empty": "No relationships yet.",
+        "confirmDelete": "Delete the relationship? The field or join table it created goes with it.",
+        "link": "Link",
+        "unlink": "Unlink",
+        "pick": "Pick a record",
+        "with": "With",
+        "backing": "Backed by",
+        "outgoing": "from here",
+        "incoming": "to here",
+        "emptyForObject": "«{{object}}» takes part in no relationship yet.",
+        "columnHere": "The column is added to «{{object}}».",
+        "columnThere": "The column is added to «{{object}}», not to this object.",
+        "columnJoinTable": "A join table is created; neither object gains a column.",
+        "belongsTo": "Belongs to relationship «{{name}}»: delete it from the relationships card.",
+        "labelOf": "Label of relationship «{{name}}»",
+        "inverseLabelOf": "Inverse label of relationship «{{name}}»"
+    },
+    "pages": {
+        "componentUnavailable": "This component's type is not available. Install the module that provides it.",
+        "tabs": {
+            "builderLabel": "Canvas tabs",
+            "label": "Page sections",
+            "page": "Page",
+            "DETAILS": "Details",
+            "MAP": "Map",
+            "RELATED": "Related",
+            "HISTORY": "History"
+        }
+    },
+    "views": {
+        "pick": "Pick a view",
+        "selector": "View"
+    }
+}

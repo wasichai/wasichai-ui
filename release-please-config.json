@@ -1,0 +1,26 @@
+{
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+    "include-component-in-tag": false,
+    "packages": {
+        ".": {
+            "release-type": "node",
+            "package-name": "wasichai-ui",
+            "changelog-path": "CHANGELOG.md",
+            "bump-minor-pre-major": true,
+            "release-as": "0.1.0",
+            "extra-files": [
+                { "type": "json", "path": "packages/agent/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/automation/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/core/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/documents/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/forms/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/gis/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/pages/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/testing/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/ui/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/views/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/workflow/package.json", "jsonpath": "$.version" }
+            ]
+        }
+    }
+}

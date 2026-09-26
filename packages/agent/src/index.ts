@@ -1,0 +1,5 @@
+export { AGENT_MODULE_ID, agentModule, type AgentModuleOptions } from './module'
+export { agentMessages } from './i18n'
+export { AssistantPage } from './AssistantPage'
+export { useAgentStatus, useAskAgent } from './api'
+export type { AgentAnswer, AgentStatus, AgentStep } from './types'

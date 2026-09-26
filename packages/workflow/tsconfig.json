@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
+        "paths": {
+            "@wasichai/ui": ["../ui/src/index.ts"],
+            "@wasichai/core": ["../core/src/index.ts"],
+            "@wasichai/testing": ["../testing/src/index.ts"],
+            "@wasichai/workflow": ["./src/index.ts"]
+        }
+    },
+    "include": ["src", "vite.config.ts"]
+}

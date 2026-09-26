@@ -1,0 +1,97 @@
+/* the printed page itself -- unlayered, so it beats tailwind's preflight reset on h1-h6 without
+   needing !important. a4, 20mm margin: the browser's print dialog does the rest. */
+@page {
+    size: A4;
+    margin: 20mm;
+}
+
+/* preflight flattens headings to body text everywhere else on purpose (no per-object css). a
+   printed document is prose, so give headings their shape back, scoped to the sheet only. the top
+   margin outweighs the bottom one so a heading visually groups with the text under it. */
+.document-sheet h1,
+.document-sheet h2,
+.document-sheet h3,
+.document-sheet h4,
+.document-sheet h5,
+.document-sheet h6 {
+    break-after: avoid;
+    font-weight: 700;
+    margin: 1.1em 0 0.5em;
+}
+
+.document-sheet h1 {
+    font-size: 1.5rem;
+}
+
+.document-sheet h2 {
+    font-size: 1.25rem;
+}
+
+.document-sheet h3 {
+    font-size: 1.125rem;
+}
+
+.document-sheet h4,
+.document-sheet h5,
+.document-sheet h6 {
+    font-size: 1rem;
+}
+
+/* a frozen document is prose: without room between blocks it reads as one cramped run-on, on
+   screen and on paper both. */
+.document-sheet p {
+    margin: 0 0 0.7em;
+}
+
+.document-sheet ul,
+.document-sheet ol {
+    margin: 0.5em 0;
+}
+
+/* DocumentView.tsx's shared Table wraps <table> in a scrolling div -- fine for the app's normal
+   tables, but a sheet has no scrollbar: on paper that overflow is just gone, silently dropping
+   columns from an authoritative document. reflow to the sheet's width instead of clipping. */
+.document-sheet .overflow-x-auto {
+    margin: 0.75em 0;
+    overflow: visible;
+}
+
+.document-sheet table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.document-sheet td,
+.document-sheet th {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* nothing at the top of the flow should carry a dangling top margin -- covers the sheet's very
+   first block and the first paragraph inside a list item alike. */
+.document-sheet :is(p, h1, h2, h3, h4, h5, h6, ul, ol, .overflow-x-auto):first-child {
+    margin-top: 0;
+}
+
+/* a related table split across pages should still make sense: no row cut in half, and the header
+   repeated on the next page. */
+.document-sheet table tr {
+    break-inside: avoid;
+}
+
+.document-sheet thead {
+    display: table-header-group;
+}
+
+@media print {
+    .document-sheet {
+        color: #000;
+    }
+
+    /* browsers drop backgrounds by default when printing. the archived mark exists to be seen --
+       force it through so an archived document can never look like a valid one on paper. */
+    .document-sheet-archived {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+}

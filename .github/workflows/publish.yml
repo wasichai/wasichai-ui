@@ -1,0 +1,53 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # the guard runs before the upload: a failed guard blocks it, so a release never half-publishes
+  guards:
+    name: Release guard (npm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: yarn
+      - run: yarn install --frozen-lockfile && yarn build
+      - name: Release guard (npm)
+        run: node tooling/check-release.mjs --pack "${GITHUB_REF_NAME#v}"
+
+  npm:
+    name: npm packages
+    needs: guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: yarn
+          registry-url: https://npm.pkg.github.com
+          # the scope must equal the organization: github packages refuses any other
+          scope: '@wasichai'
+      - run: yarn install --frozen-lockfile && yarn build
+      - name: Publish every public @wasichai package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # bumps every package's own version AND internal @wasichai/* dep ranges; plain
+          # `npm version` per package would leave internal deps pointing at the old version.
+          node tooling/set-version.mjs "$version"
+          for dir in packages/*/; do
+            if [ "$(node -p "require('./$dir/package.json').private === true")" = "true" ]; then continue; fi
+            (cd "$dir" && npm publish)
+          done

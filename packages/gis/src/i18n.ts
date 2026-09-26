@@ -1,0 +1,112 @@
+// the gis namespace. keys keep their original paths, so ported t('map.title') calls work unchanged
+// once a component asks for useTranslation(['gis', 'common']).
+export const gisMessages = {
+  es: {
+    nav: { gis: 'GIS', maps: 'Mapas', layers: 'Capas', mapViews: 'Vistas de mapa' },
+    objects: { geometry: 'Geometría', noGeometry: 'Sin geometría', crs: 'Sistema de referencia (CRS)', addGeometry: 'Añadir geometría' },
+    records: { noGeometry: 'Este objeto no tiene ninguna geometría' },
+    dashboard: { geoObjects: 'Objetos con geometría' },
+    map: {
+      title: 'Mapa',
+      layer: 'Capa',
+      draw: 'Dibujar',
+      clear: 'Limpiar',
+      drawHint: 'Dibuja la geometría en el mapa',
+      selectObject: 'Selecciona un objeto',
+      attributes: 'Atributos',
+      features: '{{count}} entidades',
+      geometryColumn: 'Geometría'
+    },
+    pages: {
+      types: { MAP: 'Mapa' },
+      geometry: 'Geometría',
+      allGeometries: 'Todas las geometrías',
+      mockMap: { allGeometries: 'todas las geometrías' }
+    },
+    history: { geometry: 'Geometría', geometryUpdated: 'geometría actualizada' },
+    layers: {
+      title: 'Capas GIS',
+      subtitle: 'Publica cada geometría de un objeto como una capa WMS/WFS en GeoServer',
+      object: 'Objeto',
+      technicalName: 'Nombre técnico',
+      layerName: 'Capa',
+      geometryType: 'Geometría',
+      srid: 'CRS',
+      status: 'Estado',
+      published: 'Publicada',
+      unpublished: 'Sin publicar',
+      publish: 'Publicar',
+      unpublish: 'Despublicar',
+      confirmUnpublish: '¿Despublicar esta capa de GeoServer?',
+      copy: 'Copiar',
+      copied: 'Copiado',
+      wms: 'WMS',
+      wfs: 'WFS',
+      preview: 'Previsualizar',
+      hidePreview: 'Ocultar vista previa',
+      previewTitle: 'Vista previa',
+      services: 'Servicios de GeoServer',
+      workspace: 'Espacio de trabajo',
+      endpoint: 'Endpoint',
+      connected: 'GeoServer configurado',
+      offline: 'GeoServer no está configurado',
+      offlineHint: 'La publicación está deshabilitada. Los objetos y sus datos siguen disponibles en Wasichai.',
+      listError: 'No se pudo leer el estado de las capas; se muestran los objetos con geometría.',
+      empty: 'Ningún objeto tiene geometrías todavía.'
+    }
+  },
+  en: {
+    nav: { gis: 'GIS', maps: 'Maps', layers: 'Layers', mapViews: 'Map views' },
+    objects: { geometry: 'Geometry', noGeometry: 'No geometry', crs: 'Coordinate system (CRS)', addGeometry: 'Add geometry' },
+    records: { noGeometry: 'This object has no geometry' },
+    dashboard: { geoObjects: 'Objects with geometry' },
+    map: {
+      title: 'Map',
+      layer: 'Layer',
+      draw: 'Draw',
+      clear: 'Clear',
+      drawHint: 'Draw the geometry on the map',
+      selectObject: 'Select an object',
+      attributes: 'Attributes',
+      features: '{{count}} features',
+      geometryColumn: 'Geometry'
+    },
+    pages: {
+      types: { MAP: 'Map' },
+      geometry: 'Geometry',
+      allGeometries: 'Every geometry',
+      mockMap: { allGeometries: 'every geometry' }
+    },
+    history: { geometry: 'Geometry', geometryUpdated: 'geometry updated' },
+    layers: {
+      title: 'GIS layers',
+      subtitle: 'Publish each geometry of an object as a WMS/WFS layer in GeoServer',
+      object: 'Object',
+      technicalName: 'Technical name',
+      layerName: 'Layer',
+      geometryType: 'Geometry',
+      srid: 'CRS',
+      status: 'Status',
+      published: 'Published',
+      unpublished: 'Not published',
+      publish: 'Publish',
+      unpublish: 'Unpublish',
+      confirmUnpublish: 'Unpublish this layer from GeoServer?',
+      copy: 'Copy',
+      copied: 'Copied',
+      wms: 'WMS',
+      wfs: 'WFS',
+      preview: 'Preview',
+      hidePreview: 'Hide preview',
+      previewTitle: 'Preview',
+      services: 'GeoServer services',
+      workspace: 'Workspace',
+      endpoint: 'Endpoint',
+      connected: 'GeoServer configured',
+      offline: 'GeoServer is not configured',
+      offlineHint: 'Publishing is disabled. Objects and their data stay available in Wasichai.',
+      listError: 'Could not read layer status; showing the objects with geometry.',
+      empty: 'No object has any geometry yet.'
+    }
+  }
+}

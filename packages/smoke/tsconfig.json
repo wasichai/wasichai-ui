@@ -1,0 +1,21 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
+        "paths": {
+            "@wasichai/ui": ["../ui/src/index.ts"],
+            "@wasichai/core": ["../core/src/index.ts"],
+            "@wasichai/testing": ["../testing/src/index.ts"],
+            "@wasichai/gis": ["../gis/src/index.ts"],
+            "@wasichai/workflow": ["../workflow/src/index.ts"],
+            "@wasichai/automation": ["../automation/src/index.ts"],
+            "@wasichai/documents": ["../documents/src/index.ts"],
+            "@wasichai/pages": ["../pages/src/index.ts"],
+            "@wasichai/views": ["../views/src/index.ts"],
+            "@wasichai/forms": ["../forms/src/index.ts"],
+            "@wasichai/agent": ["../agent/src/index.ts"]
+        }
+    },
+    "include": ["src", "vite.config.ts"]
+}
