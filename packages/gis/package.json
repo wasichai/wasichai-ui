@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/gis",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Wasichai GIS module: map and layers pages, the GEOMETRY field and the MAP page component",
     "type": "module",
     "files": [
