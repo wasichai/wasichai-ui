@@ -65,6 +65,7 @@ describe('WORKFLOW page component', () => {
     renderWithProviders(<Preview component={node('WORKFLOW')} definition={definition} />, { modules: [coreModule, workflowModule()] })
 
     expect(screen.getByText('Estado inicial')).toBeInTheDocument()
-    expect(fetch.calls).toEqual([])
+    // ThemeProvider's own preferences GET is not the preview's business; only it may call out
+    expect(fetch.calls.filter((call) => call.path !== '/auth/me/preferences')).toEqual([])
   })
 })

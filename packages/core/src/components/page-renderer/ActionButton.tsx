@@ -30,7 +30,7 @@ function NavigateAction({ component }: { component: PageComponent }) {
         href={component.url}
         target="_blank"
         rel="noreferrer noopener"
-        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-brand px-4 text-sm font-medium text-white transition-colors hover:bg-brand-strong"
+        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-brand px-4 text-sm font-medium text-on-brand transition-colors hover:bg-brand-strong"
       >
         {label}
       </a>

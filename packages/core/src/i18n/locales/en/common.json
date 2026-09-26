@@ -24,6 +24,12 @@
         "signOut": "Sign out",
         "invalid": "Invalid credentials"
     },
+    "theme": {
+        "label": "Theme",
+        "system": "System",
+        "light": "Light",
+        "dark": "Dark"
+    },
     "common": {
         "save": "Save",
         "cancel": "Cancel",

@@ -24,6 +24,12 @@
         "signOut": "Cerrar sesión",
         "invalid": "Credenciales inválidas"
     },
+    "theme": {
+        "label": "Tema",
+        "system": "Sistema",
+        "light": "Claro",
+        "dark": "Oscuro"
+    },
     "common": {
         "save": "Guardar",
         "cancel": "Cancelar",

@@ -39,11 +39,12 @@ createRoot(document.getElementById('root')!).render(
 | config | default | meaning |
 |---|---|---|
 | `apiBaseUrl` | `/api` | REST base url (trailing slash ignored) |
-| `storagePrefix` | `wasichai` | localStorage keys `<prefix>.token/.user/.lang`; give each app on an origin its own |
+| `storagePrefix` | `wasichai` | localStorage keys `<prefix>.token/.user/.lang/.theme`; give each app on an origin its own |
 | `languages` | `['es', 'en']` | first is default and fallback; the shell toggle cycles through them |
 | `appName`, `appTagline` | the `app.name`/`app.tagline` strings | shell and login header |
 | `basename` | – | router basename when not served from `/` |
 | `defaultLoginEmail` | `''` | login form prefill (demo apps) |
+| `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -98,6 +99,24 @@ sheet CSS are separate imports (not run through Tailwind, see their own READMEs)
 worker/CSS setup is `@wasichai/gis`'s (see its README for the exact-version pin and bundler recipe).
 Drop modules you do not need from both the `import` list and `modules={[...]}`; nothing else in the
 snippet changes.
+
+## Themes and preferences
+
+The shell's theme selector offers `system` (follows the OS), `light`, `dark` and every `config.themes`
+entry. An app theme is a `[data-theme='<id>']` block in your CSS that sets every token of
+`@wasichai/ui/theme.css` (ADR-034). The pick is written to `<prefix>.theme` at once and, signed in,
+saved for the user with `PUT /auth/me/preferences`; the language button does the same with the locale.
+Against a backend without that endpoint (404) both stay in the browser.
+
+| hook | gives |
+|---|---|
+| `useTheme()` | `preference`, the resolved `theme`, its `colorScheme` (`light`/`dark`, e.g. for a chart), `themes`, `setPreference(id)` |
+| `usePreferences()` | the user's stored `{ theme, locale }`; `null` when the backend has no endpoint |
+| `useUpdatePreferences()` | the mutation behind both: a partial `PUT`, optimistic, rolled back on failure |
+| `useSetLocale()` | `(language) => Promise<void>`: switches the language now and stores it for the user |
+
+To avoid a flash of the light theme before React mounts, copy the boot script from
+[docs/modules/core.md](https://github.com/wasichai/wasichai/blob/main/docs/modules/core.md) into `index.html`.
 
 ## Backend modules are optional
 

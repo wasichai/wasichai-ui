@@ -14,6 +14,7 @@ import { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygo
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { WMS_TILE_SIZE, wmsTileUrl } from '../lib/wms'
 import { boundsOf } from '../lib/geo'
+import { popupHtml } from '../lib/popup'
 import { applyMapWorkerUrl } from '../lib/mapWorker'
 import { cn } from '@wasichai/ui'
 import type { Feature, FeatureCollection, GeoJsonGeometry } from '../types'
@@ -266,20 +267,4 @@ function syncWmsLayers(instance: MapLibreMap, specs: WmsLayerSpec[]): void {
 function removeWmsLayer(instance: MapLibreMap, id: string): void {
   if (instance.getLayer(id)) instance.removeLayer(id)
   if (instance.getSource(id)) instance.removeSource(id)
-}
-
-function popupHtml(properties: Record<string, unknown>): string {
-  const rows = Object.entries(properties)
-    .filter(([key]) => !key.startsWith('__') && key !== 'id')
-    .map(
-      ([key, value]) =>
-        `<div style="display:flex;gap:8px"><span style="color:#64748b">${escapeHtml(key)}</span>` +
-        `<span>${escapeHtml(value == null ? '—' : String(value))}</span></div>`
-    )
-    .join('')
-  return `<div style="font:12px/1.5 ui-sans-serif,system-ui">${rows}</div>`
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character)
 }

@@ -16,7 +16,7 @@ const CORE_TONES: Record<'CREATE' | 'UPDATE' | 'DELETE', string> = {
 const TONES: Record<HistoryTone, string> = {
   neutral: 'bg-brand-soft text-brand-strong',
   success: 'bg-success/15 text-success',
-  warning: 'bg-amber-500/15 text-amber-700',
+  warning: 'bg-warning-soft text-warning',
   danger: 'bg-danger/15 text-danger',
   info: 'bg-brand/15 text-brand-strong'
 }

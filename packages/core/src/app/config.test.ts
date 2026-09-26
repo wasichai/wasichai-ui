@@ -18,10 +18,19 @@ describe('resolveConfig', () => {
     expect(() => resolveConfig({ languages: [] })).toThrow(/languages/)
     expect(() => resolveConfig({ storagePrefix: ' ' })).toThrow(/storagePrefix/)
   })
+
+  it('refuses an app theme that reuses a built-in id', () => {
+    expect(() => resolveConfig({ themes: [{ id: 'dark', label: 'x', colorScheme: 'dark' }] })).toThrow(/theme 'dark'/)
+  })
 })
 
 describe('storageKeys', () => {
   it('namespaces every key under the prefix', () => {
-    expect(storageKeys('catastro')).toEqual({ token: 'catastro.token', user: 'catastro.user', lang: 'catastro.lang' })
+    expect(storageKeys('catastro')).toEqual({
+      token: 'catastro.token',
+      user: 'catastro.user',
+      lang: 'catastro.lang',
+      theme: 'catastro.theme'
+    })
   })
 })
