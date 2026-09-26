@@ -1,7 +1,7 @@
-import { act, screen } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { renderWithProviders } from '@wasichai/testing'
+import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
 import { useTheme } from './ThemeProvider'
 import { resolveTheme, BUILT_IN_THEMES } from './themes'
 
@@ -10,7 +10,6 @@ function Probe() {
   return (
     <>
       <p>{`${preference}:${theme.id}`}</p>
-      {/* setPreference now tries the PUT unless the GET already confirmed a 404; unmocked here, so it can reject for real */}
       <button onClick={() => void setPreference('dark').catch(() => {})}>dark</button>
     </>
   )
@@ -33,8 +32,11 @@ function stubMatchMedia(dark: boolean) {
   }
 }
 
+let fetch: FetchMock | null = null
 beforeEach(() => localStorage.clear())
 afterEach(() => {
+  fetch?.restore()
+  fetch = null
   vi.unstubAllGlobals()
   delete document.documentElement.dataset.theme
   document.documentElement.style.colorScheme = ''
@@ -65,11 +67,14 @@ describe('ThemeProvider', () => {
   })
 
   it('reads and writes the local copy', async () => {
-    localStorage.setItem('wasichai-test.theme', 'dark')
-    renderWithProviders(<Probe />)
-    expect(screen.getByText('dark:dark')).toBeInTheDocument()
+    fetch = mockFetch([]) // backend without preferences: the local copy is the only store
     localStorage.setItem('wasichai-test.theme', 'light')
+    renderWithProviders(<Probe />)
+    expect(screen.getByText('light:light')).toBeInTheDocument()
+    await waitFor(() => expect(fetch?.calls.some((call) => call.path === '/auth/me/preferences')).toBe(true))
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
     await userEvent.click(screen.getByRole('button', { name: 'dark' }))
+    expect(await screen.findByText('dark:dark')).toBeInTheDocument()
     expect(localStorage.getItem('wasichai-test.theme')).toBe('dark')
   })
 

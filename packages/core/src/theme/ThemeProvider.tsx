@@ -1,5 +1,6 @@
 import { createContext, use, useCallback, useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useApiClient, useWasichaiConfig } from '../app/context'
+import { useAuth } from '../auth/AuthProvider'
 import { LocaleSync } from '../preferences/LocaleSync'
 import { usePreferences, useUpdatePreferences } from '../preferences/preferences'
 import { availableThemes, resolveTheme, SYSTEM_THEME, type ThemeDefinition } from './themes'
@@ -31,6 +32,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const config = useWasichaiConfig()
   const { keys } = useApiClient()
   const themes = useMemo(() => availableThemes(config), [config])
+  const { user } = useAuth()
   const stored = usePreferences()
   const update = useUpdatePreferences()
   const [local, setLocal] = useState(() => localStorage.getItem(keys.theme) ?? SYSTEM_THEME)
@@ -59,9 +61,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const previous = local
       localStorage.setItem(keys.theme, id)
       setLocal(id)
-      // null = confirmed 404: stay browser-only. pending or errored still gets a try, so a pick made
-      // before the GET settles (or while it is failing) is not silently dropped once it does settle
-      if (stored.data === null) return
+      // signed out or confirmed 404: stay browser-only. pending or errored still gets a try, so a pick made
+      // before the GET settles (or while it is failing) is not silently dropped once it does settle.
+      // a PUT answering 404 resolves null (see useUpdatePreferences), so the pick stays
+      if (!user || stored.data === null) return
       try {
         await update.mutateAsync({ theme: id })
       } catch (cause) {
@@ -70,7 +73,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         throw cause
       }
     },
-    [local, keys.theme, stored.data, update.mutateAsync]
+    [local, keys.theme, user, stored.data, update.mutateAsync]
   )
 
   const value = useMemo<ThemeContextValue>(

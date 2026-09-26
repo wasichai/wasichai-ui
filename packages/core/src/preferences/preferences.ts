@@ -36,8 +36,17 @@ export function useUpdatePreferences() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const key = preferencesKey(user?.id ?? null)
-  return useMutation<UserPreferences, ApiError, Partial<UserPreferences>, { previous?: UserPreferences | null }>({
-    mutationFn: (change) => api<UserPreferences>('/auth/me/preferences', { method: 'PUT', body: JSON.stringify(change) }),
+  // resolves null on a 404: the backend predates the endpoint, so the caller keeps its pick local and
+  // the cache turns null, which stops every later PUT (a pick can cancel the GET that would have said so)
+  return useMutation<UserPreferences | null, ApiError, Partial<UserPreferences>, { previous?: UserPreferences | null }>({
+    mutationFn: async (change) => {
+      try {
+        return await api<UserPreferences>('/auth/me/preferences', { method: 'PUT', body: JSON.stringify(change) })
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return null
+        throw cause
+      }
+    },
     // optimistic: the theme switches on click, not on the round trip
     onMutate: async (change) => {
       await queryClient.cancelQueries({ queryKey: key })
@@ -56,14 +65,15 @@ export function useUpdatePreferences() {
 export function useSetLocale(): (language: string) => Promise<void> {
   const { i18n } = useTranslation()
   const { keys } = useApiClient()
+  const { user } = useAuth()
   const preferences = usePreferences()
   const update = useUpdatePreferences()
   return useCallback(
     async (language: string) => {
       const previous = i18n.language
       await changeLanguage(i18n, keys.lang, language)
-      // null = confirmed 404: stay browser-only. pending or errored still gets a try, like the theme
-      if (preferences.data === null) return
+      // signed out or confirmed 404: stay browser-only. pending or errored still gets a try, like the theme
+      if (!user || preferences.data === null) return
       try {
         await update.mutateAsync({ locale: language })
       } catch (cause) {
@@ -71,6 +81,6 @@ export function useSetLocale(): (language: string) => Promise<void> {
         throw cause
       }
     },
-    [i18n, keys.lang, preferences.data, update.mutateAsync]
+    [i18n, keys.lang, user, preferences.data, update.mutateAsync]
   )
 }
