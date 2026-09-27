@@ -44,7 +44,7 @@ createRoot(document.getElementById('root')!).render(
 | `appName`, `appTagline` | the `app.name`/`app.tagline` strings | shell and login header |
 | `basename` | – | router basename when not served from `/` |
 | `defaultLoginEmail` | `''` | login form prefill (demo apps) |
-| `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there |
+| `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there, see [Themes](#themes-and-preferences) |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -115,8 +115,44 @@ Against a backend without that endpoint (404) both stay in the browser.
 | `useUpdatePreferences()` | the mutation behind both: a partial `PUT`, optimistic, rolled back on failure |
 | `useSetLocale()` | `(language) => Promise<void>`: switches the language now and stores it for the user |
 
-To avoid a flash of the light theme before React mounts, copy the boot script from
-[docs/modules/core.md](https://github.com/wasichai/wasichai/blob/main/docs/modules/core.md) into `index.html`.
+The library ships one optional theme, `portal-tributario` (light only). It is not built in: an app that
+wants it imports its sheet and lists its definition, and the selector offers it. The tokens and the sheet
+are described in `@wasichai/ui`'s README; the why is
+[ADR-035](https://github.com/wasichai/wasichai/blob/main/docs/adr/0035-theme-extension-tokens-slots-and-optional-sheets.md).
+
+```css
+/* src/index.css */
+@import 'tailwindcss';
+@import '@wasichai/ui/theme.css';
+@import '@wasichai/ui/themes/portal-tributario.css';
+@source '../node_modules/@wasichai';
+```
+
+```ts
+import { PORTAL_TRIBUTARIO_THEME } from '@wasichai/core'
+// config: { themes: [PORTAL_TRIBUTARIO_THEME] }
+```
+
+To avoid a flash of the light theme before React mounts, put this boot script in `index.html`, before the
+bundle. It lists every theme the app offers with its color scheme, so a stored app theme gets its
+`colorScheme` before the bundle loads and an unknown id falls to the OS, as `resolveTheme` does. This one
+is for an app with `portal-tributario`; put your own `config.themes` ids in `schemes`.
+
+```html
+<script>
+  // before the bundle: apply the stored theme so a dark user never sees a light flash. `wasichai` = storagePrefix.
+  // every theme the app offers, id -> color scheme: light, dark and each config.themes entry.
+  // system and an unknown id (an old build, another app's theme) follow the os, as core's resolveTheme does
+  try {
+    const schemes = { light: 'light', dark: 'dark', 'portal-tributario': 'light' }
+    const stored = localStorage.getItem('wasichai.theme')
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches
+    const theme = stored && Object.hasOwn(schemes, stored) ? stored : dark ? 'dark' : 'light'
+    document.documentElement.dataset.theme = theme
+    document.documentElement.style.colorScheme = schemes[theme]
+  } catch {}
+</script>
+```
 
 ## Backend modules are optional
 

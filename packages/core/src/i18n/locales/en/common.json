@@ -28,7 +28,8 @@
         "label": "Theme",
         "system": "System",
         "light": "Light",
-        "dark": "Dark"
+        "dark": "Dark",
+        "portalTributario": "Tax portal"
     },
     "common": {
         "save": "Save",

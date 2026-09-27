@@ -28,7 +28,8 @@
         "label": "Tema",
         "system": "Sistema",
         "light": "Claro",
-        "dark": "Oscuro"
+        "dark": "Oscuro",
+        "portalTributario": "Portal tributario"
     },
     "common": {
         "save": "Guardar",
