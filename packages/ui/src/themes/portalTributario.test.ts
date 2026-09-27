@@ -2,7 +2,8 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { contrast, resolveVar, rule, rules } from '../test/css'
+import { blocks, contrast, resolveVar, rule, rules } from '../test/css'
+import { customProperties, EXTENSION } from '../test/tokens'
 
 // the optional portal-tributario sheet (ADR-035): the theme's tokens, then partials that paint the library's own
 // components. its folder is copied to dist as is, so this test lives next to it, not in it
@@ -13,12 +14,13 @@ const read = (file: string) => readFileSync(join(dir, file), 'utf8')
 const PORTAL = "[data-theme='portal-tributario']"
 const PARTIALS = ['controls.css', 'tables.css', 'tabs.css']
 
-// the tokens theme.css adds to the 18 base ones; listed here too, so a token missing from theme.css still fails
-const EXTENSION = ['success-soft', 'danger-soft', 'notice', 'notice-soft', 'link', 'focus', 'table-head', 'table-stripe', 'line', 'map-selected']
+// a partial paints the theme's subtree, but not one pinned to another theme inside it (the printed document sheet)
+const SCOPE = `@scope (${PORTAL}) to ([data-theme]:not(${PORTAL}))`
 
 // the hooks the library's components put (a sheet only styles those, rule 6)
 const SLOTS = [
   'button',
+  'card',
   'input',
   'textarea',
   'select-trigger',
@@ -37,7 +39,16 @@ const SIZES = ['sm', 'md', 'icon']
 const base = readFileSync(join(__dirname, '..', 'theme.css'), 'utf8')
 const tokens = rule(read('tokens.css'), PORTAL)
 
-const customProperties = (declarations: Map<string, string>) => [...declarations.keys()].filter((name) => name.startsWith('--')).sort()
+// a partial's rules: the unlayered ones, and the ones in @layer base (a default any class still overrides)
+function layers(css: string): { unlayered: string; base: string } {
+  const found = blocks(css)
+  const body = (prelude: string) =>
+    found
+      .filter((block) => block.prelude === prelude)
+      .map((block) => block.body)
+      .join('\n')
+  return { unlayered: body(SCOPE), base: blocks(body('@layer base')).find((block) => block.prelude === SCOPE)?.body ?? '' }
+}
 
 // a declared colour: a var() of a token followed to the theme's value, a plain colour as is
 function paint(value: string | undefined): string {
@@ -115,15 +126,20 @@ describe('partials', () => {
       expect(index.indexOf(`@import './${file}';`)).toBeGreaterThan(index.indexOf("@import './tokens.css';"))
     })
 
-    it('scopes every rule to the theme', () => {
-      const selectors = rules(css).flatMap((r) => r.selectors)
-      expect(selectors.length).toBeGreaterThan(0)
-      expect(selectors.filter((selector) => !selector.startsWith(`${PORTAL} `))).toEqual([])
+    // unlayered, a rule wins over tailwind's utilities whatever their specificity; in @layer base, any class wins over
+    // it. either way it is scoped: light, dark and a subtree pinned to another theme never see it
+    it("keeps every rule in the theme's scope, unlayered or in the base layer", () => {
+      const found = blocks(css)
+      expect(found.length).toBeGreaterThan(0)
+      for (const { prelude, body } of found) {
+        expect([SCOPE, '@layer base'], prelude).toContain(prelude)
+        if (prelude === '@layer base') expect(blocks(body).map((inner) => inner.prelude)).toEqual([SCOPE])
+      }
     })
 
-    // a rule without a layer wins over tailwind's utilities, whatever their specificity
-    it('stays outside any layer', () => {
-      expect(css).not.toMatch(/@layer/)
+    it('hooks every rule on a data-slot', () => {
+      const selectors = rules(css).flatMap((r) => r.selectors)
+      expect(selectors.filter((selector) => !selector.includes('[data-slot='))).toEqual([])
     })
   })
 
@@ -142,13 +158,31 @@ describe('partials', () => {
 })
 
 describe('controls.css', () => {
-  const css = read('controls.css')
-  const BUTTON = `${PORTAL} [data-slot='button']`
+  const { unlayered: css } = layers(read('controls.css'))
+  const BUTTON = "[data-slot='button']"
   const FIELDS = ":is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger'])"
+  const declared = (property: string) => rules(css).filter((r) => r.declarations.has(property))
 
-  it('paints the primary button in brand, brand-strong on hover', () => {
-    expect(rule(css, `${BUTTON}[data-variant='primary']`).get('background')).toBe('var(--brand)')
-    expect(rule(css, `${BUTTON}[data-variant='primary']:hover:not(:disabled)`).get('background')).toBe('var(--brand-strong)')
+  it("gives the buttons the prototype's type and room", () => {
+    expect(rule(css, BUTTON).get('font-size')).toBe('15px')
+    expect(rule(css, `${BUTTON}[data-size='md']`).get('padding')).toBe('10px 20px')
+    expect(rule(css, `${BUTTON}[data-size='md']:is([data-variant='primary'], [data-variant='danger'])`).get('padding-inline')).toBe('26px')
+    // sm keeps the library's 12px sides (the prototype's too), so a caller's px-0 still holds
+    const small = rule(css, `${BUTTON}[data-size='sm']`)
+    expect(small.get('padding-block')).toBe('5px')
+    expect(small.has('padding')).toBe(false)
+  })
+
+  // what the tokens already paint (primary and danger fills, the radii) is left to the classes, so a caller's own
+  // classes keep working; ghost stays the library's, so the shell's ghost buttons keep their colours on the shell
+  it('leaves to the classes what the tokens already draw', () => {
+    expect(declared('border-radius')).toEqual([])
+    expect(rules(css).filter((r) => r.selectors.some((s) => s.includes("[data-variant='ghost']")))).toEqual([])
+    for (const variant of ['primary', 'danger'])
+      expect(
+        rules(css).filter((r) => r.selectors.includes(`${BUTTON}[data-variant='${variant}']`)),
+        variant
+      ).toEqual([])
   })
 
   it('marks a disabled button without losing the not-allowed cursor', () => {
@@ -157,37 +191,33 @@ describe('controls.css', () => {
     expect(disabled.get('pointer-events')).toBe('auto')
   })
 
+  // no padding: the library's sides stay, so a field's own (the search box's pl-8 around its icon) still holds
   it('draws the three fields alike, the input and the select trigger at one height', () => {
-    const fields = rule(css, `${PORTAL} ${FIELDS}`)
+    const fields = rule(css, FIELDS)
     expect(fields.get('border-color')).toBe('#cccccc')
-    expect(fields.get('padding')).toBe('8px 10px')
     expect(fields.get('font-size')).toBe('14.5px')
-    expect(rule(css, `${PORTAL} :is([data-slot='input'], [data-slot='select-trigger'])`).get('height')).toBe('38px')
-    expect(rule(css, `${PORTAL} ${FIELDS}:focus`).get('border-color')).toBe('var(--focus)')
+    expect(declared('padding')).toEqual(rules(css).filter((r) => r.selectors.some((s) => s.startsWith(BUTTON)) && r.declarations.has('padding')))
+    expect(rule(css, ":is([data-slot='input'], [data-slot='select-trigger'])").get('height')).toBe('38px')
+    expect(rule(css, `${FIELDS}:focus`).get('border-color')).toBe('var(--focus)')
   })
 
   it('keeps the danger border of an invalid field', () => {
-    expect(rule(css, `${PORTAL} ${FIELDS}[aria-invalid='true']`).get('border-color')).toBe('var(--danger)')
+    expect(rule(css, `${FIELDS}[aria-invalid='true']`).get('border-color')).toBe('var(--danger)')
   })
 
-  // the greys it paints behind text: a secondary button keeps its own ink, a ghost one turns link
+  // the greys it paints behind text: a secondary button keeps its own ink
   it('keeps AA over the greys it paints', () => {
-    const hover = (variant: string) => rule(css, `${BUTTON}[data-variant='${variant}']:hover:not(:disabled)`).get('background')!
-    const ghost = rule(css, `${BUTTON}[data-variant='ghost']`).get('color')!
-    const pairs: [string, string, string][] = [
-      ['secondary hovered', 'var(--ink)', hover('secondary')],
-      ['ghost hovered', ghost, hover('ghost')]
-    ]
-    expect(failing(pairs)).toEqual([])
+    const hover = rule(css, `${BUTTON}[data-variant='secondary']:hover:not(:disabled)`).get('background')!
+    expect(failing([['secondary hovered', 'var(--ink)', hover]])).toEqual([])
   })
 })
 
 describe('tables.css', () => {
-  const css = read('tables.css')
-  const TABLE = `${PORTAL} [data-slot='table']`
+  const { unlayered, base: defaults } = layers(read('tables.css'))
+  const TABLE = "[data-slot='table']"
 
   it("draws the prototype's header", () => {
-    const th = rule(css, `${TABLE} th`)
+    const th = rule(unlayered, `${TABLE} th`)
     expect(th.get('padding')).toBe('11px 18px')
     expect(th.get('font-size')).toBe('13.5px')
     expect(th.get('font-weight')).toBe('700')
@@ -197,26 +227,24 @@ describe('tables.css', () => {
   })
 
   it('draws the cells over thin lines', () => {
-    const td = rule(css, `${TABLE} td`)
+    const td = rule(unlayered, `${TABLE} td`)
     expect(td.get('font-size')).toBe('14.5px')
     expect(td.get('border-bottom')).toBe('1px solid var(--line)')
-    expect(rule(css, `${TABLE} td a`).get('white-space')).toBe('nowrap')
   })
 
-  it('stripes the rows, but a selected one', () => {
-    expect(rule(css, `${TABLE} > tbody > tr:nth-child(even):not([aria-selected='true'])`).get('background-color')).toBe('var(--table-stripe)')
-  })
-
-  it('draws the total row of the foot', () => {
-    const total = rule(css, `${TABLE} > tfoot td`)
+  // in the base layer: a row's own class (a selected row's bg-brand-soft, a hover) still wins over the stripe
+  it('stripes the rows and draws the total as defaults a class overrides', () => {
+    expect(rule(defaults, `${TABLE} > tbody > tr:nth-child(even)`).get('background-color')).toBe('var(--table-stripe)')
+    const total = rule(defaults, `${TABLE} > tfoot td`)
     expect(total.get('font-weight')).toBe('700')
     expect(total.get('background-color')).toBe('var(--surface-muted)')
     expect(total.get('border-top')).toMatch(/^2px solid /)
+    expect(unlayered).not.toMatch(/nth-child|tfoot/)
   })
 
   // the text over the backgrounds this partial paints: header, stripes and total
   it('keeps AA over the backgrounds it paints', () => {
-    const th = rule(css, `${TABLE} th`)
+    const th = rule(unlayered, `${TABLE} th`)
     const pairs: [string, string, string][] = [
       ['th', th.get('color')!, th.get('background-color')!],
       ...['ink', 'ink-muted', 'link', 'success', 'danger', 'warning'].map((name): [string, string, string] => [
@@ -224,40 +252,41 @@ describe('tables.css', () => {
         `var(--${name})`,
         'var(--table-stripe)'
       ]),
-      ['ink on total', 'var(--ink)', rule(css, `${TABLE} > tfoot td`).get('background-color')!]
+      ['ink on total', 'var(--ink)', rule(defaults, `${TABLE} > tfoot td`).get('background-color')!]
     ]
     expect(failing(pairs)).toEqual([])
   })
 })
 
 describe('tabs.css', () => {
-  const css = read('tabs.css')
-  const TRIGGER = `${PORTAL} [data-slot='tabs-trigger']`
+  const { unlayered: css } = layers(read('tabs.css'))
+  const TRIGGER = "[data-slot='tabs-trigger']"
 
   it('joins the active tab to its panel', () => {
     const active = rule(css, `${TRIGGER}[aria-selected='true']`)
     expect(active.get('background')).toBe('var(--surface)')
     expect(active.get('border-bottom-color')).toBe('var(--surface)')
-    expect(rule(css, `${PORTAL} [data-slot='tabs-content']`).get('border-top')).toBe('0')
+    expect(rule(css, "[data-slot='tabs-content']").get('border-top')).toBe('0')
   })
 
-  // the tabs sit on the page and the panel is the box
-  it('makes the box that holds the tabs step aside', () => {
-    const box = rule(css, `${PORTAL} :has(> [data-slot='tabs'])`)
-    expect(box.get('border')).toBe('0')
-    expect(box.get('background')).toBe('transparent')
-    expect(box.get('box-shadow')).toBe('none')
+  // the tabs sit on the page and the panel is the box. only a card steps aside, not any box that holds tabs
+  it('makes the card that holds the tabs step aside', () => {
+    const card = rule(css, "[data-slot='card']:has(> [data-slot='tabs'])")
+    expect(card.get('border')).toBe('0')
+    expect(card.get('background')).toBe('transparent')
+    expect(card.get('box-shadow')).toBe('none')
+    expect(rules(css).flatMap((r) => r.selectors)).not.toContain(":has(> [data-slot='tabs'])")
   })
 
   it('draws the line under the strip as its background', () => {
-    const list = rule(css, `${PORTAL} [data-slot='tabs-list']`)
+    const list = rule(css, "[data-slot='tabs-list']")
     expect(list.get('border-bottom')).toBe('0')
     expect(list.get('background')).toMatch(/^linear-gradient\(var\(--brand\), var\(--brand\)\) bottom/)
   })
 
   // many long tabs need some 1240px at the prototype's size: a narrower strip tightens them
   it('tightens the tabs in a narrow container', () => {
-    expect(rule(css, `${PORTAL} [data-slot='tabs']`).get('container-type')).toBe('inline-size')
+    expect(rule(css, "[data-slot='tabs']").get('container-type')).toBe('inline-size')
     const sizes = rules(css)
       .filter((r) => r.selectors.includes(TRIGGER))
       .map((r) => r.declarations.get('font-size'))

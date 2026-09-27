@@ -1,75 +1,78 @@
 /* folder tabs over a panel on the library's Tabs. unlayered, so they win over tailwind's utilities; hooked on the
-   data-slot of Tabs. the aria and the behaviour (lazy mount, hidden panel) do not change: this only paints them */
-
-/* the box that directly holds the tabs (a card) steps aside, so the tabs sit on the page and the panel is the box */
-[data-theme='portal-tributario'] :has(> [data-slot='tabs']) {
-    padding-bottom: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-}
-
-/* the steel line under the strip, drawn as its background: the active tab paints over it and so joins its panel.
-   a border would need the tab to overlap it, and the strip scrolls sideways (it would scroll 1px down too) */
-[data-theme='portal-tributario'] [data-slot='tabs-list'] {
-    gap: 2px;
-    padding-inline: 0;
-    border-bottom: 0;
-    background: linear-gradient(var(--brand), var(--brand)) bottom / 100% 1px no-repeat;
-}
-
-/* 16px, 13px 22px, square bottom corners; the inactive ones grey, on the line */
-[data-theme='portal-tributario'] [data-slot='tabs-trigger'] {
-    padding: 13px 22px;
-    border: 1px solid transparent;
-    border-bottom-color: var(--brand);
-    border-radius: 3px 3px 0 0;
-    background: #f0f0f0;
-    color: #666666;
-    font-size: 16px;
-    font-weight: normal;
-    line-height: 1.45;
-}
-
-/* many long tabs need some 1240px at the prototype's size: a narrower strip tightens them rather than hide the last
-   ones behind its scroll (the tabs are the container these sizes are measured against) */
-[data-theme='portal-tributario'] [data-slot='tabs'] {
-    container-type: inline-size;
-}
-
-@container (max-width: 1240px) {
-    [data-theme='portal-tributario'] [data-slot='tabs-trigger'] {
-        padding-inline: 12px;
-        font-size: 15px;
+   data-slot of Tabs (and of the Card that holds them). the aria and the behaviour (lazy mount, hidden panel) do not
+   change: this only paints them. scoped to the theme, and never into a subtree pinned to another theme */
+@scope ([data-theme='portal-tributario']) to ([data-theme]:not([data-theme='portal-tributario'])) {
+    /* the card that directly holds the tabs steps aside, so the tabs sit on the page and the panel is the box. only a
+       card: another box that holds tabs keeps its own padding and border */
+    [data-slot='card']:has(> [data-slot='tabs']) {
+        padding-bottom: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
     }
-}
 
-@container (max-width: 1000px) {
-    [data-theme='portal-tributario'] [data-slot='tabs-trigger'] {
-        padding: 10px;
-        font-size: 14px;
+    /* the steel line under the strip, drawn as its background: the active tab paints over it and so joins its panel.
+       a border would need the tab to overlap it, and the strip scrolls sideways (it would scroll 1px down too) */
+    [data-slot='tabs-list'] {
+        gap: 2px;
+        padding-inline: 0;
+        border-bottom: 0;
+        background: linear-gradient(var(--brand), var(--brand)) bottom / 100% 1px no-repeat;
     }
-}
 
-[data-theme='portal-tributario'] [data-slot='tabs-trigger']:hover:not(:disabled) {
-    color: var(--ink);
-}
+    /* 16px, 13px 22px, square bottom corners; the inactive ones grey, on the line */
+    [data-slot='tabs-trigger'] {
+        padding: 13px 22px;
+        border: 1px solid transparent;
+        border-bottom-color: var(--brand);
+        border-radius: 3px 3px 0 0;
+        background: #f0f0f0;
+        color: #666666;
+        font-size: 16px;
+        font-weight: normal;
+        line-height: 1.45;
+    }
 
-/* the active one: white and bold, steel border, and white at the bottom where it meets the panel */
-[data-theme='portal-tributario'] [data-slot='tabs-trigger'][aria-selected='true'] {
-    border-color: var(--brand);
-    border-bottom-color: var(--surface);
-    background: var(--surface);
-    color: var(--ink);
-    font-weight: bold;
-}
+    /* many long tabs need some 1240px at the prototype's size: a narrower strip tightens them rather than hide the last
+       ones behind its scroll (the tabs are the container these sizes are measured against) */
+    [data-slot='tabs'] {
+        container-type: inline-size;
+    }
 
-/* the panel: steel border without its top (the strip's line), white, with room at the bottom */
-[data-theme='portal-tributario'] [data-slot='tabs-content'] {
-    padding-bottom: 24px;
-    border: 1px solid var(--brand);
-    border-top: 0;
-    border-radius: 0 0 3px 3px;
-    background: var(--surface);
+    @container (max-width: 1240px) {
+        [data-slot='tabs-trigger'] {
+            padding-inline: 12px;
+            font-size: 15px;
+        }
+    }
+
+    @container (max-width: 1000px) {
+        [data-slot='tabs-trigger'] {
+            padding: 10px;
+            font-size: 14px;
+        }
+    }
+
+    [data-slot='tabs-trigger']:hover:not(:disabled) {
+        color: var(--ink);
+    }
+
+    /* the active one: white and bold, steel border, and white at the bottom where it meets the panel */
+    [data-slot='tabs-trigger'][aria-selected='true'] {
+        border-color: var(--brand);
+        border-bottom-color: var(--surface);
+        background: var(--surface);
+        color: var(--ink);
+        font-weight: bold;
+    }
+
+    /* the panel: steel border without its top (the strip's line), white, with room at the bottom */
+    [data-slot='tabs-content'] {
+        padding-bottom: 24px;
+        border: 1px solid var(--brand);
+        border-top: 0;
+        border-radius: 0 0 3px 3px;
+        background: var(--surface);
+    }
 }

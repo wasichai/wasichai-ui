@@ -2,15 +2,12 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { contrast, resolveVar, rule } from './test/css'
+import { BASE, customProperties, EXTENSION } from './test/tokens'
 
 const css = readFileSync(join(__dirname, 'theme.css'), 'utf8')
 
-// the custom properties declared inside the first block whose selector list contains `selector`
-function tokens(selector: string): string[] {
-  const block = css.split('}').find((chunk) => chunk.split('{')[0].includes(selector))
-  if (!block) throw new Error(`no block for ${selector}`)
-  return [...block.split('{')[1].matchAll(/--([a-z-]+)\s*:/g)].map((match) => match[1]).sort()
-}
+// the custom properties a block sets, without their leading dashes
+const tokens = (selector: string) => customProperties(rule(css, selector)).map((name) => name.slice(2))
 
 describe('theme.css', () => {
   it('dark sets every token light sets', () => {
@@ -23,29 +20,6 @@ describe('theme.css', () => {
     expect(mapped).toEqual(expect.arrayContaining(tokens("[data-theme='light']")))
   })
 })
-
-// base tokens (ADR-034) and extension tokens (ADR-035): a theme sets all of them
-const BASE = [
-  'surface',
-  'surface-muted',
-  'border',
-  'ink',
-  'ink-muted',
-  'brand',
-  'brand-strong',
-  'brand-soft',
-  'on-brand',
-  'shell',
-  'shell-muted',
-  'shell-ink',
-  'danger',
-  'on-danger',
-  'success',
-  'warning',
-  'warning-soft',
-  'overlay'
-]
-const EXTENSION = ['success-soft', 'danger-soft', 'notice', 'notice-soft', 'link', 'focus', 'table-head', 'table-stripe', 'line', 'map-selected']
 
 // light and dark alias these, so adding them changed nothing already drawn
 const ALIASES = { link: 'brand', focus: 'brand', 'table-head': 'surface-muted', line: 'border' }

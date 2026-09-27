@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { contrast, resolveVar, rule, rules } from './css'
+import { blocks, contrast, resolveVar, rule, rules } from './css'
 
 describe('rule', () => {
   const css = `/* a comment { with braces } */
@@ -24,6 +24,23 @@ describe('rule', () => {
 
   it('throws for a selector no rule has', () => {
     expect(() => rule(css, '.missing')).toThrow('no rule for .missing')
+  })
+})
+
+describe('blocks', () => {
+  it('lists the outermost blocks with their preludes, whatever they nest', () => {
+    const css = `@import './a.css';
+/* { */
+@scope (.a) to (.b) {
+    .c { color: red; }
+    @container (max-width: 10px) { .c { color: blue; } }
+}
+@layer base {
+    @scope (.a) { tr { color: green; } }
+}`
+    const found = blocks(css)
+    expect(found.map((block) => block.prelude)).toEqual(['@scope (.a) to (.b)', '@layer base'])
+    expect(rule(found[1].body, 'tr').get('color')).toBe('green')
   })
 })
 

@@ -89,6 +89,7 @@ The components carry `data-slot` attributes that a theme sheet can style:
 | Component       | `data-slot`      | Also                                                                                         |
 | --------------- | ---------------- | -------------------------------------------------------------------------------------------- |
 | `Button`        | `button`         | `data-variant` (`primary`, `secondary`, `ghost`, `danger`), `data-size` (`sm`, `md`, `icon`) |
+| `Card`          | `card`           |                                                                                              |
 | `Input`         | `input`          |                                                                                              |
 | `Textarea`      | `textarea`       |                                                                                              |
 | `SelectTrigger` | `select-trigger` |                                                                                              |
@@ -101,9 +102,11 @@ The components carry `data-slot` attributes that a theme sheet can style:
 |                 | `tabs-trigger`   | each `role="tab"`, with `aria-selected`                                                      |
 |                 | `tabs-content`   | each `role="tabpanel"`                                                                       |
 
-They never change `light` or `dark`: `theme.css` does not style them. A theme sheet targets them under its own
-`[data-theme='<id>']` selector and outside any `@layer`, so it wins over the Tailwind utilities (in the `utilities`
-layer) whatever their specificity. An app component may carry the same hooks
+They never change `light` or `dark`: `theme.css` does not style them. A theme sheet targets them in its own scope
+(`@scope ([data-theme='<id>'])`). An unlayered rule wins over the Tailwind utilities whatever their specificity, so it
+restyles the component, but it also wins over a caller's classes for the same property: the library cannot tell its
+own default classes from a caller's. A sheet therefore sets only what its tokens cannot, and puts in `@layer base` the
+defaults a class may override. An app component may carry the same hooks
 (`data-slot="button" data-variant="primary"`) to be painted like the library's under such a theme.
 
 ## Optional theme: portal-tributario
@@ -132,6 +135,22 @@ import { PORTAL_TRIBUTARIO_THEME, WasichaiApp } from '@wasichai/core'
 <WasichaiApp config={{ apiBaseUrl: '/api', themes: [PORTAL_TRIBUTARIO_THEME] }} modules={[]} />
 ```
 
-Under it, the box that directly holds a `Tabs` steps aside (no border, background, shadow or bottom padding), so the
-tabs sit on the page and the panel is the box. Why the tokens, hooks and sheet look this way:
+What the sheet sets, under the theme only:
+
+- **Buttons**: 15px text, the prototype's room (`md` 10px 20px, primary and danger 26px at the sides, `sm` 5px top
+  and bottom), a `#ccc` border and grey hover on secondary, a darker hover on danger, a not-allowed cursor when
+  disabled. The fills, the radii and `ghost` are the classes' own: under the theme's tokens they already look right,
+  and a caller's classes there (the shell's ghost buttons) keep working.
+- **Fields** (`input`, `textarea`, `select-trigger`): a `#ccc` border, 14.5px text, 38px high, the cyan focus glow and
+  the danger border when invalid. Their sides stay the library's, so a field's own room (the search box's icon)
+  holds.
+- **Tables**: the header (13.5px bold sentence case over `table-head`) and the cells (14.5px over `line`); the zebra
+  rows and the total row are defaults in `@layer base`, so a row's own class (a selected row, a hover) wins.
+- **Tabs**: folder tabs over a bordered panel. A `Card` that directly holds a `Tabs` steps aside (no border,
+  background, shadow or bottom padding), so the tabs sit on the page and the panel is the box.
+
+The partials stop at a subtree pinned to another theme (the printed document sheet stays light); the theme's font and
+radii still reach it, since they are Tailwind theme variables, not tokens. Native radios and checkboxes, a
+link-coloured `ghost` and anything an app draws itself are the app's to style. Why the tokens, hooks and sheet look
+this way:
 [ADR-035](https://github.com/wasichai/wasichai/blob/main/docs/adr/0035-theme-extension-tokens-slots-and-optional-sheets.md).

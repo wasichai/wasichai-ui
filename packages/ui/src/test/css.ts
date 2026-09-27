@@ -20,6 +20,23 @@ export function rules(css: string): { selectors: string[]; declarations: Map<str
   }))
 }
 
+// the outermost blocks of a sheet (an @scope, an @layer, a plain rule): prelude and body, comments and @imports dropped
+export function blocks(css: string): { prelude: string; body: string }[] {
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@import[^;]*;/g, '')
+  const found: { prelude: string; body: string }[] = []
+  let depth = 0
+  let start = 0
+  let open = 0
+  for (let index = 0; index < clean.length; index++) {
+    if (clean[index] === '{' && depth++ === 0) open = index
+    else if (clean[index] === '}' && --depth === 0) {
+      found.push({ prelude: clean.slice(start, open).trim().replace(/\s+/g, ' '), body: clean.slice(open + 1, index) })
+      start = index + 1
+    }
+  }
+  return found
+}
+
 // a token's value with its var() aliases followed (link: var(--brand) -> brand's value)
 export function resolveVar(tokens: Map<string, string>, name: string): string {
   const value = tokens.get(`--${name}`)

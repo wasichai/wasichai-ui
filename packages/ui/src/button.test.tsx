@@ -60,4 +60,17 @@ describe('Button', () => {
     expect(button).toHaveAttribute('data-variant', 'round')
     expect(button).toHaveClass('text-ink-muted')
   })
+
+  // cva draws no variant for null, so no hook names one
+  it('names no variant or size when told null, as cva draws none', () => {
+    render(
+      <Button variant={null} size={null}>
+        Plano
+      </Button>
+    )
+    const button = screen.getByRole('button', { name: 'Plano' })
+    expect(button).not.toHaveAttribute('data-variant')
+    expect(button).not.toHaveAttribute('data-size')
+    expect(button).not.toHaveClass('bg-brand')
+  })
 })
