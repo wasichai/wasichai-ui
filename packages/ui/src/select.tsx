@@ -6,9 +6,11 @@ import { cn } from './cn'
 export const Select = SelectPrimitive.Root
 export const SelectValue = SelectPrimitive.Value
 
+// data-slot: the hook a theme sheet styles the field by (ADR-035). before props, so a caller can override it
 export function SelectTrigger({ className, children, ...props }: ComponentProps<typeof SelectPrimitive.Trigger>) {
   return (
     <SelectPrimitive.Trigger
+      data-slot="select-trigger"
       className={cn(
         'flex h-9 w-full items-center justify-between rounded-md border border-border bg-surface px-3 text-sm text-ink',
         'data-[placeholder]:text-ink-muted/60 aria-[invalid=true]:border-danger',

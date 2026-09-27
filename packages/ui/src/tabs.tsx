@@ -24,9 +24,10 @@ export function Tabs({ tabs, label }: { tabs: TabSpec[]; label: string }) {
 
   if (tabs.length === 0) return null
 
+  // data-slot: hooks a theme sheet styles (ADR-035)
   return (
-    <div>
-      <div role="tablist" aria-label={label} className="flex gap-1 overflow-x-auto border-b border-border px-8">
+    <div data-slot="tabs">
+      <div role="tablist" aria-label={label} data-slot="tabs-list" className="flex gap-1 overflow-x-auto border-b border-border px-8">
         {tabs.map((tab) => {
           const selected = tab.id === current
           return (
@@ -34,6 +35,7 @@ export function Tabs({ tabs, label }: { tabs: TabSpec[]; label: string }) {
               key={tab.id}
               type="button"
               role="tab"
+              data-slot="tabs-trigger"
               id={`tab-${tab.id}`}
               aria-selected={selected}
               aria-controls={`panel-${tab.id}`}
@@ -53,7 +55,7 @@ export function Tabs({ tabs, label }: { tabs: TabSpec[]; label: string }) {
       {tabs
         .filter((tab) => opened.includes(tab.id))
         .map((tab) => (
-          <div key={tab.id} role="tabpanel" id={`panel-${tab.id}`} aria-labelledby={`tab-${tab.id}`} hidden={tab.id !== current}>
+          <div key={tab.id} role="tabpanel" data-slot="tabs-content" id={`panel-${tab.id}`} aria-labelledby={`tab-${tab.id}`} hidden={tab.id !== current}>
             {tab.render()}
           </div>
         ))}

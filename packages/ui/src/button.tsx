@@ -27,5 +27,14 @@ type ButtonProps = ComponentProps<'button'> & VariantProps<typeof buttonVariants
 
 export function Button({ className, variant, size, asChild, ...props }: ButtonProps) {
   const Comp = asChild ? Slot : 'button'
-  return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />
+  // data-slot, data-variant, data-size: hooks a theme sheet styles (ADR-035). before props, so a caller can override them
+  return (
+    <Comp
+      data-slot="button"
+      data-variant={variant ?? 'primary'}
+      data-size={size ?? 'md'}
+      className={cn(buttonVariants({ variant, size }), className)}
+      {...props}
+    />
+  )
 }
