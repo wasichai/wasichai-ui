@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/workflow",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "Wasichai workflow module: builder, canvas, WORKFLOW page component and TRANSITION action",
     "type": "module",
     "files": [
