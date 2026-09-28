@@ -76,8 +76,8 @@ resolves (in a monorepo, often the root `node_modules`).
 In `light` and `dark` the extension tokens alias a base token (`link` and `focus` are `brand`, `table-head` is
 `surface-muted`, `line` is `border`) or tint one, so nothing drawn before changes. The exception is `bg-danger-soft`:
 `@wasichai/documents` already used it for its error messages, where it generated nothing, and now it paints a soft
-red. `text-success` on `bg-success-soft` stays below AA in light (3.6:1), as light `success` already is on `surface`
-(3.9:1, ADR-035).
+red. Light `success` is `oklch(52% 0.13 155)`, darker than before, so success text passes AA on `surface` (5.0:1) and
+on `bg-success-soft` (4.6:1).
 
 A theme may also set `--font-sans` and `--radius`, `--radius-sm`..`--radius-xl`, `--radius-card`: the document font
 and the `rounded*` utilities read them (the bare `rounded` too).

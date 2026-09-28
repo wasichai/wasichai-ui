@@ -26,6 +26,7 @@ const ALIASES = { link: 'brand', focus: 'brand', 'table-head': 'surface-muted', 
 
 // text on the background it sits on: AA, 4.5:1
 const TEXT_ON = [
+  ['success', 'surface'],
   ['success', 'success-soft'],
   ['danger', 'danger-soft'],
   ['warning', 'warning-soft'],
@@ -33,9 +34,8 @@ const TEXT_ON = [
   ['link', 'surface']
 ]
 
-// known misses (ADR-035). light success is 3.9:1 even on the surface, so no soft tint saves it without changing
-// success, and that would change light. a listed pair must stay below AA: once fixed, drop it from here
-const BELOW_AA = ['light: success on success-soft']
+// known misses, as `<theme>: <text> on <background>`. a listed pair must stay below AA: once fixed, drop it
+const BELOW_AA: string[] = []
 
 describe.each(['light', 'dark'])('%s theme', (theme) => {
   const block = rule(css, `[data-theme='${theme}']`)
