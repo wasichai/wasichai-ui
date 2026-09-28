@@ -15,6 +15,10 @@ export const BUILT_IN_THEMES: ThemeDefinition[] = [
   { id: 'dark', label: 'theme.dark', colorScheme: 'dark' }
 ]
 
+// optional, not built in: pairs with @wasichai/ui/themes/portal-tributario.css.
+// an app that imports the sheet lists this in config.themes. light only
+export const PORTAL_TRIBUTARIO_THEME: ThemeDefinition = { id: 'portal-tributario', label: 'theme.portalTributario', colorScheme: 'light' }
+
 export function availableThemes(config: Pick<WasichaiConfig, 'themes'>): ThemeDefinition[] {
   return [...BUILT_IN_THEMES, ...(config.themes ?? [])]
 }

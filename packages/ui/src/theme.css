@@ -1,6 +1,7 @@
 /* wasichai design tokens. the app imports tailwind first, then this file, and adds
    `@source` over node_modules/@wasichai so the classes used inside the packages get generated.
-   a theme is a `[data-theme='<id>']` block that sets every token below (ADR-034). */
+   a theme is a `[data-theme='<id>']` block that sets every token below (ADR-034, ADR-035);
+   it may also set --font-sans and --radius-*. */
 :root,
 [data-theme='light'] {
     --surface: oklch(99% 0.002 260);
@@ -21,6 +22,21 @@
     --warning: oklch(50% 0.12 65);
     --warning-soft: oklch(95% 0.05 85);
     --overlay: oklch(15% 0.02 265 / 50%);
+
+    /* extension tokens: soft alert tints, notice text, links, focus ring, table and map colours.
+       fixed per block, not only on :root, because themes nest. light and dark alias or tint base tokens,
+       so nothing already drawn changes */
+    --success-soft: oklch(96% 0.01 165);
+    --danger-soft: oklch(96% 0.015 20);
+    --notice: oklch(42% 0.08 63);
+    --notice-soft: oklch(97% 0.025 85);
+    --link: var(--brand);
+    --focus: var(--brand);
+    --table-head: var(--surface-muted);
+    --table-stripe: oklch(98% 0.003 260);
+    --line: var(--border);
+    /* the orange the lotes map has always used for the selection, same in every theme */
+    --map-selected: #e8590c;
 }
 
 [data-theme='dark'] {
@@ -42,6 +58,18 @@
     --warning: oklch(80% 0.13 80);
     --warning-soft: oklch(35% 0.07 75);
     --overlay: oklch(5% 0 0 / 60%);
+
+    /* extension tokens, as in light. the soft tints keep the hue of their source colour */
+    --success-soft: oklch(26% 0.02 160);
+    --danger-soft: oklch(26% 0.025 25);
+    --notice: oklch(84% 0.09 80);
+    --notice-soft: oklch(28.5% 0.03 72);
+    --link: var(--brand);
+    --focus: var(--brand);
+    --table-head: var(--surface-muted);
+    --table-stripe: oklch(20% 0.014 265);
+    --line: var(--border);
+    --map-selected: #e8590c;
 }
 
 @theme inline {
@@ -63,10 +91,23 @@
     --color-warning: var(--warning);
     --color-warning-soft: var(--warning-soft);
     --color-overlay: var(--overlay);
+    --color-success-soft: var(--success-soft);
+    --color-danger-soft: var(--danger-soft);
+    --color-notice: var(--notice);
+    --color-notice-soft: var(--notice-soft);
+    --color-link: var(--link);
+    --color-focus: var(--focus);
+    --color-table-head: var(--table-head);
+    --color-table-stripe: var(--table-stripe);
+    --color-line: var(--line);
+    --color-map-selected: var(--map-selected);
 }
 
 @theme {
     --radius-card: 0.75rem;
+    /* the bare `rounded` reads --radius, which tailwind inlines as 0.25rem; as a theme variable (same value)
+       a theme can change it like --radius-sm..xl and --radius-card */
+    --radius: 0.25rem;
 }
 
 @layer base {

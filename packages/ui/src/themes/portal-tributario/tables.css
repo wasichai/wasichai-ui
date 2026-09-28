@@ -1,0 +1,43 @@
+/* the prototype's tables on the library's Table (data-slot="table" on the <table>). th and td are descendants, not
+   Th and Td's slots: an app's own cells inside a Table get them too. the header and the cells are unlayered, so they
+   win over the Th and Td classes; the stripes and the total are defaults in the base layer, so a row's own class (a
+   selected row, a hover) still wins. scoped to the theme, and never into a subtree pinned to another theme (the
+   printed document sheet). the greys with no token (#444, #ddd) are the prototype's */
+@scope ([data-theme='portal-tributario']) to ([data-theme]:not([data-theme='portal-tributario'])) {
+    /* header: bold sentence case over the table-head grey, on one line */
+    [data-slot='table'] th {
+        padding: 11px 18px;
+        font-size: 13.5px;
+        font-weight: 700;
+        letter-spacing: normal;
+        text-transform: none;
+        white-space: nowrap;
+        color: #444;
+        background-color: var(--table-head);
+        border-bottom: 1px solid #ddd;
+    }
+
+    /* cells: the text colour stays the cell's own (ink, or a selected row's brand) */
+    [data-slot='table'] td {
+        padding: 10px 18px;
+        font-size: 14.5px;
+        border-bottom: 1px solid var(--line);
+    }
+}
+
+@layer base {
+    @scope ([data-theme='portal-tributario']) to ([data-theme]:not([data-theme='portal-tributario'])) {
+        /* zebra rows, white first. no hover of its own: over a grey dark enough to see, the warning tone would drop
+           below AA */
+        [data-slot='table'] > tbody > tr:nth-child(even) {
+            background-color: var(--table-stripe);
+        }
+
+        /* the total row */
+        [data-slot='table'] > tfoot td {
+            font-weight: 700;
+            background-color: var(--surface-muted);
+            border-top: 2px solid #ddd;
+        }
+    }
+}

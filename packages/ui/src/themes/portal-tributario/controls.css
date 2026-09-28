@@ -1,0 +1,77 @@
+/* the library's controls as in the prototype: buttons, inputs, text areas and select triggers. unlayered, so they win
+   over tailwind's utilities, and so over a caller's classes too: they set only what the prototype changes and the
+   tokens do not. the primary and danger fills, the radii and ghost are the classes' own (under this theme's tokens
+   they already look right), so a caller's classes there keep working, and the shell's ghost buttons keep their
+   colours. scoped to the theme, and never into a subtree pinned to another theme (the printed document sheet) */
+@scope ([data-theme='portal-tributario']) to ([data-theme]:not([data-theme='portal-tributario'])) {
+    /* buttons: 15px text, a 1px border on every variant so they all share one height */
+    [data-slot='button'] {
+        border: 1px solid transparent;
+        font-size: 15px;
+        line-height: 1.45;
+    }
+
+    [data-slot='button'][data-size='md'] {
+        height: auto;
+        padding: 10px 20px;
+    }
+
+    [data-slot='button'][data-size='md']:is([data-variant='primary'], [data-variant='danger']) {
+        padding-inline: 26px;
+    }
+
+    /* the sides stay the library's 12px, the prototype's too */
+    [data-slot='button'][data-size='sm'] {
+        height: auto;
+        padding-block: 5px;
+        font-size: 14px;
+    }
+
+    /* secondary: a #ccc border, grey on hover. the text colour stays the component's (an icon may be brand) */
+    [data-slot='button'][data-variant='secondary'] {
+        border-color: #cccccc;
+    }
+
+    [data-slot='button'][data-variant='secondary']:hover:not(:disabled) {
+        background: #f0f0f0;
+    }
+
+    [data-slot='button'][data-variant='danger']:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--danger) 85%, #000000);
+    }
+
+    /* disabled: faded, and the not-allowed cursor shows (the library turns pointer events off, which hides it) */
+    [data-slot='button']:disabled {
+        cursor: not-allowed;
+        pointer-events: auto;
+        opacity: 0.55;
+    }
+
+    /* inputs, text areas and select triggers: #ccc border, 14.5px text. no padding: the library's sides stay, so a
+       field's own (the search box's room for its icon) still holds */
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']) {
+        border-color: #cccccc;
+        font-size: 14.5px;
+        line-height: 1.45;
+    }
+
+    /* one height for inputs and select triggers: 8px + 20px + 8px and the border */
+    :is([data-slot='input'], [data-slot='select-trigger']) {
+        height: 38px;
+        line-height: 20px;
+    }
+
+    /* focused: the cyan border and glow of the prototype in place of the outline */
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):focus {
+        outline: none;
+        border-color: var(--focus);
+        box-shadow:
+            inset 0 1px 1px rgb(0 0 0 / 6%),
+            0 0 6px color-mix(in srgb, var(--focus) 45%, transparent);
+    }
+
+    /* after the focus: an invalid field keeps its danger border, focused or not */
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger'])[aria-invalid='true'] {
+        border-color: var(--danger);
+    }
+}
