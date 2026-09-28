@@ -18,7 +18,7 @@
     --shell-ink: oklch(99% 0.002 260);
     --danger: oklch(55% 0.19 25);
     --on-danger: oklch(99% 0.002 260);
-    --success: oklch(58% 0.13 155);
+    --success: oklch(52% 0.13 155);
     --warning: oklch(50% 0.12 65);
     --warning-soft: oklch(95% 0.05 85);
     --overlay: oklch(15% 0.02 265 / 50%);
