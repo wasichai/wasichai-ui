@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/wasichai/wasichai-ui/compare/v0.2.1...v0.3.0) (2026-09-28)
+
+
+### Features
+
+* **ui:** extension tokens, data-slot hooks and the optional portal-tributario theme ([#13](https://github.com/wasichai/wasichai-ui/issues/13)) ([868e18a](https://github.com/wasichai/wasichai-ui/commit/868e18a12733054ca7102aeb87f9cbd24ab7bbf5))
+
 ## [0.2.1](https://github.com/wasichai/wasichai-ui/compare/v0.2.0...v0.2.1) (2026-09-26)
 
 
