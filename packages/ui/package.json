@@ -28,7 +28,8 @@
     "scripts": {
         "lint": "prettier --check src package.json tsconfig.json tsconfig.build.json vite.config.ts && tsc --noEmit -p tsconfig.json",
         "test": "vitest run",
-        "build": "vite build && tsc -p tsconfig.build.json && cp src/theme.css dist/theme.css && mkdir -p dist/themes && cp -r src/themes/portal-tributario dist/themes/"
+        "build": "vite build && tsc -p tsconfig.build.json && yarn build:css",
+        "build:css": "cp src/theme.css dist/theme.css && mkdir -p dist/themes && cp -r src/themes/portal-tributario dist/themes/"
     },
     "dependencies": {
         "@radix-ui/react-dialog": "1.1.23",
