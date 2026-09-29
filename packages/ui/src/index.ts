@@ -6,6 +6,7 @@ export { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } 
 export { Input, Textarea } from './input'
 export { Label } from './label'
 export { PageSizePagination, Pagination } from './pagination'
+export { PdfDialog, type PdfDialogProps, type PdfFile } from './pdf-dialog'
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 export { Badge, Table, Td, Th } from './table'
 export { Tabs, type TabSpec } from './tabs'

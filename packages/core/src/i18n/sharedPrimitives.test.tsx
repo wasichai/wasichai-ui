@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@wasichai/testing'
-import { ConfirmDialog, PageSizePagination, Pagination } from '@wasichai/ui'
+import { ConfirmDialog, PageSizePagination, Pagination, PdfDialog } from '@wasichai/ui'
 
 // the ui primitives ship no words: core's common bundle does. these tests render them in Spanish, the default
 // language of renderWithProviders, so a missing or renamed key shows here and not only in an app
@@ -76,5 +76,56 @@ describe('ConfirmDialog strings', () => {
     renderWithProviders(<ConfirmDialog title="Delete?" description="It cannot be undone." onConfirm={noop} onCancel={noop} />, { language: 'en' })
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+  })
+})
+
+describe('PdfDialog strings', () => {
+  const pdf = () => Promise.resolve({ blob: new Blob(['%PDF']), filename: 'pu.pdf' })
+  const pending = () => new Promise<never>(noop)
+  const original = { create: URL.createObjectURL, revoke: URL.revokeObjectURL }
+
+  // jsdom has no object urls
+  beforeEach(() => {
+    URL.createObjectURL = vi.fn(() => 'blob:pdf')
+    URL.revokeObjectURL = vi.fn()
+  })
+
+  afterEach(() => {
+    URL.createObjectURL = original.create
+    URL.revokeObjectURL = original.revoke
+  })
+
+  it('says Generando… while it loads, and labels Imprimir, Descargar and Cerrar', () => {
+    renderWithProviders(<PdfDialog title="PU" source="a" load={pending} onClose={noop} />)
+    expect(screen.getByRole('status')).toHaveTextContent('Generando…')
+    expect(screen.getByRole('button', { name: 'Imprimir' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Descargar' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Cerrar' })).toHaveLength(2)
+    expect(screen.getByRole('dialog')).toHaveAccessibleDescription('Vista previa del documento en PDF, para imprimirlo o descargarlo.')
+  })
+
+  it('labels Descargar as a link once the document is ready', async () => {
+    renderWithProviders(<PdfDialog title="PU" source="a" load={pdf} onClose={noop} />)
+    expect(await screen.findByRole('link', { name: 'Descargar' })).toHaveAttribute('download', 'pu.pdf')
+    expect(screen.getByRole('button', { name: 'Imprimir' })).toBeEnabled()
+  })
+
+  it('says the document could not be generated when what failed has no message', async () => {
+    renderWithProviders(<PdfDialog title="PU" source="a" load={() => Promise.reject('nope')} onClose={noop} />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo generar el documento')
+  })
+
+  it('writes the same in English when the app is in English', async () => {
+    renderWithProviders(<PdfDialog title="PU" source="a" load={pending} onClose={noop} />, { language: 'en' })
+    expect(screen.getByRole('status')).toHaveTextContent('Generating…')
+    expect(screen.getByRole('button', { name: 'Print' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(2)
+    expect(screen.getByRole('dialog')).toHaveAccessibleDescription('A PDF preview, to print or download it.')
+  })
+
+  it('says the document could not be generated in English too', async () => {
+    renderWithProviders(<PdfDialog title="PU" source="a" load={() => Promise.reject('nope')} onClose={noop} />, { language: 'en' })
+    expect(await screen.findByRole('alert')).toHaveTextContent('The document could not be generated')
   })
 })

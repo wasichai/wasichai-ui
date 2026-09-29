@@ -55,7 +55,12 @@
         "range_one": "{{from, number}}–{{to, number}} of {{count, number}} record",
         "range_other": "{{from, number}}–{{to, number}} of {{count, number}} records",
         "previousPage": "Previous page",
-        "nextPage": "Next page"
+        "nextPage": "Next page",
+        "print": "Print",
+        "download": "Download",
+        "generating": "Generating…",
+        "pdfPreview": "A PDF preview, to print or download it.",
+        "pdfFailed": "The document could not be generated"
     },
     "objects": {
         "title": "Objects",
