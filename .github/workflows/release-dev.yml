@@ -1,41 +1,59 @@
 name: Release dev
 
-# dev pre-releases: X.Y.0-dev.N under the npm dist-tag dev. latest stays where release-please put it.
-on: workflow_dispatch
+# a vX.Y.Z-dev.N tag pushed on a dev commit publishes X.Y.Z-dev.N under the npm dist-tag dev; latest never moves.
+# a tag, not workflow_dispatch: dispatch only sees workflows on main, and nothing of dev may reach main.
+on:
+  push:
+    tags: ['v*-dev.*']
 
-permissions:
-  contents: write
-  packages: write
+# one dev release at a time: a second tag waits for the first upload instead of racing it
+concurrency:
+  group: release-dev
+  cancel-in-progress: false
 
 jobs:
   version:
-    # only dev builds dev versions
-    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     outputs:
-      version: ${{ steps.next.outputs.version }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
-      # every tag, not the last commit: the next counter comes from the existing v*-dev.* tags
+      # full history: the ancestry check below walks dev
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - id: next
-        run: echo "version=$(node tooling/dev-release.mjs next)" >> "$GITHUB_OUTPUT"
+      - id: tag
+        run: |
+          # assigned first: under set -e a refused tag fails the step, echo "version=$(...)" would hide it
+          version="$(node tooling/dev-release.mjs version-of "$GITHUB_REF_NAME")"
+          # anyone can tag any commit, a feature branch's included: only what is on dev ships
+          git fetch --no-tags --quiet origin +refs/heads/dev:refs/remotes/origin/dev
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/dev; then
+            echo "::error::Release dev publishes only commits on dev: $GITHUB_REF_NAME points at $GITHUB_SHA, not on origin/dev"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
   publish:
     needs: version
-    # the caller's permissions bound the called workflow's
+    # the called workflow's token gets at most these
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/publish.yml
     with:
       version: ${{ needs.version.outputs.version }}
 
   release:
-    # tagged after the upload: a failed publish leaves no tag behind
+    # only after every package is up: the GitHub prerelease says this dev build is complete
     needs: [version, publish]
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
     steps:
-      - run: gh release create "v${{ needs.version.outputs.version }}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --generate-notes
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease --generate-notes

@@ -3,7 +3,7 @@ name: Publish
 on:
   release:
     types: [published]
-  # release-dev.yml calls this with the dev version: GITHUB_REF_NAME is then the branch, not a tag
+  # release-dev.yml passes the version of the dev tag it runs for
   workflow_call:
     inputs:
       version:
@@ -18,11 +18,24 @@ jobs:
   # the guard runs before the upload: a failed guard blocks it, so a release never half-publishes
   guards:
     name: Release guard (npm)
-    # a dev prerelease is tagged by release-dev.yml after the upload: it must not publish twice
+    # release-dev.yml uploads dev builds itself: a prerelease must not upload again
     if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
+      - id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          # a release carries it in its tag; a caller must pass it. no fallback: a caller's ref name is no release tag
+          if [ "$GITHUB_EVENT_NAME" = release ]; then version="${GITHUB_REF_NAME#v}"; else version="$INPUT_VERSION"; fi
+          if [ -z "$version" ]; then
+            echo "::error::publish.yml needs inputs.version when called (event $GITHUB_EVENT_NAME)"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -31,11 +44,8 @@ jobs:
       - run: yarn install --frozen-lockfile && yarn build
       - name: Release guard (npm)
         env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          # inputs is empty on the release event: the tag name carries the version then
-          version="$INPUT_VERSION"; [ -n "$version" ] || version="${GITHUB_REF_NAME#v}"
-          node tooling/check-release.mjs --pack "$version"
+          VERSION: ${{ steps.version.outputs.version }}
+        run: node tooling/check-release.mjs --pack "$VERSION"
 
   npm:
     name: npm packages
@@ -59,16 +69,13 @@ jobs:
       - run: yarn install --frozen-lockfile && yarn build
       - name: Publish every public @wasichai package
         env:
-          INPUT_VERSION: ${{ inputs.version }}
+          # the one the guard checked
+          VERSION: ${{ needs.guards.outputs.version }}
         run: |
-          # inputs is empty on the release event: the tag name carries the version then
-          version="$INPUT_VERSION"; [ -n "$version" ] || version="${GITHUB_REF_NAME#v}"
           # dev versions go under the dev dist-tag so latest never moves; throws on any other prerelease
-          tag="$(node tooling/dev-release.mjs dist-tag "$version")"
+          tag="$(node tooling/dev-release.mjs dist-tag "$VERSION")"
           # bumps every package's own version AND internal @wasichai/* dep ranges; plain
           # `npm version` per package would leave internal deps pointing at the old version.
-          node tooling/set-version.mjs "$version"
-          for dir in packages/*/; do
-            if [ "$(node -p "require('./$dir/package.json').private === true")" = "true" ]; then continue; fi
-            (cd "$dir" && npm publish --tag "$tag")
-          done
+          node tooling/set-version.mjs "$VERSION"
+          # skips versions already up, so re-running a failed upload finishes it; puts latest back if a dev publish moved it
+          node tooling/publish-packages.mjs "$VERSION" "$tag"
