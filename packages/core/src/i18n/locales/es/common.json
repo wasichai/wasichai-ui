@@ -48,7 +48,14 @@
         "results": "{{count}} resultados",
         "yes": "Sí",
         "no": "No",
-        "retry": "Reintentar"
+        "retry": "Reintentar",
+        "records_one": "{{count, number}} registro",
+        "records_other": "{{count, number}} registros",
+        "rows": "Filas",
+        "range_one": "{{from, number}} a {{to, number}} de {{count, number}} registro",
+        "range_other": "{{from, number}} a {{to, number}} de {{count, number}} registros",
+        "previousPage": "Página anterior",
+        "nextPage": "Página siguiente"
     },
     "objects": {
         "title": "Objetos",
