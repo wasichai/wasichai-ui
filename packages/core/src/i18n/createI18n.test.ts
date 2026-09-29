@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { changeLanguage, createWasichaiI18n } from './createI18n'
+import es from './locales/es/common.json'
 
 const KEY = 'i18n-test.lang'
 const plans = { id: 'plans', i18n: { es: { nav: { sheets: 'Hojas' } }, en: { nav: { sheets: 'Sheets' } } } }
@@ -55,5 +56,20 @@ describe('createWasichaiI18n', () => {
   it('falls back to common for a module namespace missing a key', () => {
     const i18n = createWasichaiI18n({ languages: ['es', 'en'], storageKey: KEY, modules: [{ id: 'x' }] })
     expect(i18n.getFixedT(null, 'x')('common.loading')).toBe('Cargando…')
+  })
+})
+
+// every leaf of a nested bundle, as a dotted path: 'common.records_one'
+const leaves = (bundle: object, prefix = ''): string[] =>
+  Object.entries(bundle).flatMap(([key, value]) => (typeof value === 'object' && value !== null ? leaves(value, `${prefix}${key}.`) : [`${prefix}${key}`]))
+
+// Intl.PluralRules('es') answers `many` for exact millions (1,000,000 registros): a `_one` key with no `_many` twin
+// makes i18next print the raw key there. the twin carries the same text as `_other`
+describe('the Spanish bundle', () => {
+  it('has a _many twin for every _one key', () => {
+    const keys = leaves(es)
+    const ones = keys.filter((key) => key.endsWith('_one'))
+    expect(ones.length).toBeGreaterThan(0)
+    expect(ones.map((key) => key.replace(/_one$/, '_many')).filter((many) => !keys.includes(many))).toEqual([])
   })
 })
