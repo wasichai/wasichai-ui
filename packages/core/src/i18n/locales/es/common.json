@@ -51,9 +51,11 @@
         "retry": "Reintentar",
         "records_one": "{{count, number}} registro",
         "records_other": "{{count, number}} registros",
+        "records_many": "{{count, number}} registros",
         "rows": "Filas",
         "range_one": "{{from, number}} a {{to, number}} de {{count, number}} registro",
         "range_other": "{{from, number}} a {{to, number}} de {{count, number}} registros",
+        "range_many": "{{from, number}} a {{to, number}} de {{count, number}} registros",
         "previousPage": "Página anterior",
         "nextPage": "Página siguiente"
     },
