@@ -44,7 +44,7 @@
         "back": "Back",
         "actions": "Actions",
         "confirmDelete": "Delete this record?",
-        "page": "Page {{page}} of {{total}}",
+        "page": "Page {{page, number}} of {{total, number}}",
         "results": "{{count}} results",
         "yes": "Yes",
         "no": "No",

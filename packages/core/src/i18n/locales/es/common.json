@@ -44,7 +44,7 @@
         "back": "Volver",
         "actions": "Acciones",
         "confirmDelete": "¿Eliminar este registro?",
-        "page": "Página {{page}} de {{total}}",
+        "page": "Página {{page, number}} de {{total, number}}",
         "results": "{{count}} resultados",
         "yes": "Sí",
         "no": "No",

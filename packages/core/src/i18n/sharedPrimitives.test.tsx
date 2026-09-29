@@ -30,6 +30,16 @@ describe('Pagination strings', () => {
     expect(screen.getByText(`${MILLION} registros`)).toBeInTheDocument()
     expect(document.body).not.toHaveTextContent('common.')
   })
+
+  // the page numbers go through the number format too, so a swapped formatter reaches them
+  it('groups the digits of a large page count by the language', () => {
+    const { unmount } = renderWithProviders(<Pagination page={9_999} totalPages={12_345} totalElements={123_450} onPage={noop} />)
+    expect(screen.getByText(`Página ${(10_000).toLocaleString('es')} de ${(12_345).toLocaleString('es')}`)).toBeInTheDocument()
+    unmount()
+
+    renderWithProviders(<Pagination page={9_999} totalPages={12_345} totalElements={123_450} onPage={noop} />, { language: 'en' })
+    expect(screen.getByText('Page 10,000 of 12,345')).toBeInTheDocument()
+  })
 })
 
 describe('PageSizePagination strings', () => {
