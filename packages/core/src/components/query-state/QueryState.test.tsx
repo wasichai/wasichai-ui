@@ -94,6 +94,15 @@ describe('ErrorState', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('No se pudo cargar')
     expect(screen.queryByText('boom')).toBeNull()
   })
+
+  // an ApiError's message is the status text when the body has none, and that is '' over HTTP/2
+  it('draws no message line for an Error with an empty message', () => {
+    renderWithProviders(<ErrorState error={new ApiError(500, '')} onRetry={() => {}} />)
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('No se pudo cargar')
+    expect(alert.querySelectorAll('p')).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+  })
 })
 
 // data-slot: hook a theme sheet styles; data-state tells the three apart

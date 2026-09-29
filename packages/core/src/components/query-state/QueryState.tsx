@@ -32,13 +32,15 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   const status = error instanceof ApiError ? error.status : 0
   // 404 and 403 will not change on a retry: no message, no button
   const permanent = status === 404 || status === 403
+  // an empty message ('' status text over HTTP/2) gets no line: an empty <p> still takes a gap
+  const message = error instanceof Error && !permanent ? error.message : ''
   const [Icon, title] =
     status === 404 ? [SearchX, t('common.notFound')] : status === 403 ? [Lock, t('common.forbidden')] : [AlertTriangle, t('common.loadFailed')]
   return (
     <div role="alert" data-slot="query-state" data-state="error" className="flex flex-col items-center gap-3 py-12 text-center text-sm">
       <Icon className="size-8 text-danger" />
       <p className="font-medium text-ink">{title}</p>
-      {error instanceof Error && !permanent && <p className="text-ink-muted">{error.message}</p>}
+      {message !== '' && <p className="text-ink-muted">{message}</p>}
       {onRetry && !permanent && (
         <Button variant="secondary" size="sm" onClick={onRetry}>
           {t('common.retry')}
