@@ -62,7 +62,10 @@
         "download": "Descargar",
         "generating": "Generando…",
         "pdfPreview": "Vista previa del documento en PDF, para imprimirlo o descargarlo.",
-        "pdfFailed": "No se pudo generar el documento"
+        "pdfFailed": "No se pudo generar el documento",
+        "notFound": "No se encontró el registro",
+        "forbidden": "No tienes permiso para ver esto",
+        "loadFailed": "No se pudo cargar"
     },
     "objects": {
         "title": "Objetos",

@@ -60,7 +60,10 @@
         "download": "Download",
         "generating": "Generating…",
         "pdfPreview": "A PDF preview, to print or download it.",
-        "pdfFailed": "The document could not be generated"
+        "pdfFailed": "The document could not be generated",
+        "notFound": "Record not found",
+        "forbidden": "You are not allowed to see this",
+        "loadFailed": "Could not load"
     },
     "objects": {
         "title": "Objects",
