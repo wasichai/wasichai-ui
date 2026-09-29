@@ -5,8 +5,31 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@wasichai/ui'
 import { ApiError } from '../../api/client'
 
+export interface LoadingStateProps {
+  // default common.loading
+  label?: string
+}
+
+export interface EmptyStateProps {
+  title: string
+  // default Inbox
+  icon?: LucideIcon
+  children?: ReactNode
+}
+
+export interface ErrorStateProps {
+  error: unknown
+  // no button without it, nor for a 404 or a 403
+  onRetry?: () => void
+}
+
+export interface QueryStateProps<T> {
+  query: UseQueryResult<T>
+  children: (data: T) => ReactNode
+}
+
 // data-slot: hook a theme sheet styles (ADR-035). data-state tells the three apart.
-export function LoadingState({ label }: { label?: string }) {
+export function LoadingState({ label }: LoadingStateProps) {
   const { t } = useTranslation()
   return (
     <div role="status" data-slot="query-state" data-state="loading" className="flex items-center justify-center gap-2 py-12 text-sm text-ink-muted">
@@ -17,7 +40,7 @@ export function LoadingState({ label }: { label?: string }) {
 }
 
 // icon: an app draws its own thing, e.g. a cube for a list of lots
-export function EmptyState({ title, icon: Icon = Inbox, children }: { title: string; icon?: LucideIcon; children?: ReactNode }) {
+export function EmptyState({ title, icon: Icon = Inbox, children }: EmptyStateProps) {
   return (
     <div data-slot="query-state" data-state="empty" className="flex flex-col items-center gap-2 py-12 text-center text-sm text-ink-muted">
       <Icon className="size-8 text-border" />
@@ -27,7 +50,7 @@ export function EmptyState({ title, icon: Icon = Inbox, children }: { title: str
   )
 }
 
-export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+export function ErrorState({ error, onRetry }: ErrorStateProps) {
   const { t } = useTranslation()
   const status = error instanceof ApiError ? error.status : 0
   // 404 and 403 will not change on a retry: no message, no button
@@ -51,7 +74,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
 }
 
 // loading, error or the data, in that order
-export function QueryState<T>({ query, children }: { query: UseQueryResult<T>; children: (data: T) => ReactNode }) {
+export function QueryState<T>({ query, children }: QueryStateProps<T>) {
   if (query.isPending) return <LoadingState />
   if (query.isError) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />
   return children(query.data)

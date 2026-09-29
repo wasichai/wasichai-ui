@@ -2,9 +2,11 @@ import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { Cuboid } from 'lucide-react'
-import { describe, expect, it, vi } from 'vitest'
+import type { ReactNode } from 'react'
+import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { renderWithProviders } from '@wasichai/testing'
 import { ApiError } from '../../api/client'
+import type { EmptyStateProps, ErrorStateProps, LoadingStateProps, QueryStateProps } from '../../index'
 import { EmptyState, ErrorState, LoadingState, QueryState } from './QueryState'
 
 // the minimal shape QueryState reads, cast: a real UseQueryResult needs a QueryClient and a fetch
@@ -126,5 +128,16 @@ describe('markup hooks', () => {
   it('marks the states QueryState renders', () => {
     renderWithProviders(<QueryState query={fakeQuery({ isPending: true })}>{() => null}</QueryState>)
     expect(screen.getByRole('status')).toHaveAttribute('data-slot', 'query-state')
+  })
+})
+
+// an app wraps the states (its own empty list, a query of two queries): the prop types come from the package
+describe('the prop types', () => {
+  it('are exported, and are what the states take', () => {
+    expectTypeOf<LoadingStateProps>().toEqualTypeOf<Parameters<typeof LoadingState>[0]>()
+    expectTypeOf<EmptyStateProps>().toEqualTypeOf<Parameters<typeof EmptyState>[0]>()
+    expectTypeOf<ErrorStateProps>().toEqualTypeOf<Parameters<typeof ErrorState>[0]>()
+    expectTypeOf<QueryStateProps<string>>().toEqualTypeOf<Parameters<typeof QueryState<string>>[0]>()
+    expectTypeOf<QueryStateProps<string>['children']>().toEqualTypeOf<(data: string) => ReactNode>()
   })
 })
