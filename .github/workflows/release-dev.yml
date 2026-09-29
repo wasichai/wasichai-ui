@@ -1,0 +1,59 @@
+name: Release dev
+
+# a vX.Y.Z-dev.N tag pushed on a dev commit publishes X.Y.Z-dev.N under the npm dist-tag dev; latest never moves.
+# a tag, not workflow_dispatch: dispatch only sees workflows on main, and nothing of dev may reach main.
+on:
+  push:
+    tags: ['v*-dev.*']
+
+# one dev release at a time: a second tag waits for the first upload instead of racing it
+concurrency:
+  group: release-dev
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      # full history: the ancestry check below walks dev
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: tag
+        run: |
+          # assigned first: under set -e a refused tag fails the step, echo "version=$(...)" would hide it
+          version="$(node tooling/dev-release.mjs version-of "$GITHUB_REF_NAME")"
+          # anyone can tag any commit, a feature branch's included: only what is on dev ships
+          git fetch --no-tags --quiet origin +refs/heads/dev:refs/remotes/origin/dev
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/dev; then
+            echo "::error::Release dev publishes only commits on dev: $GITHUB_REF_NAME points at $GITHUB_SHA, not on origin/dev"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: version
+    # the called workflow's token gets at most these
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/publish.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+
+  release:
+    # only after every package is up: the GitHub prerelease says this dev build is complete
+    needs: [version, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --prerelease --generate-notes
