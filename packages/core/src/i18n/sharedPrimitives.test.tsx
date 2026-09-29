@@ -40,6 +40,18 @@ describe('Pagination strings', () => {
     renderWithProviders(<Pagination page={9_999} totalPages={12_345} totalElements={123_450} onPage={noop} />, { language: 'en' })
     expect(screen.getByText('Page 10,000 of 12,345')).toBeInTheDocument()
   })
+
+  it('writes the same in English when the app is in English', () => {
+    const { unmount } = renderWithProviders(<Pagination page={1} totalPages={5} totalElements={47} onPage={noop} />, { language: 'en' })
+    expect(screen.getByText('47 records')).toBeInTheDocument()
+    expect(screen.getByText('Page 2 of 5')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument()
+    unmount()
+
+    renderWithProviders(<Pagination page={0} totalPages={1} totalElements={1} onPage={noop} />, { language: 'en' })
+    expect(screen.getByText('1 record')).toBeInTheDocument()
+  })
 })
 
 describe('PageSizePagination strings', () => {

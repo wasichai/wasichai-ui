@@ -56,6 +56,20 @@ describe('QueryState', () => {
     })
     expect(screen.getByRole('alert')).toHaveTextContent('You are not allowed to see this')
   })
+
+  it.each([
+    ['Loading…', 'status', fakeQuery<string>({ isPending: true })],
+    ['Record not found', 'alert', fakeQuery({ isError: true, error: new ApiError(404, 'nope') })],
+    ['Could not load', 'alert', fakeQuery({ isError: true, error: new Error('boom') })]
+  ] as const)('says %s in English', (text, role, query) => {
+    renderWithProviders(<QueryState query={query}>{() => <p>data</p>}</QueryState>, { language: 'en' })
+    expect(screen.getByRole(role)).toHaveTextContent(text)
+  })
+
+  it('labels the retry Retry in English', () => {
+    renderWithProviders(<QueryState query={fakeQuery({ isError: true, error: new Error('boom') })}>{() => <p>data</p>}</QueryState>, { language: 'en' })
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
 })
 
 describe('LoadingState', () => {
