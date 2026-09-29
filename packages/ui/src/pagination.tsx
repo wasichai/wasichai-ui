@@ -1,0 +1,94 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Button } from './button'
+
+const DEFAULT_SIZES = [5, 10, 25] as const
+
+export interface PaginationProps {
+  // zero-based, like the backend's
+  page: number
+  totalPages: number
+  totalElements: number
+  onPage: (page: number) => void
+}
+
+export interface PageSizePaginationProps {
+  // zero-based, like the backend's
+  page: number
+  size: number
+  total: number
+  onPage: (page: number) => void
+  onSize: (size: number) => void
+  // default [5, 10, 25]; a size not among them is added
+  sizes?: readonly number[]
+}
+
+// the footer of a backend page: the record count, then "page x of y" and the arrows when there is more than one page.
+// data-slot, data-mode: hooks a theme sheet styles (ADR-035). data-mode names what the footer shows: "pages" here,
+// "range" in PageSizePagination.
+export function Pagination({ page, totalPages, totalElements, onPage }: PaginationProps) {
+  const { t } = useTranslation()
+
+  return (
+    <div data-slot="pagination" data-mode="pages" className="flex items-center justify-between gap-4 border-t border-border px-4 py-3 text-sm text-ink-muted">
+      <span>{t('common.records', { count: totalElements })}</span>
+      {totalPages > 1 && (
+        <div className="flex items-center gap-2">
+          <span>{t('common.page', { page: page + 1, total: totalPages })}</span>
+          <Button variant="secondary" size="icon" aria-label={t('common.previousPage')} disabled={page === 0} onClick={() => onPage(page - 1)}>
+            <ChevronLeft className="size-4" />
+          </Button>
+          <Button variant="secondary" size="icon" aria-label={t('common.nextPage')} disabled={page + 1 >= totalPages} onClick={() => onPage(page + 1)}>
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// a range footer with a rows picker: "Rows [10]" on the left, "1 a 10 de 47 registros < >" on the right. for any paging where
+// the caller knows the total: rows it slices itself, or a server page. data-mode="range": what it shows (see Pagination).
+export function PageSizePagination({ page, size, total, onPage, onSize, sizes = DEFAULT_SIZES }: PageSizePaginationProps) {
+  const { t } = useTranslation()
+  // no rows: "0 a 0", not "1 a 0"
+  const from = total === 0 ? 0 : page * size + 1
+  const to = Math.min(total, (page + 1) * size)
+  const last = Math.max(0, Math.ceil(total / size) - 1)
+  // a size not offered (a saved preference, a server default) joins the options: else the select shows the first one
+  const options = sizes.includes(size) ? sizes : [...sizes, size].sort((a, b) => a - b)
+
+  return (
+    <div
+      data-slot="pagination"
+      data-mode="range"
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-sm text-ink-muted"
+    >
+      <label className="flex items-center gap-2">
+        {t('common.rows')}
+        {/* Input's look on a native select, until the library has one */}
+        <select
+          data-slot="native-select"
+          value={size}
+          onChange={(e) => onSize(Number(e.target.value))}
+          className="h-8 w-20 rounded-md border border-border bg-surface px-3 text-sm text-ink"
+        >
+          {options.map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flex items-center gap-2">
+        <span>{t('common.range', { from, to, count: total })}</span>
+        <Button variant="ghost" size="icon" aria-label={t('common.previousPage')} disabled={page === 0} onClick={() => onPage(page - 1)}>
+          <ChevronLeft className="size-4" />
+        </Button>
+        <Button variant="ghost" size="icon" aria-label={t('common.nextPage')} disabled={page >= last} onClick={() => onPage(page + 1)}>
+          <ChevronRight className="size-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}

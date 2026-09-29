@@ -5,8 +5,25 @@ Module guide: [docs/modules/core.md](https://github.com/wasichai/wasichai/blob/m
 Primitives shared by every wasichai package: `Button`, `Card*`, `Dialog*`, `Input`, `Textarea`, `Label`,
 `Select*`, `Table`/`Th`/`Td`/`Badge`, `Tabs`, the `cn()` class merger, the Tailwind 4 theme
 tokens (`theme.css`) and an optional theme sheet ([portal-tributario](#optional-theme-portal-tributario)).
+Four more carry the footers and dialogs every list and record screen ends up needing:
 
-Peer dependencies: `react`, `react-dom`, `react-i18next` (the dialog's close label reads `common.close`).
+- `ConfirmDialog`: a question before something that cannot be undone (danger or primary confirm, a busy state, an error line).
+- `Pagination`: the footer of a backend page, the record count plus "Page 2 of 5" and previous/next arrows when there is more
+  than one page.
+- `PageSizePagination`: a range footer, a rows-per-page picker, the "1–10 of 47 records" range and the arrows, for any paging
+  where the caller knows the total (rows it slices itself, or a server page).
+- `PdfDialog`: a generated PDF embedded in a dialog, to see, print or download; it loads the blob itself and revokes its URL on close.
+
+`ConfirmDialog` and `PdfDialog` are mounted open: they take no `open` prop, so the caller renders one only while it shows
+(`{target && <ConfirmDialog … onCancel={() => setTarget(null)} />}`) and unmounts it in `onCancel` or `onClose`. `PdfDialog`
+revokes its blob URL when it closes or is unmounted, so the URL does not outlive the dialog.
+
+`ConfirmDialog`'s `description` renders inside the dialog's description paragraph (a `<p>`): give it inline text, not blocks.
+Its confirm button reads Delete (`common.delete`) whatever the `variant`: a confirmation that deletes nothing passes its own
+`confirmLabel` (and, usually, `variant="primary"`).
+
+Peer dependencies: `react`, `react-dom`, `react-i18next` (the dialogs' close label and the four primitives above read `common.*`
+strings, see [Strings](#strings-common)).
 
 ## Install
 
@@ -32,6 +49,42 @@ The packages ship class names, not compiled CSS. Your app's Tailwind 4 build mus
 
 `@source` is relative to the css file. Point it at the `node_modules/@wasichai` folder your app
 resolves (in a monorepo, often the root `node_modules`).
+
+## Strings (`common.*`)
+
+The primitives ship no words. Their labels are `common.*` keys (`common.records`, `common.range`, `common.previousPage`,
+`common.rows`, `common.pdfPreview`, `common.close`…) that live in `@wasichai/core`'s bundle, in `es` and `en`, because
+`@wasichai/ui` does not import core (core depends on ui, never the reverse). An app on `WasichaiApp` has them; an app that
+does not load core's bundle supplies the same keys itself.
+
+An app may override any wording with i18next. Core registers its strings in the namespace `common` and nests every key under a
+`common` object inside it (`t('common.records')` reads the key `common.records` of the namespace `common`), so the strings an
+override passes are `{ common: { … } }`. `addResourceBundle(language, namespace, strings, deep, overwrite)` with the last two
+`true` merges over what core registered:
+
+```ts
+i18n.addResourceBundle(
+  'es',
+  'common', // the namespace
+  { common: { records_one: '{{count, number}} expediente', records_other: '{{count, number}} expedientes', records_many: '{{count, number}} expedientes' } },
+  true,
+  true
+)
+```
+
+Keys placed straight in the strings (`{ records_one: … }`) are not the `common.records` the primitives read and change nothing.
+
+Counts, ranges and page numbers are written `{{count, number}}`, `{{from, number}}`, `{{to, number}}`, `{{page, number}}` and
+`{{total, number}}`: i18next's `number` format, which groups digits by the language's locale. An app that wants another rendering
+(no grouping, another separator) swaps that one formatter, and the numbers in these strings follow:
+
+```ts
+i18n.services.formatter?.add('number', (value, lng) => new Intl.NumberFormat(lng, { useGrouping: false }).format(value))
+```
+
+Spanish plural keys need a `_many` twin. `Intl.PluralRules('es')` answers `many` for the multiples of 1,000,000, so i18next asks
+for `records_many` there and, if it is missing, prints the raw key. Core's `es` bundle writes `_one`, `_other` and `_many` (the
+same text as `_other`); an override of a plural string in Spanish sets all three, as the example does.
 
 ## Theme tokens
 
@@ -86,21 +139,26 @@ and the `rounded*` utilities read them (the bare `rounded` too).
 
 The components carry `data-slot` attributes that a theme sheet can style:
 
-| Component       | `data-slot`      | Also                                                                                         |
-| --------------- | ---------------- | -------------------------------------------------------------------------------------------- |
-| `Button`        | `button`         | `data-variant` (`primary`, `secondary`, `ghost`, `danger`), `data-size` (`sm`, `md`, `icon`) |
-| `Card`          | `card`           |                                                                                              |
-| `Input`         | `input`          |                                                                                              |
-| `Textarea`      | `textarea`       |                                                                                              |
-| `SelectTrigger` | `select-trigger` |                                                                                              |
-| `Table`         | `table`          | on the `<table>`, not its scroll box                                                         |
-| `Th`            | `table-head`     |                                                                                              |
-| `Td`            | `table-cell`     |                                                                                              |
-| `Badge`         | `badge`          |                                                                                              |
-| `Tabs`          | `tabs`           | the root                                                                                     |
-|                 | `tabs-list`      | the `role="tablist"` strip                                                                   |
-|                 | `tabs-trigger`   | each `role="tab"`, with `aria-selected`                                                      |
-|                 | `tabs-content`   | each `role="tabpanel"`                                                                       |
+| Component            | `data-slot`      | Also                                                                                         |
+| -------------------- | ---------------- | -------------------------------------------------------------------------------------------- |
+| `Button`             | `button`         | `data-variant` (`primary`, `secondary`, `ghost`, `danger`), `data-size` (`sm`, `md`, `icon`) |
+| `Card`               | `card`           |                                                                                              |
+| `Input`              | `input`          |                                                                                              |
+| `Textarea`           | `textarea`       |                                                                                              |
+| `SelectTrigger`      | `select-trigger` |                                                                                              |
+| `Pagination`         | `pagination`     | `data-mode="pages"`: the record count and "Page 2 of 5"                                      |
+| `PageSizePagination` | `pagination`     | `data-mode="range"`: the rows picker and the "1–10 of 47 records" range                      |
+|                      | `native-select`  | its rows-per-page `<select>`                                                                 |
+| `ConfirmDialog`      | `confirm-dialog` | the dialog's content box (the overlay and the X are `Dialog`'s)                              |
+| `PdfDialog`          | `pdf-dialog`     | the dialog's content box                                                                     |
+| `Table`              | `table`          | on the `<table>`, not its scroll box                                                         |
+| `Th`                 | `table-head`     |                                                                                              |
+| `Td`                 | `table-cell`     |                                                                                              |
+| `Badge`              | `badge`          |                                                                                              |
+| `Tabs`               | `tabs`           | the root                                                                                     |
+|                      | `tabs-list`      | the `role="tablist"` strip                                                                   |
+|                      | `tabs-trigger`   | each `role="tab"`, with `aria-selected`                                                      |
+|                      | `tabs-content`   | each `role="tabpanel"`                                                                       |
 
 They never change `light` or `dark`: `theme.css` does not style them. A theme sheet targets them in its own scope
 (`@scope ([data-theme='<id>'])`). An unlayered rule wins over the Tailwind utilities whatever their specificity, so it
