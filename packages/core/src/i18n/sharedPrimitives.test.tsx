@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@wasichai/testing'
 import { ConfirmDialog, PageSizePagination, Pagination, PdfDialog } from '@wasichai/ui'
+import { ApiError } from '../api/client'
 
 // the ui primitives ship no words: core's common bundle does. these tests render them in Spanish, the default
 // language of renderWithProviders, so a missing or renamed key shows here and not only in an app
@@ -112,6 +113,12 @@ describe('PdfDialog strings', () => {
 
   it('says the document could not be generated when what failed has no message', async () => {
     renderWithProviders(<PdfDialog title="PU" source="a" load={() => Promise.reject('nope')} onClose={noop} />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo generar el documento')
+  })
+
+  // an ApiError's message is the status text when the body has none, and that is '' over HTTP/2
+  it('says the document could not be generated for an ApiError with an empty message', async () => {
+    renderWithProviders(<PdfDialog title="PU" source="a" load={() => Promise.reject(new ApiError(500, ''))} onClose={noop} />)
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo generar el documento')
   })
 

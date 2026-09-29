@@ -239,6 +239,12 @@ describe('PdfDialog', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent(FAILED)
     })
 
+    // core's ApiError falls back to the status text, which is '' over HTTP/2: an empty alert says nothing
+    it('says the document could not be generated when the Error has no message', async () => {
+      render(<PdfDialog title={TITLE} source="a" load={() => Promise.reject(new Error(''))} onClose={noop} />)
+      expect(await screen.findByRole('alert')).toHaveTextContent(FAILED)
+    })
+
     it('shows what renderError makes of the failure, in the alert', async () => {
       const failure = { message: 'ambiguo', faltan: ['titular', 'año'] }
       const onError = vi.fn()

@@ -18,7 +18,7 @@ export interface PdfDialogProps {
   onClose: () => void
   // who opened it may act on a failure (pick another titular); it is shown all the same
   onError?: (error: unknown) => void
-  // a failure's body; default: its message
+  // a failure's body; default: its message, or common.pdfFailed when it has none
   renderError?: (error: unknown) => ReactNode
 }
 
@@ -95,7 +95,8 @@ export function PdfDialog({ title, source, load, onClose, onError, renderError }
               {renderError ? (
                 renderError(state.error)
               ) : (
-                <p className="font-semibold">{state.error instanceof Error ? state.error.message : t('common.pdfFailed')}</p>
+                // an empty message ('' status text over HTTP/2) says nothing: fall back to the generic line
+                <p className="font-semibold">{(state.error instanceof Error && state.error.message) || t('common.pdfFailed')}</p>
               )}
             </div>
           )}
