@@ -4,8 +4,9 @@ import { Button } from './button'
 
 const DEFAULT_SIZES = [5, 10, 25] as const
 
-// server paging: the backend owns the page, so the arrows show only when there is more than one.
-// data-slot, data-mode: hooks a theme sheet styles (ADR-035). the two footers differ, hence the mode.
+// the footer of a backend page: the record count, then "page x of y" and the arrows when there is more than one page.
+// data-slot, data-mode: hooks a theme sheet styles (ADR-035). data-mode names what the footer shows: "pages" here,
+// "range" in PageSizePagination.
 export function Pagination({
   page,
   totalPages,
@@ -20,7 +21,7 @@ export function Pagination({
   const { t } = useTranslation()
 
   return (
-    <div data-slot="pagination" data-mode="server" className="flex items-center justify-between gap-4 border-t border-border px-4 py-3 text-sm text-ink-muted">
+    <div data-slot="pagination" data-mode="pages" className="flex items-center justify-between gap-4 border-t border-border px-4 py-3 text-sm text-ink-muted">
       <span>{t('common.records', { count: totalElements })}</span>
       {totalPages > 1 && (
         <div className="flex items-center gap-2">
@@ -37,7 +38,8 @@ export function Pagination({
   )
 }
 
-// client paging: the app holds every row and slices it. "Rows [10]" on the left, "1 a 10 de 47 registros < >" on the right.
+// a range footer with a rows picker: "Rows [10]" on the left, "1 a 10 de 47 registros < >" on the right. for any paging where
+// the caller knows the total: rows it slices itself, or a server page. data-mode="range": what it shows (see Pagination).
 // page is zero-based, like the backend's
 export function PageSizePagination({
   page,
@@ -63,7 +65,7 @@ export function PageSizePagination({
   return (
     <div
       data-slot="pagination"
-      data-mode="client"
+      data-mode="range"
       className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-2.5 text-sm text-ink-muted"
     >
       <label className="flex items-center gap-2">

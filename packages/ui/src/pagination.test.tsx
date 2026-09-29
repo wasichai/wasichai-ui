@@ -8,10 +8,11 @@ const PREVIOUS = 'common.previousPage'
 const NEXT = 'common.nextPage'
 
 describe('Pagination', () => {
+  // data-mode names what the footer shows: the count and "page x of y"
   it('puts the hooks a theme sheet styles it by on the root', () => {
     const { container } = render(<Pagination page={0} totalPages={3} totalElements={30} onPage={() => {}} />)
     expect(container.firstElementChild).toHaveAttribute('data-slot', 'pagination')
-    expect(container.firstElementChild).toHaveAttribute('data-mode', 'server')
+    expect(container.firstElementChild).toHaveAttribute('data-mode', 'pages')
   })
 
   it('moves one page at a time and disables the arrow at each end', async () => {
@@ -40,10 +41,11 @@ describe('Pagination', () => {
 describe('PageSizePagination', () => {
   const noop = () => {}
 
+  // data-mode names what the footer shows: the rows picker and "a–b of n", whoever slices the rows
   it('puts the hooks a theme sheet styles it by on the root and the picker', () => {
     const { container } = render(<PageSizePagination page={0} size={10} total={47} onPage={noop} onSize={noop} />)
     expect(container.firstElementChild).toHaveAttribute('data-slot', 'pagination')
-    expect(container.firstElementChild).toHaveAttribute('data-mode', 'client')
+    expect(container.firstElementChild).toHaveAttribute('data-mode', 'range')
     expect(screen.getByRole('combobox')).toHaveAttribute('data-slot', 'native-select')
   })
 
