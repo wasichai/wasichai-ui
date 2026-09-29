@@ -18,7 +18,8 @@ documented there; this page covers working in this repository.
 ## Requirements and layout
 
 Node 26, Yarn 1. `packages/*` are the yarn workspaces. `tooling/` holds `run-ordered.mjs`
-(builds packages in dependency order), `check-release.mjs`, `set-version.mjs` and `scaffold-module.mjs`.
+(builds packages in dependency order), `check-release.mjs`, `set-version.mjs`, `publish-packages.mjs`, `dev-release.mjs`
+(the next dev version, a dev tag's version) and `scaffold-module.mjs`.
 
 ## Commands
 
@@ -45,8 +46,13 @@ released before a sample's CI sees it.
 release-please (`node`) bumps the root `package.json` and every public `packages/*/package.json` together and writes
 `CHANGELOG.md`; merging its PR tags `vX.Y.Z`, and the release runs `publish.yml`: `check-release.mjs --pack` (exactly
 the eleven public `@wasichai/*` packages, internal ranges pinned, entry points in every tarball), then
-`set-version.mjs` and `npm publish` to `https://npm.pkg.github.com`. The version is independent of the Maven
-libraries' (ADR-032). The first release, v0.1.0, was pinned with `"release-as"`; to pin another one, add it back.
+`set-version.mjs` and `publish-packages.mjs` to `https://npm.pkg.github.com` (a version already there is skipped, so
+re-running a failed publish finishes it). The version is independent of the Maven libraries' (ADR-032). The first
+release, v0.1.0, was pinned with `"release-as"`; to pin another one, add it back.
+
+Dev pre-releases (`X.Y.0-dev.N`, npm dist-tag `dev`, never `latest`) come from `dev`, which never merges into `main`:
+push a `vX.Y.0-dev.N` tag on a commit of `dev` and `release-dev.yml` publishes it. Steps, checks and recovery:
+[README](../README.md#dev-pre-releases).
 
 One-time repository secrets (Settings → Secrets and variables → Actions):
 
