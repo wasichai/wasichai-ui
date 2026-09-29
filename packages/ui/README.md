@@ -47,12 +47,22 @@ The primitives ship no words. Their labels are `common.*` keys (`common.records`
 imports nothing from core (rule 3). An app on `WasichaiApp` has them; an app that does not load core's bundle supplies the
 same keys itself.
 
-An app may override any wording with i18next. `addResourceBundle(language, namespace, strings, deep, overwrite)` with the last
-two `true` merges over what core registered:
+An app may override any wording with i18next. Core registers its strings in the namespace `common` and nests every key under a
+`common` object inside it (`t('common.records')` reads the key `common.records` of the namespace `common`), so the strings an
+override passes are `{ common: { … } }`. `addResourceBundle(language, namespace, strings, deep, overwrite)` with the last two
+`true` merges over what core registered:
 
 ```ts
-i18n.addResourceBundle('es', 'common', { records_one: '{{count, number}} expediente', records_other: '{{count, number}} expedientes' }, true, true)
+i18n.addResourceBundle(
+  'es',
+  'common', // the namespace
+  { common: { records_one: '{{count, number}} expediente', records_other: '{{count, number}} expedientes', records_many: '{{count, number}} expedientes' } },
+  true,
+  true
+)
 ```
+
+Keys placed straight in the strings (`{ records_one: … }`) are not the `common.records` the primitives read and change nothing.
 
 Counts and ranges are written `{{count, number}}`, `{{from, number}}`, `{{to, number}}`: i18next's `number` format, which groups
 digits by the language's locale. An app that wants another rendering (no grouping, another separator) swaps that one formatter and
@@ -64,7 +74,7 @@ i18n.services.formatter?.add('number', (value, lng) => new Intl.NumberFormat(lng
 
 Spanish plural keys need a `_many` twin. `Intl.PluralRules('es')` answers `many` for the multiples of 1,000,000, so i18next asks
 for `records_many` there and, if it is missing, prints the raw key. Core's `es` bundle writes `_one`, `_other` and `_many` (the
-same text as `_other`); an override of a plural string in Spanish does the same.
+same text as `_other`); an override of a plural string in Spanish sets all three, as the example does.
 
 ## Theme tokens
 
