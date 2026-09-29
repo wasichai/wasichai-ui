@@ -14,6 +14,14 @@ Four more carry the footers and dialogs every list and record screen ends up nee
   where the caller knows the total (rows it slices itself, or a server page).
 - `PdfDialog`: a generated PDF embedded in a dialog, to see, print or download; it loads the blob itself and revokes its URL on close.
 
+`ConfirmDialog` and `PdfDialog` are mounted open: they take no `open` prop, so the caller renders one only while it shows
+(`{target && <ConfirmDialog … onCancel={() => setTarget(null)} />}`) and unmounts it in `onCancel` or `onClose`. `PdfDialog`
+revokes its blob URL when it closes or is unmounted, so the URL does not outlive the dialog.
+
+`ConfirmDialog`'s `description` renders inside the dialog's description paragraph (a `<p>`): give it inline text, not blocks.
+Its confirm button reads Delete (`common.delete`) whatever the `variant`: a confirmation that deletes nothing passes its own
+`confirmLabel` (and, usually, `variant="primary"`).
+
 Peer dependencies: `react`, `react-dom`, `react-i18next` (the dialogs' close label and the four primitives above read `common.*`
 strings, see [Strings](#strings-common)).
 
@@ -45,9 +53,9 @@ resolves (in a monorepo, often the root `node_modules`).
 ## Strings (`common.*`)
 
 The primitives ship no words. Their labels are `common.*` keys (`common.records`, `common.range`, `common.previousPage`,
-`common.rows`, `common.pdfPreview`, `common.close`…) that live in `@wasichai/core`'s bundle, in `es` and `en`: `@wasichai/ui`
-imports nothing from core (rule 3). An app on `WasichaiApp` has them; an app that does not load core's bundle supplies the
-same keys itself.
+`common.rows`, `common.pdfPreview`, `common.close`…) that live in `@wasichai/core`'s bundle, in `es` and `en`, because
+`@wasichai/ui` does not import core (core depends on ui, never the reverse). An app on `WasichaiApp` has them; an app that
+does not load core's bundle supplies the same keys itself.
 
 An app may override any wording with i18next. Core registers its strings in the namespace `common` and nests every key under a
 `common` object inside it (`t('common.records')` reads the key `common.records` of the namespace `common`), so the strings an
@@ -66,9 +74,9 @@ i18n.addResourceBundle(
 
 Keys placed straight in the strings (`{ records_one: … }`) are not the `common.records` the primitives read and change nothing.
 
-Counts and ranges are written `{{count, number}}`, `{{from, number}}`, `{{to, number}}`: i18next's `number` format, which groups
-digits by the language's locale. An app that wants another rendering (no grouping, another separator) swaps that one formatter and
-every string follows:
+Counts, ranges and page numbers are written `{{count, number}}`, `{{from, number}}`, `{{to, number}}`, `{{page, number}}` and
+`{{total, number}}`: i18next's `number` format, which groups digits by the language's locale. An app that wants another rendering
+(no grouping, another separator) swaps that one formatter, and the numbers in these strings follow:
 
 ```ts
 i18n.services.formatter?.add('number', (value, lng) => new Intl.NumberFormat(lng, { useGrouping: false }).format(value))
