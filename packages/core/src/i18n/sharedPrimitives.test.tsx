@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderWithProviders } from '@wasichai/testing'
-import { PageSizePagination, Pagination } from '@wasichai/ui'
+import { ConfirmDialog, PageSizePagination, Pagination } from '@wasichai/ui'
 
 // the ui primitives ship no words: core's common bundle does. these tests render them in Spanish, the default
 // language of renderWithProviders, so a missing or renamed key shows here and not only in an app
@@ -46,5 +46,20 @@ describe('PageSizePagination strings', () => {
     expect(screen.getByText('Rows')).toBeInTheDocument()
     expect(screen.getByText('1–10 of 47 records')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous page' })).toBeInTheDocument()
+  })
+})
+
+describe('ConfirmDialog strings', () => {
+  it('labels the buttons Eliminar and Cancelar, and the close button Cerrar', () => {
+    renderWithProviders(<ConfirmDialog title="¿Eliminar?" description="No se puede deshacer." onConfirm={noop} onCancel={noop} />)
+    expect(screen.getByRole('button', { name: 'Eliminar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cerrar' })).toBeInTheDocument()
+  })
+
+  it('writes the same in English when the app is in English', () => {
+    renderWithProviders(<ConfirmDialog title="Delete?" description="It cannot be undone." onConfirm={noop} onCancel={noop} />, { language: 'en' })
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
   })
 })

@@ -1,6 +1,7 @@
 export { cn } from './cn'
 export { Button } from './button'
 export { Card, CardBody, CardHeader, CardTitle } from './card'
+export { ConfirmDialog, type ConfirmDialogProps } from './confirm-dialog'
 export { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from './dialog'
 export { Input, Textarea } from './input'
 export { Label } from './label'
