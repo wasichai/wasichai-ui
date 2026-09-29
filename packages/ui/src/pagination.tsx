@@ -61,6 +61,8 @@ export function PageSizePagination({
   const from = total === 0 ? 0 : page * size + 1
   const to = Math.min(total, (page + 1) * size)
   const last = Math.max(0, Math.ceil(total / size) - 1)
+  // a size not offered (a saved preference, a server default) joins the options: else the select shows the first one
+  const options = sizes.includes(size) ? sizes : [...sizes, size].sort((a, b) => a - b)
 
   return (
     <div
@@ -77,7 +79,7 @@ export function PageSizePagination({
           onChange={(e) => onSize(Number(e.target.value))}
           className="h-8 w-20 rounded-md border border-border bg-surface px-3 text-sm text-ink"
         >
-          {sizes.map((n) => (
+          {options.map((n) => (
             <option key={n} value={n}>
               {n}
             </option>

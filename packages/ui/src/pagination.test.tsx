@@ -88,4 +88,15 @@ describe('PageSizePagination', () => {
     render(<PageSizePagination page={0} size={20} total={47} onPage={noop} onSize={noop} sizes={[20, 50]} />)
     expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['20', '50'])
   })
+
+  // a size that is not offered (a saved preference, a server default) would show the first option instead
+  it('adds the size it pages by to the options, in order, when the sizes lack it', () => {
+    const { rerender } = render(<PageSizePagination page={0} size={20} total={47} onPage={noop} onSize={noop} />)
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['5', '10', '20', '25'])
+    expect(screen.getByRole('combobox')).toHaveValue('20')
+
+    rerender(<PageSizePagination page={0} size={100} total={47} onPage={noop} onSize={noop} sizes={[20, 50]} />)
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['20', '50', '100'])
+    expect(screen.getByRole('combobox')).toHaveValue('100')
+  })
 })
