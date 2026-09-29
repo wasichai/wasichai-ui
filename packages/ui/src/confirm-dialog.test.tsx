@@ -83,6 +83,19 @@ describe('ConfirmDialog', () => {
     expect(onConfirm).not.toHaveBeenCalled()
   })
 
+  it('calls onCancel on a click outside, on the overlay', async () => {
+    const user = userEvent.setup()
+    const onConfirm = vi.fn()
+    const onCancel = vi.fn()
+    render(<ConfirmDialog title="Sure?" description="Really." onConfirm={onConfirm} onCancel={onCancel} />)
+    // the overlay is Dialog's: no role, no slot. it is the one element painted bg-overlay
+    const overlay = document.querySelector('.bg-overlay')!
+    expect(overlay).toBeInTheDocument()
+    await user.click(overlay)
+    expect(onCancel).toHaveBeenCalledTimes(1)
+    expect(onConfirm).not.toHaveBeenCalled()
+  })
+
   it('shows the error as an alert, and no alert without one', () => {
     const { rerender } = render(<ConfirmDialog title="Sure?" description="Really." onConfirm={noop} onCancel={noop} />)
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
