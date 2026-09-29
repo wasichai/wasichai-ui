@@ -31,6 +31,20 @@ tooling/    release and scaffolding scripts (check-release, set-version, run-ord
 docs/       frontend development guide
 ```
 
+## Dev pre-releases
+
+`dev` is a clone of `main` that never merges back. To try a change before release-please ships it, run the *Release dev*
+workflow (Actions tab) on `dev`: it publishes every public package as `X.Y.0-dev.N` (the next minor of the manifest plus
+a counter: `0.3.1` gives `0.4.0-dev.0`) under the npm dist-tag `dev`, then tags a GitHub prerelease. `latest` never
+moves.
+
+A consumer pins the exact version; a range would not match a pre-release of another minor:
+
+```bash
+yarn add -E @wasichai/core@0.4.0-dev.0 @wasichai/ui@0.4.0-dev.0
+npm view @wasichai/ui dist-tags
+```
+
 ## Commands
 
 ```bash

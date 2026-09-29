@@ -1,0 +1,41 @@
+name: Release dev
+
+# dev pre-releases: X.Y.0-dev.N under the npm dist-tag dev. latest stays where release-please put it.
+on: workflow_dispatch
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  version:
+    # only dev builds dev versions
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.next.outputs.version }}
+    steps:
+      # every tag, not the last commit: the next counter comes from the existing v*-dev.* tags
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: next
+        run: echo "version=$(node tooling/dev-release.mjs next)" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: version
+    # the caller's permissions bound the called workflow's
+    uses: ./.github/workflows/publish.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+
+  release:
+    # tagged after the upload: a failed publish leaves no tag behind
+    needs: [version, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - run: gh release create "v${{ needs.version.outputs.version }}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --generate-notes

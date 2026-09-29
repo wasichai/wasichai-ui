@@ -3,6 +3,12 @@ name: Publish
 on:
   release:
     types: [published]
+  # release-dev.yml calls this with the dev version: GITHUB_REF_NAME is then the branch, not a tag
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -12,6 +18,8 @@ jobs:
   # the guard runs before the upload: a failed guard blocks it, so a release never half-publishes
   guards:
     name: Release guard (npm)
+    # a dev prerelease is tagged by release-dev.yml after the upload: it must not publish twice
+    if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -22,11 +30,17 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile && yarn build
       - name: Release guard (npm)
-        run: node tooling/check-release.mjs --pack "${GITHUB_REF_NAME#v}"
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          # inputs is empty on the release event: the tag name carries the version then
+          version="$INPUT_VERSION"; [ -n "$version" ] || version="${GITHUB_REF_NAME#v}"
+          node tooling/check-release.mjs --pack "$version"
 
   npm:
     name: npm packages
     needs: guards
+    if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # job level, not only on the publish step: setup-node writes an .npmrc that reads ${NODE_AUTH_TOKEN} and, with
@@ -44,12 +58,17 @@ jobs:
           scope: '@wasichai'
       - run: yarn install --frozen-lockfile && yarn build
       - name: Publish every public @wasichai package
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          # inputs is empty on the release event: the tag name carries the version then
+          version="$INPUT_VERSION"; [ -n "$version" ] || version="${GITHUB_REF_NAME#v}"
+          # dev versions go under the dev dist-tag so latest never moves; throws on any other prerelease
+          tag="$(node tooling/dev-release.mjs dist-tag "$version")"
           # bumps every package's own version AND internal @wasichai/* dep ranges; plain
           # `npm version` per package would leave internal deps pointing at the old version.
           node tooling/set-version.mjs "$version"
           for dir in packages/*/; do
             if [ "$(node -p "require('./$dir/package.json').private === true")" = "true" ]; then continue; fi
-            (cd "$dir" && npm publish)
+            (cd "$dir" && npm publish --tag "$tag")
           done
