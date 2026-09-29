@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, expectTypeOf, it, vi } from 'vitest'
+import type { PageSizePaginationProps, PaginationProps } from './index'
 import { PageSizePagination, Pagination } from './pagination'
 
 // no i18n instance here: t() answers its key. the words are asserted in core's sharedPrimitives test
@@ -98,5 +99,14 @@ describe('PageSizePagination', () => {
     rerender(<PageSizePagination page={0} size={100} total={47} onPage={noop} onSize={noop} sizes={[20, 50]} />)
     expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['20', '50', '100'])
     expect(screen.getByRole('combobox')).toHaveValue('100')
+  })
+})
+
+// an app wraps the footers (a list screen's own footer): the prop types come from the package, not a Parameters<> dig
+describe('the prop types', () => {
+  it('are exported, and are what the footers take', () => {
+    expectTypeOf<PaginationProps>().toEqualTypeOf<Parameters<typeof Pagination>[0]>()
+    expectTypeOf<PageSizePaginationProps>().toEqualTypeOf<Parameters<typeof PageSizePagination>[0]>()
+    expectTypeOf<PageSizePaginationProps['sizes']>().toEqualTypeOf<readonly number[] | undefined>()
   })
 })

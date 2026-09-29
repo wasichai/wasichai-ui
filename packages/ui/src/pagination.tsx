@@ -4,20 +4,29 @@ import { Button } from './button'
 
 const DEFAULT_SIZES = [5, 10, 25] as const
 
-// the footer of a backend page: the record count, then "page x of y" and the arrows when there is more than one page.
-// data-slot, data-mode: hooks a theme sheet styles (ADR-035). data-mode names what the footer shows: "pages" here,
-// "range" in PageSizePagination.
-export function Pagination({
-  page,
-  totalPages,
-  totalElements,
-  onPage
-}: {
+export interface PaginationProps {
+  // zero-based, like the backend's
   page: number
   totalPages: number
   totalElements: number
   onPage: (page: number) => void
-}) {
+}
+
+export interface PageSizePaginationProps {
+  // zero-based, like the backend's
+  page: number
+  size: number
+  total: number
+  onPage: (page: number) => void
+  onSize: (size: number) => void
+  // default [5, 10, 25]; a size not among them is added
+  sizes?: readonly number[]
+}
+
+// the footer of a backend page: the record count, then "page x of y" and the arrows when there is more than one page.
+// data-slot, data-mode: hooks a theme sheet styles (ADR-035). data-mode names what the footer shows: "pages" here,
+// "range" in PageSizePagination.
+export function Pagination({ page, totalPages, totalElements, onPage }: PaginationProps) {
   const { t } = useTranslation()
 
   return (
@@ -40,22 +49,7 @@ export function Pagination({
 
 // a range footer with a rows picker: "Rows [10]" on the left, "1 a 10 de 47 registros < >" on the right. for any paging where
 // the caller knows the total: rows it slices itself, or a server page. data-mode="range": what it shows (see Pagination).
-// page is zero-based, like the backend's
-export function PageSizePagination({
-  page,
-  size,
-  total,
-  onPage,
-  onSize,
-  sizes = DEFAULT_SIZES
-}: {
-  page: number
-  size: number
-  total: number
-  onPage: (page: number) => void
-  onSize: (size: number) => void
-  sizes?: readonly number[]
-}) {
+export function PageSizePagination({ page, size, total, onPage, onSize, sizes = DEFAULT_SIZES }: PageSizePaginationProps) {
   const { t } = useTranslation()
   // no rows: "0 a 0", not "1 a 0"
   const from = total === 0 ? 0 : page * size + 1
