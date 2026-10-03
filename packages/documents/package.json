@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/documents",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "Wasichai documents module: document types, template editor, issued documents and print page",
     "type": "module",
     "files": [
