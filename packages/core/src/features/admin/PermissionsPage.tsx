@@ -9,12 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, Td, Th } from '@wasichai/ui'
 import { ApiError } from '../../api/client'
 import { useObjectDefinition, useObjects } from '../../queries'
-import { useRoles, useUpdateRoleFieldPermissions, useUpdateRolePermissions } from './api'
-import { buildMatrix, EVERY_OBJECT, GLOBAL_ACTIONS, isGranted, OBJECT_ACTIONS, toPermissions, toggleCell, type PermissionMatrix } from './permissionMatrix'
-import { PROTECTED_ROLE, type Action, type FieldPermission } from './types'
+import { useDeclaredActions, useRoles, useUpdateRoleFieldPermissions, useUpdateRolePermissions } from './api'
+import { BUILT_IN_ACTIONS, buildMatrix, EVERY_OBJECT, GLOBAL_ACTIONS, isGranted, toPermissions, toggleCell, type PermissionMatrix } from './permissionMatrix'
+import { PROTECTED_ROLE, type FieldPermission } from './types'
 
 const CHECKBOX = 'h-4 w-4 accent-brand'
-const ALL_ACTIONS: Action[] = [...OBJECT_ACTIONS, ...GLOBAL_ACTIONS]
 
 // field rule: no explicit entry means the role sees everything, so default both boxes on
 type FieldGrants = Record<string, { read: boolean; write: boolean }>
@@ -66,6 +65,11 @@ export function PermissionsPage() {
   const restricted = role?.fieldPermissions.some((item) => item.objectName === objectName) ?? false
 
   const rowKeys = [EVERY_OBJECT, ...objects.map((item) => item.name)]
+  // only once a role is picked: the matrix is the only reader
+  const declared = useDeclaredActions(
+    objects.map((item) => item.name),
+    Boolean(role)
+  )
 
   const submitMatrix = async () => {
     if (!role) return
@@ -139,11 +143,12 @@ export function PermissionsPage() {
                 <thead>
                   <tr>
                     <Th>{t('admin.permissions.object')}</Th>
-                    {ALL_ACTIONS.map((action) => (
+                    {BUILT_IN_ACTIONS.map((action) => (
                       <Th key={action} className="text-center">
                         {action}
                       </Th>
                     ))}
+                    <Th>{t('admin.permissions.declaredActions')}</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -156,7 +161,7 @@ export function PermissionsPage() {
                           {every ? t('admin.permissions.everyObject') : (object?.label ?? rowKey)}
                           <span className="ml-2 font-mono text-xs text-ink-muted">{every ? t('admin.permissions.everyObjectHint') : rowKey}</span>
                         </Td>
-                        {ALL_ACTIONS.map((action) => {
+                        {BUILT_IN_ACTIONS.map((action) => {
                           // MANAGE_* is tenant-wide: only the every-object row offers it
                           const global = GLOBAL_ACTIONS.includes(action)
                           if (global && !every) {
@@ -178,6 +183,33 @@ export function PermissionsPage() {
                             </Td>
                           )
                         })}
+                        {every ? (
+                          // a declared action is the object's own verb: it means nothing tenant-wide
+                          <Td className="text-xs text-ink-muted" title={t('admin.permissions.declaredObjectOnly')}>
+                            —
+                          </Td>
+                        ) : (
+                          <Td>
+                            {(declared[rowKey] ?? []).length === 0 ? (
+                              <span className="text-xs text-ink-muted">—</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                {declared[rowKey].map((item) => (
+                                  <label key={item.name} className="inline-flex items-center gap-1.5 text-sm" title={item.name}>
+                                    <input
+                                      type="checkbox"
+                                      className={CHECKBOX}
+                                      aria-label={`${rowKey} ${item.name}`}
+                                      checked={isGranted(matrix, rowKey, item.name)}
+                                      onChange={() => setMatrix((current) => toggleCell(current, rowKey, item.name))}
+                                    />
+                                    {item.label || item.name}
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </Td>
+                        )}
                       </tr>
                     )
                   })}
