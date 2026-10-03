@@ -1,6 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../api/client'
-import type { AdminUser, CreateRolePayload, CreateUserPayload, FieldPermission, Permission, Role, UpdateRolePayload, UpdateUserPayload } from './types'
+import type {
+  AdminUser,
+  CreateRolePayload,
+  CreateUserPayload,
+  DeclaredAction,
+  FieldPermission,
+  Permission,
+  Role,
+  UpdateRolePayload,
+  UpdateUserPayload
+} from './types'
 
 const USERS_KEY = ['admin', 'users']
 const ROLES_KEY = ['admin', 'roles']
@@ -100,5 +110,25 @@ export function useUpdateRoleFieldPermissions() {
         body: JSON.stringify({ fields })
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ROLES_KEY })
+  })
+}
+
+// each object's declared actions (ADR-042), by object name. an object whose list failed (e.g. 403
+// without READ on it) is simply missing: its grants still round-trip through the matrix.
+export function useDeclaredActions(objectNames: string[], enabled: boolean): Record<string, DeclaredAction[]> {
+  return useQueries({
+    queries: objectNames.map((name) => ({
+      // under ['objects', name] so invalidating an object refreshes its actions too
+      queryKey: ['objects', name, 'actions'],
+      queryFn: () => api<DeclaredAction[]>(`/metadata/objects/${name}/actions`),
+      enabled
+    })),
+    combine: (results) => {
+      const byObject: Record<string, DeclaredAction[]> = {}
+      results.forEach((result, index) => {
+        if (result.data) byObject[objectNames[index]] = result.data
+      })
+      return byObject
+    }
   })
 }

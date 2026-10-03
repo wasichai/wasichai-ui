@@ -1,34 +1,42 @@
-import type { Action, Permission } from './types'
+import type { Action, BuiltInAction, Permission } from './types'
 
 // per-object actions. every object row gets these plus the global ones.
-export const OBJECT_ACTIONS: Action[] = ['READ', 'CREATE', 'UPDATE', 'DELETE']
+export const OBJECT_ACTIONS: BuiltInAction[] = ['READ', 'CREATE', 'UPDATE', 'DELETE']
 
 // MANAGE_* is tenant-wide. it never belongs to a single object.
-export const GLOBAL_ACTIONS: Action[] = ['MANAGE_METADATA', 'MANAGE_ORGANIZATION']
+export const GLOBAL_ACTIONS: BuiltInAction[] = ['MANAGE_METADATA', 'MANAGE_ORGANIZATION']
+
+export const BUILT_IN_ACTIONS: BuiltInAction[] = [...OBJECT_ACTIONS, ...GLOBAL_ACTIONS]
 
 // row key standing for `objectName: null`. '*' is not a legal object name so it cannot clash.
 export const EVERY_OBJECT = '*'
 
-// row key -> granted actions. only granted cells are stored, so no permissions means {}.
-export type PermissionMatrix = Record<string, Partial<Record<Action, boolean>>>
+// row key -> action -> allowed. true is a granted cell, false a stored deny (reads unchecked).
+// every permission the role came with lands here, rendered or not: the PUT replaces the whole
+// list, so whatever the screen does not show must still go back out (ADR-042 declared actions).
+export type PermissionMatrix = Record<string, Record<Action, boolean>>
 
-export function actionsForRow(rowKey: string): Action[] {
-  return rowKey === EVERY_OBJECT ? [...OBJECT_ACTIONS, ...GLOBAL_ACTIONS] : OBJECT_ACTIONS
+export function isBuiltIn(action: Action): action is BuiltInAction {
+  return (BUILT_IN_ACTIONS as Action[]).includes(action)
 }
 
+export function actionsForRow(rowKey: string): BuiltInAction[] {
+  return rowKey === EVERY_OBJECT ? BUILT_IN_ACTIONS : OBJECT_ACTIONS
+}
+
+// what the screen may toggle. a declared action is always object-scoped, never tenant-wide.
 export function isActionAllowedOnRow(rowKey: string, action: Action): boolean {
-  return actionsForRow(rowKey).includes(action)
+  if (isBuiltIn(action)) return actionsForRow(rowKey).includes(action)
+  return rowKey !== EVERY_OBJECT
 }
 
 export function buildMatrix(permissions: Permission[]): PermissionMatrix {
   const matrix: PermissionMatrix = {}
   for (const permission of permissions) {
-    // a checkbox only knows granted / not granted. a deny reads the same as missing.
-    if (!permission.allowed) continue
     const rowKey = permission.objectName ?? EVERY_OBJECT
-    // drop nonsense the server may have stored, e.g. MANAGE_METADATA on one object
-    if (!isActionAllowedOnRow(rowKey, permission.action)) continue
-    matrix[rowKey] = { ...matrix[rowKey], [permission.action]: true }
+    // a grant wins over a deny of the same cell: the server keeps one row per cell anyway
+    const allowed = matrix[rowKey]?.[permission.action] === true || permission.allowed
+    matrix[rowKey] = { ...matrix[rowKey], [permission.action]: allowed }
   }
   return matrix
 }
@@ -41,7 +49,7 @@ export function toggleCell(matrix: PermissionMatrix, rowKey: string, action: Act
   if (!isActionAllowedOnRow(rowKey, action)) return matrix
 
   const row = { ...matrix[rowKey] }
-  if (row[action]) delete row[action]
+  if (row[action] === true) delete row[action]
   else row[action] = true
 
   const next = { ...matrix }
@@ -51,7 +59,16 @@ export function toggleCell(matrix: PermissionMatrix, rowKey: string, action: Act
   return next
 }
 
-// deterministic order: every object first, then object rows alphabetically, actions canonical
+// built-ins in canonical order, then anything else by name
+function rowOrder(row: Record<Action, boolean>): Action[] {
+  const builtIn = BUILT_IN_ACTIONS.filter((action) => action in row)
+  const others = Object.keys(row)
+    .filter((action) => !isBuiltIn(action))
+    .sort()
+  return [...builtIn, ...others]
+}
+
+// deterministic order: every object first, then object rows alphabetically
 export function toPermissions(matrix: PermissionMatrix): Permission[] {
   const objectRows = Object.keys(matrix)
     .filter((key) => key !== EVERY_OBJECT)
@@ -59,13 +76,11 @@ export function toPermissions(matrix: PermissionMatrix): Permission[] {
   const rowKeys = (EVERY_OBJECT in matrix ? [EVERY_OBJECT] : []).concat(objectRows)
 
   return rowKeys.flatMap((rowKey) =>
-    actionsForRow(rowKey)
-      .filter((action) => isGranted(matrix, rowKey, action))
-      .map<Permission>((action) => ({
-        objectName: rowKey === EVERY_OBJECT ? null : rowKey,
-        action,
-        allowed: true
-      }))
+    rowOrder(matrix[rowKey]).map<Permission>((action) => ({
+      objectName: rowKey === EVERY_OBJECT ? null : rowKey,
+      action,
+      allowed: matrix[rowKey][action]
+    }))
   )
 }
 
