@@ -1,6 +1,17 @@
 // security administration shapes. mirrors the /api/users and /api/roles contract.
 
-export type Action = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'MANAGE_METADATA' | 'MANAGE_ORGANIZATION'
+// the six actions the platform knows. the matrix renders them as fixed columns.
+export type BuiltInAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'MANAGE_METADATA' | 'MANAGE_ORGANIZATION'
+
+// a permission may also carry an action an object declares (ADR-042), so any string.
+// a closed union here dropped those on save and the replace-all PUT deleted them.
+export type Action = string
+
+// an object's own verb beyond CRUD, from GET /api/metadata/objects/{object}/actions
+export interface DeclaredAction {
+  name: string
+  label: string
+}
 
 export interface AdminUser {
   id: string
