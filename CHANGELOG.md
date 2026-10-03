@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/wasichai/wasichai-ui/compare/v0.4.0...v0.4.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **core:** roles page keeps and shows declared actions ([ea47006](https://github.com/wasichai/wasichai-ui/commit/ea47006c6243a8626055f66c175c225d25ab1dcb))
+* **core:** roles page keeps and shows declared actions ([c3d4371](https://github.com/wasichai/wasichai-ui/commit/c3d4371d14aa88e414c38a17ee2164b0f9b4b2d6))
+
 ## [0.4.0](https://github.com/wasichai/wasichai-ui/compare/v0.3.1...v0.4.0) (2026-10-01)
 
 
