@@ -27,7 +27,7 @@
         "build": "vite build && tsc -p tsconfig.build.json"
     },
     "dependencies": {
-        "lucide-react": "^1.47.0",
+        "lucide-react": "^1.49.0",
         "@xyflow/react": "12.11.6"
     },
     "peerDependencies": {

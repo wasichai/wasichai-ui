@@ -27,7 +27,7 @@
         "build": "vite build && tsc -p tsconfig.build.json"
     },
     "dependencies": {
-        "lucide-react": "^1.47.0",
+        "lucide-react": "^1.49.0",
         "maplibre-gl": "6.10.0",
         "terra-draw": "1.33.0",
         "terra-draw-maplibre-gl-adapter": "1.4.1"
