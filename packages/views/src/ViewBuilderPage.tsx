@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, RotateCcw, Trash2 } from 'lucide-react'
-import { ApiError, PageHeader, fallbackView, pickView, useDeleteView, useObjectDefinition, useObjects, useSaveView, useViews } from '@wasichai/core'
+import { PageHeader, describeError, fallbackView, pickView, useDeleteView, useObjectDefinition, useObjects, useSaveView, useViews } from '@wasichai/core'
 import type { FieldMeta, SortDirection, View } from '@wasichai/core'
 import { Badge, Button, Card, CardBody, CardHeader, CardTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 
@@ -49,8 +49,7 @@ export function ViewBuilderPage() {
       return { ...current, definition: { ...current.definition, columns } }
     })
 
-  const report = (cause: unknown) =>
-    setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+  const report = (cause: unknown) => setError(describeError(cause))
 
   const submit = async () => {
     if (!draft) return

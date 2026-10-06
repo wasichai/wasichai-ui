@@ -7,16 +7,12 @@ import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useCreateRole, useDeleteRole, useRoles, useUpdateRole } from './api'
 import { grantedCount } from './permissionMatrix'
 import { PROTECTED_ROLE, type Role } from './types'
 
 const CHECKBOX = 'h-4 w-4 accent-brand'
-
-function describe(cause: unknown): string {
-  return cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause)
-}
 
 export function RolesPage() {
   const { t } = useTranslation()
@@ -58,7 +54,7 @@ export function RolesPage() {
       setLabel('')
       setOwnRecordsOnly(false)
     } catch (cause) {
-      setCreateError(describe(cause))
+      setCreateError(describeError(cause))
     }
   }
 
@@ -74,7 +70,7 @@ export function RolesPage() {
       })
       setEditing(null)
     } catch (cause) {
-      setEditError(describe(cause))
+      setEditError(describeError(cause))
     }
   }
 

@@ -231,6 +231,10 @@ export function plansModule(): WasichaiModule {
 Links: `useWasichaiLinks()` gives `records(object)`, `record(object, id)`, … for core screens and
 `to('plans:list')` / `has('plans:list')` for module routes.
 
+Errors: `api()` rejects with an `ApiError` (`status`, `message`, `violations`). `describeError(cause)` gives
+the line every core screen shows for a refusal, `message — field: reason — …`, and `String(cause)` for anything
+else.
+
 ## Adding a language / overriding strings
 
 Every module ships `es` and `en` (core's own strings too). A module's `i18n` is just

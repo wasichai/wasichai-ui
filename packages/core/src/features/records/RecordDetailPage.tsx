@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { ApiError, describeError } from '../../api/client'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { fallbackPage } from '../../components/page-renderer/fallbackPage'
 import { PageRenderer } from '../../components/page-renderer/PageRenderer'
@@ -72,7 +72,7 @@ export function RecordDetailPage() {
           try {
             await save.mutateAsync(payload)
           } catch (cause) {
-            setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+            setError(describeError(cause))
           }
         }}
       />

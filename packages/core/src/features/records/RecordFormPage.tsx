@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../../shell/PageHeader'
 import { Card, CardBody } from '@wasichai/ui'
 import { DynamicForm } from '../../components/dynamic-form/DynamicForm'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useObjectDefinition, useSaveRecord } from '../../queries'
 import { useWasichaiLinks } from '../../app/context'
 
@@ -38,7 +38,7 @@ export function RecordFormPage() {
                   const created = await save.mutateAsync(payload)
                   void navigate(links.record(object ?? '', created.id))
                 } catch (cause) {
-                  setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+                  setError(describeError(cause))
                 }
               }}
             />

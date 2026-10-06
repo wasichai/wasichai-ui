@@ -21,7 +21,8 @@ import {
   useUpdateObject
 } from '../../queries'
 import type { FieldMeta, FieldType } from '../../types/metadata'
-import { addableFieldTypes, describeError, emptyFieldDraft, fieldPayload, nameTaken, scopeOf, type FieldDraft } from './objectDraft'
+import { describeError } from '../../api/client'
+import { addableFieldTypes, emptyFieldDraft, fieldPayload, nameTaken, scopeOf, type FieldDraft } from './objectDraft'
 import { ObjectRelationships } from './ObjectRelationships'
 import { relationshipOfField } from './relationshipSides'
 import { useWasichaiLinks, useRegistry } from '../../app/context'

@@ -6,7 +6,7 @@ import { Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
 import { MapView } from '../components/LazyMapView'
-import { ApiError } from '@wasichai/core'
+import { describeError } from '@wasichai/core'
 import { useObjects } from '@wasichai/core'
 import { useGeoServerServices, useLayers, usePublishLayer, useUnpublishLayer } from './api'
 import type { LayerStatus } from './types'
@@ -46,7 +46,7 @@ export function LayersPage() {
       await (action === 'publish' ? publish : unpublish).mutateAsync({ objectName: row.objectName, geometryName: row.geometryName })
       if (action === 'unpublish' && preview === key) setPreview(null)
     } catch (cause) {
-      setError({ key, message: describe(cause) })
+      setError({ key, message: describeError(cause) })
     }
   }
 
@@ -243,11 +243,4 @@ function unpublishedRow(object: ObjectSummary): LayerStatus {
     wms: '',
     wfs: ''
   }
-}
-
-function describe(cause: unknown): string {
-  if (cause instanceof ApiError) {
-    return [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ')
-  }
-  return String(cause)
 }

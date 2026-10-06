@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, api, createApiClient, getActiveApiClient, setActiveApiClient } from './client'
+import { ApiError, api, createApiClient, describeError, getActiveApiClient, setActiveApiClient } from './client'
 
 function answer(status: number, body?: unknown) {
   return vi.fn(async () => new Response(body === undefined ? null : JSON.stringify(body), { status }))
@@ -97,5 +97,21 @@ describe('api()', () => {
     } finally {
       setActiveApiClient(previous)
     }
+  })
+})
+
+describe('describeError', () => {
+  // the whole point of a refusal is the reason; losing it would leave the admin guessing
+  it('keeps the field that a validation error names', () => {
+    const error = new ApiError(400, 'Objects cannot be renamed', [{ field: 'name', message: 'the name backs the table' }])
+    expect(describeError(error)).toBe('Objects cannot be renamed — name: the name backs the table')
+  })
+
+  it('keeps a conflict message that names no field', () => {
+    expect(describeError(new ApiError(409, "Field 'revisado' is used by automation 'marca'"))).toBe("Field 'revisado' is used by automation 'marca'")
+  })
+
+  it('falls back to the raw cause when it is not an API error', () => {
+    expect(describeError('network down')).toBe('network down')
   })
 })

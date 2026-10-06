@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Trash2 } from 'lucide-react'
-import { ApiError, PageHeader, useDeleteForm, useForms, useObjectDefinition, useObjects, useSaveStoredForm } from '@wasichai/core'
+import { PageHeader, describeError, useDeleteForm, useForms, useObjectDefinition, useObjects, useSaveStoredForm } from '@wasichai/core'
 import type { FieldMeta, Form, FormSection } from '@wasichai/core'
 import { Badge, Button, Card, CardBody, CardHeader, CardTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 
@@ -59,8 +59,7 @@ export function FormBuilderPage() {
     patchSection(index, { fields: names })
   }
 
-  const report = (cause: unknown) =>
-    setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+  const report = (cause: unknown) => setError(describeError(cause))
 
   const submit = async () => {
     if (!draft) return

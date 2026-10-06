@@ -8,7 +8,7 @@ import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useCreateRelationship, useDeleteRelationship, useObjects, useRelationships } from '../../queries'
 import type { RelationshipType } from '../../types/metadata'
 
@@ -48,7 +48,7 @@ export function RelationshipsPage() {
       setInverseLabel('')
       setFieldName('')
     } catch (cause) {
-      setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+      setError(describeError(cause))
     }
   }
 

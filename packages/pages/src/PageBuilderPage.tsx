@@ -8,7 +8,7 @@ import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { Badge } from '@wasichai/ui'
-import { ApiError } from '@wasichai/core'
+import { describeError } from '@wasichai/core'
 import { useDeletePage, useForms, useObjectDefinition, useObjectRelationships, useObjects, useResolvedPage, useSavePage } from '@wasichai/core'
 import type { Page, PageLayout } from '@wasichai/core'
 import { Canvas } from './builder/Canvas'
@@ -108,7 +108,7 @@ export function PageBuilderPage() {
         }
       })
     } catch (cause) {
-      setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+      setError(describeError(cause))
     }
   }
 
@@ -119,7 +119,7 @@ export function PageBuilderPage() {
     try {
       await remove.mutateAsync({ name: draft.name, objectName: draft.objectName })
     } catch (cause) {
-      setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+      setError(describeError(cause))
     }
   }
 

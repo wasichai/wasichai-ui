@@ -8,15 +8,11 @@ import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useAdminUsers, useCreateUser, useDeleteUser, useRoles, useUpdateUser, useUpdateUserRoles } from './api'
 import type { AdminUser } from './types'
 
 const CHECKBOX = 'h-4 w-4 accent-brand'
-
-function describe(cause: unknown): string {
-  return cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause)
-}
 
 export function UsersPage() {
   const { t } = useTranslation()
@@ -70,7 +66,7 @@ export function UsersPage() {
       setPassword('')
       setNewRoles([])
     } catch (cause) {
-      setCreateError(describe(cause))
+      setCreateError(describeError(cause))
     }
   }
 
@@ -89,7 +85,7 @@ export function UsersPage() {
       await updateRoles.mutateAsync({ id: editing.id, roles: editRoles })
       setEditing(null)
     } catch (cause) {
-      setEditError(describe(cause))
+      setEditError(describeError(cause))
     }
   }
 

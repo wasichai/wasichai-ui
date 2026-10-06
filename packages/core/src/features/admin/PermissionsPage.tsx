@@ -7,7 +7,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { Table, Td, Th } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useObjectDefinition, useObjects } from '../../queries'
 import { useDeclaredActions, useRoles, useUpdateRoleFieldPermissions, useUpdateRolePermissions } from './api'
 import { BUILT_IN_ACTIONS, buildMatrix, EVERY_OBJECT, GLOBAL_ACTIONS, isGranted, toPermissions, toggleCell, type PermissionMatrix } from './permissionMatrix'
@@ -17,10 +17,6 @@ const CHECKBOX = 'h-4 w-4 accent-brand'
 
 // field rule: no explicit entry means the role sees everything, so default both boxes on
 type FieldGrants = Record<string, { read: boolean; write: boolean }>
-
-function describe(cause: unknown): string {
-  return cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause)
-}
 
 export function PermissionsPage() {
   const { t } = useTranslation()
@@ -77,7 +73,7 @@ export function PermissionsPage() {
     try {
       await savePermissions.mutateAsync({ name: role.name, permissions: toPermissions(matrix) })
     } catch (cause) {
-      setMatrixError(describe(cause))
+      setMatrixError(describeError(cause))
     }
   }
 
@@ -93,7 +89,7 @@ export function PermissionsPage() {
     try {
       await saveFields.mutateAsync({ name: role.name, fields: payload })
     } catch (cause) {
-      setFieldError(describe(cause))
+      setFieldError(describeError(cause))
     }
   }
 

@@ -3,6 +3,7 @@ export {
   ApiError,
   api,
   createApiClient,
+  describeError,
   getActiveApiClient,
   getToken,
   setToken,
