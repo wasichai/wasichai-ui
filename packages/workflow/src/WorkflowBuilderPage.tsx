@@ -6,7 +6,7 @@ import { Button } from '@wasichai/ui'
 import { Card, CardBody } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
-import { ApiError } from '@wasichai/core'
+import { ApiError, ErrorState } from '@wasichai/core'
 import { useObjects } from '@wasichai/core'
 import { useDeleteWorkflow, useSaveWorkflow, useWorkflow } from './api'
 import { WorkflowCanvas } from './WorkflowCanvas'
@@ -33,8 +33,10 @@ export function WorkflowBuilderPage() {
 
   // react-query keeps the last good data after an error, so a fresh 404 (deleted just now)
   // would still look like a stored workflow. the error wins.
-  const missing = workflow.isError
-  const stored = missing ? undefined : workflow.data
+  // only a 404 means "none yet": a starter after a 500 would let Save overwrite the stored one
+  const missing = workflow.error instanceof ApiError && workflow.error.status === 404
+  const failed = workflow.isError && !missing
+  const stored = workflow.isError ? undefined : workflow.data
   // the server is the source of truth. no workflow yet? hand out something worth editing.
   useEffect(() => {
     if (!objectName) {
@@ -58,6 +60,9 @@ export function WorkflowBuilderPage() {
       })
     } else if (stored) {
       setDraft({ name: stored.name, label: stored.label, enabled: stored.enabled, definition: stored.definition })
+    } else {
+      // loading or failed: the draft of the last object must not be saved over this one
+      setDraft(null)
     }
     setSelection(null)
     setError(null)
@@ -247,7 +252,9 @@ export function WorkflowBuilderPage() {
           </CardBody>
         </Card>
 
-        {!objectName ? null : workflow.isLoading || !draft ? (
+        {!objectName ? null : failed ? (
+          <ErrorState error={workflow.error} onRetry={() => void workflow.refetch()} />
+        ) : workflow.isLoading || !draft ? (
           <p className="text-sm text-ink-muted">{t('common.loading')}</p>
         ) : (
           <>
