@@ -107,8 +107,16 @@ export function toFormValues(fields: FieldMeta[], attributes: Record<string, unk
   for (const field of fields) {
     const value = attributes[field.name]
     if (field.type === 'BOOLEAN') values[field.name] = value ?? false
-    else if (field.type === 'DATETIME' && typeof value === 'string') values[field.name] = value.slice(0, 16)
+    else if (field.type === 'DATETIME' && typeof value === 'string') values[field.name] = toLocalInput(value)
     else values[field.name] = value ?? ''
   }
   return values
+}
+
+// api instant (utc) -> datetime-local wall time. cutting the Z off instead showed utc as local, and
+// toAttributes then read it back as local: every save moved the value by the browser's offset
+function toLocalInput(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value.slice(0, 16)
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
 }

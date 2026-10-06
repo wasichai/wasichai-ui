@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildRecordSchema, toAttributes, toFormValues } from './metadata-to-zod'
 import type { FieldMeta } from '../types/metadata'
 
@@ -73,5 +73,30 @@ describe('form value mapping', () => {
       codigo: 'P-001',
       activo: false
     })
+  })
+})
+
+// the api sends an instant in utc; datetime-local works in the browser's wall time
+describe('DATETIME form values', () => {
+  const cita = [field({ name: 'cita', type: 'DATETIME' })]
+  beforeEach(() => vi.stubEnv('TZ', 'America/Lima'))
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('shows the instant in local time', () => {
+    expect(toFormValues(cita, { cita: '2026-10-06T14:30:00Z' })).toEqual({ cita: '2026-10-06T09:30' })
+  })
+
+  it('saves an untouched value back as the same instant, however often', () => {
+    let stored: unknown = '2026-10-06T14:30:00Z'
+    for (let save = 0; save < 3; save++) stored = toAttributes(cita, toFormValues(cita, { cita: stored })).cita
+    expect(stored).toBe('2026-10-06T14:30:00.000Z')
+  })
+
+  it('crosses midnight into the local day', () => {
+    expect(toFormValues(cita, { cita: '2026-10-07T02:15:00Z' })).toEqual({ cita: '2026-10-06T21:15' })
+  })
+
+  it('leaves a value it cannot read as before', () => {
+    expect(toFormValues(cita, { cita: 'mañana temprano' })).toEqual({ cita: 'mañana temprano' })
   })
 })
