@@ -133,6 +133,14 @@ describe('NavTree', () => {
     expect(onNavigate).not.toHaveBeenCalled()
   })
 
+  // a plain <a>, not a router Link: a Link would move the router and the home link would lose its mark
+  it('does not move the router on an external leaf', async () => {
+    draw()
+    expect(current()).toEqual(['Ir al inicio'])
+    await userEvent.click(within(nav()).getByRole('link', { name: 'Administración' }))
+    expect(current()).toEqual(['Ir al inicio'])
+  })
+
   it('tells its caller of a pick and of a fold', async () => {
     const { onNavigate, onFold } = draw()
     await userEvent.click(within(nav()).getByRole('link', { name: 'Arbitrios' }))

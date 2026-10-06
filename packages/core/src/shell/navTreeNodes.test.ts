@@ -57,6 +57,9 @@ describe('currentNavTreeLeaf', () => {
     ['/infracciones/0b5e8f1a', 'Expedientes'],
     // its own route over another leaf's alsoAt: /infracciones/:id matches /infracciones/cuis too
     ['/infracciones/cuis', 'CUIS'],
+    // a trailing slash is the same page
+    ['/infracciones/cuis/', 'CUIS'],
+    ['/contribuyentes/', 'Buscar contribuyentes'],
     ['/cuenta/2026', 'Cuenta corriente'],
     // a string prefix is not a start of the route
     ['/contribuyentesx', undefined],

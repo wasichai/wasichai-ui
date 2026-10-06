@@ -30,12 +30,14 @@ export const navTreeLeaves = <L extends NavTreeLeaf>(nodes: NavTreeNode<L>[]): L
 // route is the longest start of it. own route first: /infracciones/:id matches /infracciones/cuis too. a page with no
 // leaf of its own has none, an external leaf is never current
 export function currentNavTreeLeaf<L extends NavTreeLeaf>(nodes: NavTreeNode<L>[], pathname: string): L | undefined {
+  // matchPath takes a trailing slash, so cut it: else alsoAt beats the leaf's own route. keeps "/"
+  const path = pathname.replace(/(.)\/+$/, '$1')
   const own = navTreeLeaves(nodes).filter((leaf) => !leaf.external)
-  const exact = own.find((leaf) => leaf.to === pathname)
+  const exact = own.find((leaf) => leaf.to === path)
   if (exact) return exact
-  const byPattern = own.find((leaf) => leaf.alsoAt?.some((pattern) => matchPath(pattern, pathname)))
+  const byPattern = own.find((leaf) => leaf.alsoAt?.some((pattern) => matchPath(pattern, path)))
   if (byPattern) return byPattern
   return own
-    .filter((leaf) => pathname.startsWith(`${leaf.to}/`))
+    .filter((leaf) => path.startsWith(`${leaf.to}/`))
     .reduce<L | undefined>((best, leaf) => (!best || leaf.to.length > best.to.length ? leaf : best), undefined)
 }

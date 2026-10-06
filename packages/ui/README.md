@@ -27,8 +27,8 @@ revokes its blob URL when it closes or is unmounted, so the URL does not outlive
 Its confirm button reads Delete (`common.delete`) whatever the `variant`: a confirmation that deletes nothing passes its own
 `confirmLabel` (and, usually, `variant="primary"`).
 
-Peer dependencies: `react`, `react-dom`, `react-i18next` (the dialogs' close label and the four primitives above read `common.*`
-strings, see [Strings](#strings-common)).
+Peer dependencies: `react`, `react-dom`, `react-i18next` (the dialogs' close label and the four primitives above and `Alert` read
+`common.*` strings, see [Strings](#strings-common)).
 
 ## Install
 
@@ -218,7 +218,8 @@ What the sheet sets, under the theme only:
   background, shadow or bottom padding), so the tabs sit on the page and the panel is the box.
 - **Alerts**: the prototype's boxes, `14px 18px` at 14.5px, a 1px border and 3px corners, per tone its soft background,
   its text and Bootstrap 3's border (`#d6e9c6`, `#faebcc`, `#ebccd1`, `#e8e0c4`), the dismiss check at the top right.
-  Over a caller's box classes (`rounded-md bg-danger/10 px-3 py-2`), the sheet's box wins.
+  Over a caller's box classes (`rounded-md bg-danger/10 px-3 py-2`), the sheet's box wins, so hide an alert by not rendering it,
+  not with a `hidden` class.
 - **Tree menu** (`NavTree` of `@wasichai/core`): the prototype's greys, which no token has: carets `#555`, a hovered
   group `#0d4d80`, a hovered leaf on `#e9e9e9`, the current leaf `#0d4d80` on `#e6e6e6`.
 
