@@ -82,7 +82,8 @@ export function createApiClient({ baseUrl, storagePrefix }: ApiClientOptions): A
         onUnauthorized?.()
       }
       const problem = readProblem(text)
-      throw new ApiError(response.status, problem?.detail ?? problem?.title ?? response.statusText, problem?.errors ?? [])
+      // http/2 sends no status text: an html 502 behind a proxy would read as an empty error
+      throw new ApiError(response.status, problem?.detail ?? problem?.title ?? (response.statusText || `HTTP ${response.status}`), problem?.errors ?? [])
     }
     return (text ? JSON.parse(text) : null) as T
   }

@@ -68,6 +68,14 @@ describe('createApiClient', () => {
     await expect(failure).rejects.toMatchObject({ status: 502, message: 'Bad Gateway', violations: [] })
   })
 
+  it('names the status when there is neither a problem nor a status text (http/2)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('<html>502</html>', { status: 502 }))
+    )
+    await expect(createApiClient({ baseUrl: '/api', storagePrefix: 'a' }).request('/objects')).rejects.toMatchObject({ status: 502, message: 'HTTP 502' })
+  })
+
   it('signs out on a 401 whose body is not json', async () => {
     vi.stubGlobal(
       'fetch',
