@@ -57,6 +57,32 @@ describe('createApiClient', () => {
     expect(b.getToken()).toBe('token-b')
   })
 
+  // a proxy or gateway in front of the api answers in html or plain text: the status still counts
+  it('turns an error page that is not json into an ApiError with its status', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('<html><body>Bad Gateway</body></html>', { status: 502, statusText: 'Bad Gateway' }))
+    )
+    const failure = createApiClient({ baseUrl: '/api', storagePrefix: 'a' }).request('/objects')
+    await expect(failure).rejects.toBeInstanceOf(ApiError)
+    await expect(failure).rejects.toMatchObject({ status: 502, message: 'Bad Gateway', violations: [] })
+  })
+
+  it('signs out on a 401 whose body is not json', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('Unauthorized', { status: 401, statusText: 'Unauthorized' }))
+    )
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    client.setToken('token-a')
+    const handler = vi.fn()
+    client.setOnUnauthorized(handler)
+
+    await expect(client.request('/objects')).rejects.toMatchObject({ status: 401 })
+    expect(client.getToken()).toBeNull()
+    expect(handler).toHaveBeenCalledTimes(1)
+  })
+
   it('answers undefined for a 204', async () => {
     vi.stubGlobal('fetch', answer(204))
     await expect(createApiClient({ baseUrl: '/api', storagePrefix: 'a' }).request('/objects/x', { method: 'DELETE' })).resolves.toBeUndefined()
