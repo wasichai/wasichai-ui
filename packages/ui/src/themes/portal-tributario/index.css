@@ -1,7 +1,9 @@
 /* @wasichai/ui/themes/portal-tributario.css: the portal-tributario theme's tokens, then partials that give the
    library's components the prototype's shape. each partial is @scope'd to [data-theme='portal-tributario'] (light and
-   dark never change, nor a subtree pinned to another theme) and hooked on the components' data-slot */
+   dark never change, nor a subtree pinned to another theme) and hooked on the components' data-slot (ui's and core's) */
 @import './tokens.css';
 @import './controls.css';
 @import './tables.css';
 @import './tabs.css';
+@import './alerts.css';
+@import './nav.css';

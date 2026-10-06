@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@wasichai/testing'
-import { ConfirmDialog, PageSizePagination, Pagination, PdfDialog } from '@wasichai/ui'
+import { Alert, ConfirmDialog, PageSizePagination, Pagination, PdfDialog } from '@wasichai/ui'
 import { ApiError } from '../api/client'
 
 // the ui primitives ship no words: core's common bundle does. these tests render them in Spanish, the default
@@ -156,5 +156,26 @@ describe('PdfDialog strings', () => {
   it('says the document could not be generated in English too', async () => {
     renderWithProviders(<PdfDialog title="PU" source="a" load={() => Promise.reject('nope')} onClose={noop} />, { language: 'en' })
     expect(await screen.findByRole('alert')).toHaveTextContent('The document could not be generated')
+  })
+})
+
+describe('Alert strings', () => {
+  it('names its dismiss button', () => {
+    renderWithProviders(
+      <Alert tone="notice" onDismiss={noop}>
+        Aviso.
+      </Alert>
+    )
+    expect(screen.getByRole('button', { name: 'Entendido, cerrar el aviso' })).toBeInTheDocument()
+  })
+
+  it('names it in English when the app is in English', () => {
+    renderWithProviders(
+      <Alert tone="notice" onDismiss={noop}>
+        Notice.
+      </Alert>,
+      { language: 'en' }
+    )
+    expect(screen.getByRole('button', { name: 'Got it, dismiss this notice' })).toBeInTheDocument()
   })
 })

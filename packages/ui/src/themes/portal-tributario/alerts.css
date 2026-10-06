@@ -1,0 +1,51 @@
+/* alerts: the prototype's boxes, bootstrap 3's palette, in four tones. unlayered, so they win over tailwind's
+   utilities (Alert's classic look and the classes each place gives it); hooked on Alert's data-slot and data-tone.
+   background and text are tokens (their contrast is portalTributario.test.ts's); the borders have no token. scoped to
+   the theme, and never into a subtree pinned to another theme */
+@scope ([data-theme='portal-tributario']) to ([data-theme]:not([data-theme='portal-tributario'])) {
+    [data-slot='alert'] {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 18px;
+        border: 1px solid;
+        border-radius: 3px;
+        font-size: 14.5px;
+        line-height: 1.6;
+    }
+
+    [data-slot='alert'][data-tone='success'] {
+        border-color: #d6e9c6;
+        background: var(--success-soft);
+        color: var(--success);
+    }
+
+    [data-slot='alert'][data-tone='warning'] {
+        border-color: #faebcc;
+        background: var(--warning-soft);
+        color: var(--warning);
+    }
+
+    [data-slot='alert'][data-tone='danger'] {
+        border-color: #ebccd1;
+        background: var(--danger-soft);
+        color: var(--danger);
+    }
+
+    [data-slot='alert'][data-tone='notice'] {
+        border-color: #e8e0c4;
+        background: var(--notice-soft);
+        color: var(--notice);
+    }
+
+    /* the text takes the width; the dismiss check stays at the top right */
+    [data-slot='alert-text'] {
+        flex: 1;
+        min-width: 0;
+    }
+
+    [data-slot='alert-dismiss'] {
+        margin-left: 0;
+        padding: 3px;
+    }
+}
