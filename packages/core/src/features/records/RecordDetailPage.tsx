@@ -50,7 +50,8 @@ export function RecordDetailPage() {
 
   // the record or its object failed (a link to a record deleted meanwhile is a 404): they never
   // arrive, so the loading guard below would wait for ever
-  const failed = definition.isError ? definition : record.isError ? record : null
+  // a failed refetch keeps what is on screen: only a read that never arrived replaces the page
+  const failed = definition.isError && !definition.data ? definition : record.isError && !record.data ? record : null
   if (failed) {
     return (
       <div className="p-8">

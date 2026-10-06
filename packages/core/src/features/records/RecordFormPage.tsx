@@ -19,7 +19,7 @@ export function RecordFormPage() {
   const [error, setError] = useState<string | null>(null)
 
   // an object that fails to load never arrives: say so rather than load for ever
-  if (definition.isError) {
+  if (definition.isError && !definition.data) {
     return (
       <div className="p-8">
         <ErrorState error={definition.error} onRetry={() => void definition.refetch()} />
