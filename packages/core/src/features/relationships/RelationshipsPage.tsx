@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus, Trash2 } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
-import { Button } from '@wasichai/ui'
+import { Alert, Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
@@ -142,6 +142,11 @@ export function RelationshipsPage() {
         </Card>
 
         <Card>
+          {remove.isError ? (
+            <Alert tone="danger" className="border-b border-border bg-danger-soft px-5 py-3" onDismiss={() => remove.reset()}>
+              {describeError(remove.error)}
+            </Alert>
+          ) : null}
           {isLoading ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('common.loading')}</p>
           ) : relationships.length === 0 ? (

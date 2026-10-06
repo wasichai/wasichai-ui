@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Unlink } from 'lucide-react'
-import { Button } from '@wasichai/ui'
+import { Alert, Button } from '@wasichai/ui'
 import { Card, CardHeader, CardTitle } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
+import { describeError } from '../../api/client'
 import { FieldCell } from '../field-value'
 import { useLinkRelated, useObjectDefinition, useRecords, useRelatedRecords } from '../../queries'
 import type { RelatedSide } from '../../types/metadata'
@@ -24,8 +25,11 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
   const { fieldRenderers } = useRegistry()
   const definition = useObjectDefinition(side.objectName)
   const related = useRelatedRecords(objectName, recordId, side.relationship)
+  const { link, unlink } = useLinkRelated(objectName, recordId, side.relationship)
   const columns = (definition.data?.fields ?? []).filter((field) => field.visible).slice(0, 4)
   const manyToMany = side.type === 'MANY_TO_MANY'
+  // the last link or unlink the server refused says why; the next attempt clears it
+  const refused = link.error ?? unlink.error
 
   return (
     <Card>
@@ -35,8 +39,30 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
           <Badge>{side.type}</Badge>
           <span className="text-xs text-ink-muted">{related.data?.totalElements ?? 0}</span>
         </div>
-        {manyToMany ? <LinkPicker objectName={objectName} recordId={recordId} side={side} /> : null}
+        {manyToMany ? (
+          <LinkPicker
+            side={side}
+            pending={link.isPending}
+            onLink={(otherId, done) => {
+              unlink.reset()
+              link.mutate(otherId, { onSuccess: done })
+            }}
+          />
+        ) : null}
       </CardHeader>
+
+      {refused ? (
+        <Alert
+          tone="danger"
+          className="border-b border-border bg-danger-soft px-5 py-3"
+          onDismiss={() => {
+            link.reset()
+            unlink.reset()
+          }}
+        >
+          {describeError(refused)}
+        </Alert>
+      ) : null}
 
       {related.isLoading ? (
         <p className="px-5 py-6 text-sm text-ink-muted">{t('common.loading')}</p>
@@ -65,7 +91,14 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={links.record(side.objectName, record.id)}>{t('common.edit')}</Link>
                     </Button>
-                    {manyToMany ? <UnlinkButton objectName={objectName} recordId={recordId} side={side} otherId={record.id} /> : null}
+                    {manyToMany ? (
+                      <UnlinkButton
+                        onUnlink={() => {
+                          link.reset()
+                          unlink.mutate(record.id)
+                        }}
+                      />
+                    ) : null}
                   </div>
                 </Td>
               </tr>
@@ -77,12 +110,12 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
   )
 }
 
-function LinkPicker({ objectName, recordId, side }: RelatedListProps) {
+// done: the pick is kept until the link holds, so a refused one can be tried again
+function LinkPicker({ side, pending, onLink }: { side: RelatedSide; pending: boolean; onLink: (otherId: string, done: () => void) => void }) {
   const { t } = useTranslation()
   const [selected, setSelected] = useState('')
   const candidates = useRecords(side.objectName, { size: '100' })
   const definition = useObjectDefinition(side.objectName)
-  const { link } = useLinkRelated(objectName, recordId, side.relationship)
   const labelField = definition.data?.fields.find((field) => ['TEXT', 'EMAIL', 'URL', 'ENUM'].includes(field.type))?.name
 
   return (
@@ -101,26 +134,17 @@ function LinkPicker({ objectName, recordId, side }: RelatedListProps) {
           </SelectContent>
         </Select>
       </div>
-      <Button
-        size="sm"
-        variant="secondary"
-        disabled={!selected || link.isPending}
-        onClick={() => {
-          link.mutate(selected)
-          setSelected('')
-        }}
-      >
+      <Button size="sm" variant="secondary" disabled={!selected || pending} onClick={() => onLink(selected, () => setSelected(''))}>
         {t('relationships.link')}
       </Button>
     </div>
   )
 }
 
-function UnlinkButton({ objectName, recordId, side, otherId }: RelatedListProps & { otherId: string }) {
+function UnlinkButton({ onUnlink }: { onUnlink: () => void }) {
   const { t } = useTranslation()
-  const { unlink } = useLinkRelated(objectName, recordId, side.relationship)
   return (
-    <Button variant="ghost" size="icon" aria-label={t('relationships.unlink')} onClick={() => unlink.mutate(otherId)}>
+    <Button variant="ghost" size="icon" aria-label={t('relationships.unlink')} onClick={onUnlink}>
       <Unlink className="h-4 w-4" />
     </Button>
   )

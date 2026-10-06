@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { renderWithProviders } from '@wasichai/testing'
+import userEvent from '@testing-library/user-event'
+import { mockFetch, renderWithProviders } from '@wasichai/testing'
 import type { AuthUser } from '../../types/auth'
 import { UsersPage } from './UsersPage'
 import type { AdminUser, Role } from './types'
@@ -67,6 +68,7 @@ function stubApi() {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('UsersPage', () => {
@@ -90,5 +92,21 @@ describe('UsersPage', () => {
     expect(self).toBeDisabled()
     expect(self).toHaveAttribute('title', 'No puedes desactivarte ni eliminarte a ti mismo')
     expect(other).toBeEnabled()
+  })
+
+  it('says why a delete was refused', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const fetch = mockFetch([
+      { path: '/users', body: users },
+      { path: '/roles', body: roles },
+      { method: 'DELETE', path: '/users/u-beto', status: 409, body: { title: 'Conflict', detail: 'El usuario firmó registros de solo anexado' } }
+    ])
+    try {
+      renderWithProviders(<UsersPage />, { user: signedIn })
+      await userEvent.click(await screen.findByRole('button', { name: 'Eliminar beto@wasichai.test' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('El usuario firmó registros de solo anexado')
+    } finally {
+      fetch.restore()
+    }
   })
 })

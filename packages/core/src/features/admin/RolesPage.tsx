@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
-import { Button } from '@wasichai/ui'
+import { Alert, Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
@@ -82,7 +82,7 @@ export function RolesPage() {
       return
     }
     if (window.confirm(t('admin.roles.confirmDelete', { name: role.name }))) {
-      remove.mutate(role.name)
+      remove.mutate(role.name, { onError: (cause) => setNotice(describeError(cause)) })
     }
   }
 
@@ -160,7 +160,11 @@ export function RolesPage() {
         ) : null}
 
         <Card>
-          {notice ? <p className="border-b border-border bg-brand-soft px-5 py-3 text-sm text-danger">{notice}</p> : null}
+          {notice ? (
+            <Alert tone="danger" className="border-b border-border bg-danger-soft px-5 py-3" onDismiss={() => setNotice(null)}>
+              {notice}
+            </Alert>
+          ) : null}
           {isLoading ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('common.loading')}</p>
           ) : roles.length === 0 ? (
