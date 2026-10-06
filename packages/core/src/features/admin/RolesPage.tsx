@@ -115,7 +115,11 @@ export function RolesPage() {
               </div>
 
               <div className="sm:col-span-3">
-                {createError ? <p className="mb-2 text-sm text-danger">{createError}</p> : null}
+                {createError ? (
+                  <p role="alert" className="mb-2 text-sm text-danger">
+                    {createError}
+                  </p>
+                ) : null}
                 <Button type="submit" disabled={!name.trim() || create.isPending}>
                   <Plus className="h-4 w-4" />
                   {t('common.create')}
@@ -149,7 +153,11 @@ export function RolesPage() {
                   </label>
                 </div>
                 <div className="sm:col-span-3">
-                  {editError ? <p className="mb-2 text-sm text-danger">{editError}</p> : null}
+                  {editError ? (
+                    <p role="alert" className="mb-2 text-sm text-danger">
+                      {editError}
+                    </p>
+                  ) : null}
                   <Button type="submit" disabled={update.isPending}>
                     {t('common.save')}
                   </Button>

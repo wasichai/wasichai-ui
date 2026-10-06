@@ -133,7 +133,11 @@ export function ObjectEditorPage() {
       />
 
       <div className="space-y-5 p-8">
-        {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
         {saved && !error ? <p className="rounded-md border border-success/40 bg-success/10 px-4 py-2.5 text-sm text-success">{t('objects.saved')}</p> : null}
 
         <form onSubmit={saveDetails}>

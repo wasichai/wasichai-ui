@@ -103,7 +103,11 @@ export function AppShell() {
               </option>
             ))}
           </select>
-          {prefsError ? <p className="mt-1 text-[11px] text-danger">{prefsError}</p> : null}
+          {prefsError ? (
+            <p role="alert" className="mt-1 text-[11px] text-danger">
+              {prefsError}
+            </p>
+          ) : null}
           <div className="mt-2 flex items-center gap-1">
             {languages.length > 1 ? (
               <Button variant="ghost" size="sm" className="text-shell-muted hover:text-shell-ink" onClick={() => save(setLocale(next))}>

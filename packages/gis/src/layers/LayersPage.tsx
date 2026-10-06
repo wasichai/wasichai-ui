@@ -187,7 +187,11 @@ export function LayersPage() {
                               </Button>
                             )}
                           </div>
-                          {error?.key === key ? <p className="mt-1 text-right text-xs text-danger">{error.message}</p> : null}
+                          {error?.key === key ? (
+                            <p role="alert" className="mt-1 text-right text-xs text-danger">
+                              {error.message}
+                            </p>
+                          ) : null}
                         </Td>
                       </tr>
                     )

@@ -42,7 +42,11 @@ export function WorkflowPanel({ objectName, recordId }: WorkflowPanelProps) {
         </Badge>
       </CardHeader>
       <CardBody className="space-y-3">
-        {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
 
         {available.length === 0 ? (
           <p className="text-sm text-ink-muted">{t('workflows.noTransitions')}</p>

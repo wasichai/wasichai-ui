@@ -212,7 +212,11 @@ export function PermissionsPage() {
                 </tbody>
               </Table>
               <CardBody className="border-t border-border">
-                {matrixError ? <p className="mb-2 text-sm text-danger">{matrixError}</p> : null}
+                {matrixError ? (
+                  <p role="alert" className="mb-2 text-sm text-danger">
+                    {matrixError}
+                  </p>
+                ) : null}
                 <Button onClick={submitMatrix} disabled={savePermissions.isPending}>
                   {t('admin.permissions.save')}
                 </Button>
@@ -304,7 +308,11 @@ export function PermissionsPage() {
                       </tbody>
                     </Table>
                     <CardBody className="border-t border-border">
-                      {fieldError ? <p className="mb-2 text-sm text-danger">{fieldError}</p> : null}
+                      {fieldError ? (
+                        <p role="alert" className="mb-2 text-sm text-danger">
+                          {fieldError}
+                        </p>
+                      ) : null}
                       <Button onClick={submitFields} disabled={saveFields.isPending}>
                         {t('admin.permissions.saveFields')}
                       </Button>

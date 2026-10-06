@@ -59,7 +59,11 @@ export function LoginPage() {
           </div>
         </div>
 
-        {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="mt-4 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
 
         <Button type="submit" className="mt-6 w-full" disabled={busy}>
           {busy ? t('common.loading') : t('auth.signIn')}

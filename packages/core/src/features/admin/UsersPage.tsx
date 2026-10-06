@@ -138,7 +138,11 @@ export function UsersPage() {
               </div>
 
               <div className="sm:col-span-3">
-                {createError ? <p className="mb-2 text-sm text-danger">{createError}</p> : null}
+                {createError ? (
+                  <p role="alert" className="mb-2 text-sm text-danger">
+                    {createError}
+                  </p>
+                ) : null}
                 <Button type="submit" disabled={!email || !password || create.isPending}>
                   <Plus className="h-4 w-4" />
                   {t('common.create')}
@@ -201,7 +205,11 @@ export function UsersPage() {
                 </div>
 
                 <div className="sm:col-span-3">
-                  {editError ? <p className="mb-2 text-sm text-danger">{editError}</p> : null}
+                  {editError ? (
+                    <p role="alert" className="mb-2 text-sm text-danger">
+                      {editError}
+                    </p>
+                  ) : null}
                   <Button type="submit" disabled={update.isPending || updateRoles.isPending}>
                     {t('common.save')}
                   </Button>

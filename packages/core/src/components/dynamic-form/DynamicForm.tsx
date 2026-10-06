@@ -85,7 +85,11 @@ export function DynamicForm({ definition, form, record, submitting, error, onSub
     // attributes goes last: a section can never clobber it, even though createRegistry already
     // refuses a section named 'attributes'
     <form className="space-y-5" noValidate onSubmit={handleSubmit((values) => onSubmit({ ...extra, attributes: toAttributes(modelFields, values) }))}>
-      {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
 
       {sections ? (
         <div className="space-y-6">

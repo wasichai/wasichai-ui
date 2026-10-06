@@ -89,7 +89,11 @@ export function ObjectBuilderPage() {
       />
 
       <div className="space-y-5 p-8">
-        {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
 
         <Card>
           <CardHeader>

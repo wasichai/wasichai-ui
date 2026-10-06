@@ -131,7 +131,11 @@ export function RelationshipsPage() {
               ) : null}
 
               <div className="sm:col-span-3">
-                {error ? <p className="mb-2 text-sm text-danger">{error}</p> : null}
+                {error ? (
+                  <p role="alert" className="mb-2 text-sm text-danger">
+                    {error}
+                  </p>
+                ) : null}
                 <Button type="submit" disabled={!source || !target || create.isPending}>
                   <Plus className="h-4 w-4" />
                   {t('common.create')}

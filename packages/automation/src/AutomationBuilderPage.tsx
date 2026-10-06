@@ -200,7 +200,11 @@ export function AutomationBuilderPage() {
                   </CardHeader>
                   <CardBody className="space-y-4">
                     {!selected ? <p className="text-sm text-ink-muted">{t('automations.newHint')}</p> : null}
-                    {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+                    {error ? (
+                      <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+                        {error}
+                      </p>
+                    ) : null}
                     {violations.length > 0 ? (
                       <ul className="space-y-1 text-sm text-danger">
                         {violations.map((violation) => (

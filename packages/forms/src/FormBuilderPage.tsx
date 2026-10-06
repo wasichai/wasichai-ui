@@ -161,7 +161,11 @@ export function FormBuilderPage() {
               </CardHeader>
               <CardBody className="space-y-4">
                 {draft.generated ? <p className="text-sm text-ink-muted">{t('forms.generatedHint')}</p> : null}
-                {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+                {error ? (
+                  <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+                    {error}
+                  </p>
+                ) : null}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
