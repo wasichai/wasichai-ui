@@ -12,7 +12,7 @@ const dir = join(__dirname, 'portal-tributario')
 const read = (file: string) => readFileSync(join(dir, file), 'utf8')
 
 const PORTAL = "[data-theme='portal-tributario']"
-const PARTIALS = ['controls.css', 'tables.css', 'tabs.css', 'alerts.css']
+const PARTIALS = ['controls.css', 'tables.css', 'tabs.css', 'alerts.css', 'nav.css']
 
 // a partial paints the theme's subtree, but not one pinned to another theme inside it (the printed document sheet)
 const SCOPE = `@scope (${PORTAL}) to ([data-theme]:not(${PORTAL}))`
@@ -34,7 +34,11 @@ const SLOTS = [
   'tabs-content',
   'alert',
   'alert-text',
-  'alert-dismiss'
+  'alert-dismiss',
+  'nav-tree',
+  'nav-tree-group',
+  'nav-tree-leaf',
+  'nav-tree-caret'
 ]
 const VARIANTS = ['primary', 'secondary', 'ghost', 'danger']
 const SIZES = ['sm', 'md', 'icon']
@@ -348,5 +352,50 @@ describe('alerts.css', () => {
   it('keeps AA for every tone on its box', () => {
     const pairs = ['success', 'warning', 'danger', 'notice'].map((tone): [string, string, string] => [tone, `var(--${tone})`, `var(--${tone}-soft)`])
     expect(failing(pairs)).toEqual([])
+  })
+})
+
+describe('nav.css', () => {
+  const { unlayered: css } = layers(read('nav.css'))
+  const TREE = "[data-slot='nav-tree']"
+  const part = (selector: string) => rule(css, `${TREE} ${selector}`)
+  const CURRENT = "[data-slot='nav-tree-leaf'][aria-current='page']"
+  const HOVER = "[data-slot='nav-tree-leaf']:hover"
+  const current = part(CURRENT)
+  const hover = part(HOVER)
+  const group = part("[data-slot='nav-tree-group']:hover")
+  const caret = part("[data-slot='nav-tree-caret']")
+
+  it('only styles the tree', () => {
+    const selectors = rules(css).flatMap((r) => r.selectors)
+    expect(selectors.length).toBeGreaterThan(0)
+    expect(selectors.filter((selector) => !selector.startsWith(`${TREE} `))).toEqual([])
+  })
+
+  it("pins the prototype's current leaf, hovers and carets", () => {
+    expect(current.get('color')).toBe('#0d4d80')
+    expect(current.get('background-color')).toBe('#e6e6e6')
+    expect(hover.get('background-color')).toBe('#e9e9e9')
+    expect(group.get('color')).toBe('#0d4d80')
+    expect(caret.get('color')).toBe('#555555')
+  })
+
+  // as specific as the hover, and after it: the current leaf keeps its background under the pointer
+  it('puts the current leaf after the hover', () => {
+    const selectors = rules(css).flatMap((r) => r.selectors)
+    expect(selectors.indexOf(`${TREE} ${CURRENT}`)).toBeGreaterThan(selectors.indexOf(`${TREE} ${HOVER}`))
+  })
+
+  // over the lateral (table-head): a hovered leaf, the current one and a hovered group at 4.5:1; the caret, a graphic
+  // next to its group's name, at 3:1
+  it('keeps AA over the backgrounds it paints', () => {
+    expect(
+      failing([
+        ['link on a hovered leaf', 'var(--link)', hover.get('background-color')!],
+        ['current leaf', current.get('color')!, current.get('background-color')!],
+        ['hovered group', group.get('color')!, 'var(--table-head)']
+      ])
+    ).toEqual([])
+    expect(failing([['caret', caret.get('color')!, 'var(--table-head)']], 3)).toEqual([])
   })
 })
