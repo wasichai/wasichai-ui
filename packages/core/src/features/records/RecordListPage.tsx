@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
@@ -34,6 +34,9 @@ export function RecordListPage() {
   const query = { page, search, sort, descending }
   const records = useRecords(object, viewQueryParams(view.definition, query))
   const remove = useDeleteRecord(object ?? '')
+  const resetRemove = remove.reset
+  // the page stays mounted from one object's list to the next: a refusal belongs to the list it happened on
+  useEffect(() => resetRemove(), [object, resetRemove])
 
   const columns = viewColumns(view.definition, fields)
   const active = effectiveSort(view.definition, query)
