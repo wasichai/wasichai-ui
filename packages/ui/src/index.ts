@@ -1,4 +1,5 @@
 export { cn } from './cn'
+export { Alert, type AlertProps, type AlertTone } from './alert'
 export { Button } from './button'
 export { Card, CardBody, CardHeader, CardTitle } from './card'
 export { ConfirmDialog, type ConfirmDialogProps } from './confirm-dialog'
