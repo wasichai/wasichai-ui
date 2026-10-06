@@ -154,6 +154,34 @@ is for an app with `portal-tributario`; put your own `config.themes` ids in `sch
 </script>
 ```
 
+## Tree menu (`NavTree`)
+
+A foldable tree menu for an app's own shell (srtm-ui's and caja-ui's portals): a panel headed by the way home and a
+button that folds it, a bold title, groups and subgroups that fold, and leaves in the link colour, the current one
+marked in bold with a chevron. A leaf at the root is drawn like a group, with its `icon` where a group has its caret;
+an `external` leaf is a plain `<a>` to another app, never current.
+
+```tsx
+import { Settings } from 'lucide-react'
+import { NavTree, type NavTreeNode } from '@wasichai/core'
+
+const nodes: NavTreeNode[] = [
+  { label: 'Contribuyentes', children: [{ label: 'Buscar contribuyentes', to: '/contribuyentes' }] },
+  { label: 'Administración', to: '/admin', external: true, icon: Settings }
+]
+
+<NavTree id="sidebar" label="Secciones" title="Mis trámites" nodes={nodes} homeTo="/"
+  open={open} groups={groups} onToggleGroup={toggle} onNavigate={foldOnPhone} onFold={() => setOpen(false)} />
+```
+
+The caller keeps the state: `open` hides the panel, and `groups` says which groups are folded, by their labels from the
+root joined by `/` (`Tributos/Impuesto predial`); a group not in it is open. An app extends `NavTreeLeaf` with its own
+fields, and the helpers keep that type: `navTreeLeaves(nodes)` lists the leaves, `currentNavTreeLeaf(nodes, pathname)`
+gives the current one (its own route, else one whose `alsoAt` pattern matches, else the longest start of the path),
+`isNavTreeGroup(node)` tells a group from a leaf. Its words are `common.goHome` and `common.hideMenu`. Its hooks
+(`data-slot`): `nav-tree`, `nav-tree-group`, `nav-tree-leaf`, `nav-tree-caret`; `@wasichai/ui/themes/portal-tributario.css`
+paints them.
+
 ## Backend modules are optional
 
 Core only needs the core backend. Without the pages module the record detail page is generated

@@ -2,7 +2,7 @@
 
 Module guide: [docs/modules/core.md](https://github.com/wasichai/wasichai/blob/main/docs/modules/core.md) (ui has no module doc of its own).
 
-Primitives shared by every wasichai package: `Button`, `Card*`, `Dialog*`, `Input`, `Textarea`, `Label`,
+Primitives shared by every wasichai package: `Alert`, `Button`, `Card*`, `Dialog*`, `Input`, `Textarea`, `Label`,
 `Select*`, `Table`/`Th`/`Td`/`Badge`, `Tabs`, the `cn()` class merger, the Tailwind 4 theme
 tokens (`theme.css`) and an optional theme sheet ([portal-tributario](#optional-theme-portal-tributario)).
 Four more carry the footers and dialogs every list and record screen ends up needing:
@@ -13,6 +13,11 @@ Four more carry the footers and dialogs every list and record screen ends up nee
 - `PageSizePagination`: a range footer, a rows-per-page picker, the "1–10 of 47 records" range and the arrows, for any paging
   where the caller knows the total (rows it slices itself, or a server page).
 - `PdfDialog`: a generated PDF embedded in a dialog, to see, print or download; it loads the blob itself and revokes its URL on close.
+
+`Alert` is a message in one of four tones (`success`, `warning`, `danger`, `notice`), with an optional bold `title` and,
+with `onDismiss`, a check that dismisses it. `danger` is a `role="alert"`, the others a `role="status"`. Light and dark
+draw it as text in its tone's colour; `className` adds the place's box or margins. Its dismiss label is
+`common.dismissAlert`.
 
 `ConfirmDialog` and `PdfDialog` are mounted open: they take no `open` prop, so the caller renders one only while it shows
 (`{target && <ConfirmDialog … onCancel={() => setTarget(null)} />}`) and unmounts it in `onCancel` or `onClose`. `PdfDialog`
@@ -151,6 +156,9 @@ The components carry `data-slot` attributes that a theme sheet can style:
 |                      | `native-select`  | its rows-per-page `<select>`                                                                 |
 | `ConfirmDialog`      | `confirm-dialog` | the dialog's content box (the overlay and the X are `Dialog`'s)                              |
 | `PdfDialog`          | `pdf-dialog`     | the dialog's content box                                                                     |
+| `Alert`              | `alert`          | `data-tone` (`success`, `warning`, `danger`, `notice`)                                       |
+|                      | `alert-text`     | the title and the text                                                                       |
+|                      | `alert-dismiss`  | the dismiss button                                                                           |
 | `Table`              | `table`          | on the `<table>`, not its scroll box                                                         |
 | `Th`                 | `table-head`     |                                                                                              |
 | `Td`                 | `table-cell`     |                                                                                              |
@@ -159,6 +167,8 @@ The components carry `data-slot` attributes that a theme sheet can style:
 |                      | `tabs-list`      | the `role="tablist"` strip                                                                   |
 |                      | `tabs-trigger`   | each `role="tab"`, with `aria-selected`                                                      |
 |                      | `tabs-content`   | each `role="tabpanel"`                                                                       |
+
+Core's `NavTree` carries `nav-tree`, `nav-tree-group`, `nav-tree-leaf` and `nav-tree-caret` (see `@wasichai/core`'s README).
 
 They never change `light` or `dark`: `theme.css` does not style them. A theme sheet targets them in its own scope
 (`@scope ([data-theme='<id>'])`). An unlayered rule wins over the Tailwind utilities whatever their specificity, so it
@@ -206,6 +216,11 @@ What the sheet sets, under the theme only:
   rows and the total row are defaults in `@layer base`, so a row's own class (a selected row, a hover) wins.
 - **Tabs**: folder tabs over a bordered panel. A `Card` that directly holds a `Tabs` steps aside (no border,
   background, shadow or bottom padding), so the tabs sit on the page and the panel is the box.
+- **Alerts**: the prototype's boxes, `14px 18px` at 14.5px, a 1px border and 3px corners, per tone its soft background,
+  its text and Bootstrap 3's border (`#d6e9c6`, `#faebcc`, `#ebccd1`, `#e8e0c4`), the dismiss check at the top right.
+  Over a caller's box classes (`rounded-md bg-danger/10 px-3 py-2`), the sheet's box wins.
+- **Tree menu** (`NavTree` of `@wasichai/core`): the prototype's greys, which no token has: carets `#555`, a hovered
+  group `#0d4d80`, a hovered leaf on `#e9e9e9`, the current leaf `#0d4d80` on `#e6e6e6`.
 
 The partials stop at a subtree pinned to another theme (the printed document sheet stays light); the theme's font and
 radii still reach it, since they are Tailwind theme variables, not tokens. Native radios and checkboxes, a
