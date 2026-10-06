@@ -80,7 +80,7 @@ export function DataTable({
               <Th className="w-px">
                 <input
                   type="checkbox"
-                  aria-label="select all"
+                  aria-label={t('common.selectAll')}
                   checked={selected.size === records.length && records.length > 0}
                   onChange={(event) => setSelected(event.target.checked ? new Set(records.map((r) => r.id)) : new Set())}
                 />
@@ -92,7 +92,8 @@ export function DataTable({
                     <span className="inline-flex items-center gap-1">{field.label}</span>
                   </Th>
                 ) : (
-                  <Th key={field.id}>
+                  // the arrow is drawn for the eye; aria-sort says it to a screen reader
+                  <Th key={field.id} aria-sort={sort === field.name ? (descending ? 'descending' : 'ascending') : undefined}>
                     <button type="button" className="inline-flex items-center gap-1 hover:text-ink" onClick={() => onSortChange(field.name)}>
                       {field.label}
                       {sort === field.name ? descending ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" /> : null}
@@ -104,14 +105,28 @@ export function DataTable({
             </tr>
           </thead>
           <tbody>
-            {records.map((record) => (
+            {records.map((record, index) => (
+              // the row is the way to a record, so the keyboard gets it too: Enter on the row itself,
+              // not on a control inside it
               <tr
                 key={record.id}
-                className={cn('cursor-pointer hover:bg-surface-muted', selected.has(record.id) && 'bg-brand-soft')}
+                tabIndex={0}
+                className={cn(
+                  'cursor-pointer hover:bg-surface-muted focus-visible:bg-surface-muted focus-visible:-outline-offset-2',
+                  selected.has(record.id) && 'bg-brand-soft'
+                )}
                 onClick={() => onOpen(record)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && event.target === event.currentTarget) onOpen(record)
+                }}
               >
                 <Td onClick={(event) => event.stopPropagation()}>
-                  <input type="checkbox" aria-label={`select ${record.id}`} checked={selected.has(record.id)} onChange={() => toggle(record.id)} />
+                  <input
+                    type="checkbox"
+                    aria-label={t('common.selectRow', { position: index + 1 })}
+                    checked={selected.has(record.id)}
+                    onChange={() => toggle(record.id)}
+                  />
                 </Td>
                 {shown.map((field) => (
                   <Td key={field.id}>
@@ -134,10 +149,16 @@ export function DataTable({
       {page && page.totalPages > 1 ? (
         <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
           <span className="text-xs text-ink-muted">{t('common.page', { page: page.page + 1, total: page.totalPages })}</span>
-          <Button variant="secondary" size="icon" aria-label="previous" disabled={page.page === 0} onClick={() => onPageChange(page.page - 1)}>
+          <Button variant="secondary" size="icon" aria-label={t('common.previousPage')} disabled={page.page === 0} onClick={() => onPageChange(page.page - 1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="secondary" size="icon" aria-label="next" disabled={page.page + 1 >= page.totalPages} onClick={() => onPageChange(page.page + 1)}>
+          <Button
+            variant="secondary"
+            size="icon"
+            aria-label={t('common.nextPage')}
+            disabled={page.page + 1 >= page.totalPages}
+            onClick={() => onPageChange(page.page + 1)}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

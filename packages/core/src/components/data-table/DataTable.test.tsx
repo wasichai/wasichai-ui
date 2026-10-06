@@ -116,7 +116,7 @@ describe('DataTable', () => {
   it('selects rows without opening them', async () => {
     const user = userEvent.setup()
     const props = setup()
-    await user.click(screen.getByLabelText('select r1'))
+    await user.click(screen.getByLabelText('Seleccionar fila 1'))
     expect(props.onOpen).not.toHaveBeenCalled()
     expect(screen.getByText('1 / 2')).toBeInTheDocument()
   })
@@ -124,8 +124,42 @@ describe('DataTable', () => {
   it('pages only when there is more than one page', async () => {
     const user = userEvent.setup()
     const props = setup({ page: { ...page, totalElements: 30, totalPages: 2, size: 25 } })
-    await user.click(screen.getByRole('button', { name: 'next' }))
+    await user.click(screen.getByRole('button', { name: 'Página siguiente' }))
     expect(props.onPageChange).toHaveBeenCalledWith(1)
+  })
+
+  // a row was the only way to a record, and only a pointer could use it
+  it('opens a row from the keyboard, and not from a control inside it', async () => {
+    const user = userEvent.setup()
+    const props = setup()
+    const row = screen.getByText('P-001').closest('tr') as HTMLTableRowElement
+    expect(row).toHaveAttribute('tabindex', '0')
+
+    row.focus()
+    await user.keyboard('{Enter}')
+    expect(props.onOpen).toHaveBeenCalledWith(page.content[0])
+
+    screen.getByLabelText('Seleccionar fila 1').focus()
+    await user.keyboard('{Enter}')
+    expect(props.onOpen).toHaveBeenCalledTimes(1)
+  })
+
+  it('says which column sorts the list, and which way', () => {
+    setup({ sort: 'codigo', descending: true })
+    expect(screen.getByRole('columnheader', { name: 'Código' })).toHaveAttribute('aria-sort', 'descending')
+    expect(screen.getByRole('columnheader', { name: 'Área' })).not.toHaveAttribute('aria-sort')
+  })
+
+  it('names its checkboxes and page buttons in the language of the app', () => {
+    setup({ page: { ...page, totalElements: 30, totalPages: 2, size: 25 } })
+    expect(screen.getByLabelText('Seleccionar todos')).toBeInTheDocument()
+    expect(screen.getByLabelText('Seleccionar fila 2')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Página anterior' })).toBeDisabled()
+  })
+
+  it('counts one result in the singular', () => {
+    setup({ page: { ...page, content: [page.content[0]], totalElements: 1 } })
+    expect(screen.getByText('1 resultado')).toBeInTheDocument()
   })
 
   it('shows an empty state when there are no records', () => {
