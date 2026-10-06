@@ -1,0 +1,23 @@
+/* the tree menu (NavTree of @wasichai/core), with what the prototype gives it and no token has. the component draws it
+   with tokens (bg-table-head, text-link, bg-ink/6 and /4 for the current leaf and the hover, text-ink-muted carets)
+   and marks its parts with data-slot; this pins the prototype's values. unlayered, so it beats the utilities. scoped
+   to the theme, and never into a subtree pinned to another theme */
+@scope ([data-theme='portal-tributario']) to ([data-theme]:not([data-theme='portal-tributario'])) {
+    [data-slot='nav-tree'] [data-slot='nav-tree-caret'] {
+        color: #555555;
+    }
+
+    [data-slot='nav-tree'] [data-slot='nav-tree-group']:hover {
+        color: #0d4d80;
+    }
+
+    [data-slot='nav-tree'] [data-slot='nav-tree-leaf']:hover {
+        background-color: #e9e9e9;
+    }
+
+    /* after the hover: the current leaf keeps its background under the pointer */
+    [data-slot='nav-tree'] [data-slot='nav-tree-leaf'][aria-current='page'] {
+        color: #0d4d80;
+        background-color: #e6e6e6;
+    }
+}
