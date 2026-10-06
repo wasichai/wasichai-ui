@@ -6,6 +6,7 @@ import { ApiError, describeError } from '../../api/client'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { fallbackPage } from '../../components/page-renderer/fallbackPage'
 import { PageRenderer } from '../../components/page-renderer/PageRenderer'
+import { ErrorState } from '../../components/query-state/QueryState'
 import { useObjectDefinition, useObjectRelationships, useRecord, useResolvedPage, useSaveRecord } from '../../queries'
 import { PageHeader } from '../../shell/PageHeader'
 
@@ -43,6 +44,17 @@ export function RecordDetailPage() {
         <Button variant="secondary" onClick={() => void page.refetch()}>
           {t('common.retry')}
         </Button>
+      </div>
+    )
+  }
+
+  // the record or its object failed (a link to a record deleted meanwhile is a 404): they never
+  // arrive, so the loading guard below would wait for ever
+  const failed = definition.isError ? definition : record.isError ? record : null
+  if (failed) {
+    return (
+      <div className="p-8">
+        <ErrorState error={failed.error} onRetry={() => void failed.refetch()} />
       </div>
     )
   }

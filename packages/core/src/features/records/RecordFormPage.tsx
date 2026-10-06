@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../../shell/PageHeader'
 import { Card, CardBody } from '@wasichai/ui'
 import { DynamicForm } from '../../components/dynamic-form/DynamicForm'
+import { ErrorState } from '../../components/query-state/QueryState'
 import { describeError } from '../../api/client'
 import { useObjectDefinition, useSaveRecord } from '../../queries'
 import { useWasichaiLinks } from '../../app/context'
@@ -16,6 +17,15 @@ export function RecordFormPage() {
   const definition = useObjectDefinition(object)
   const save = useSaveRecord(object ?? '')
   const [error, setError] = useState<string | null>(null)
+
+  // an object that fails to load never arrives: say so rather than load for ever
+  if (definition.isError) {
+    return (
+      <div className="p-8">
+        <ErrorState error={definition.error} onRetry={() => void definition.refetch()} />
+      </div>
+    )
+  }
 
   if (!definition.data) {
     return <p className="p-8 text-sm text-ink-muted">{t('common.loading')}</p>

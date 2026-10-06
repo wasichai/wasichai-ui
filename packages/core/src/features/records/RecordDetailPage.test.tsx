@@ -101,6 +101,13 @@ describe('RecordDetailPage', () => {
     expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument()
   })
 
+  // a link to a record deleted meanwhile (history, audit, an old tab): this read "Cargando…" for ever
+  it('says the record is gone instead of loading for ever', async () => {
+    mount([{ path: '/objects/predio/records/r1', status: 404, body: { title: 'Not Found', detail: 'Record not found' } }])
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se encontró el registro')
+    expect(screen.queryByText('Cargando…')).not.toBeInTheDocument()
+  })
+
   it('saves what the form holds and draws module panels under the page', async () => {
     const panels: WasichaiModule = { id: 'panels', recordPanels: [({ record }) => <p>{`panel ${record.id}`}</p>] }
     mount([], [panels])
