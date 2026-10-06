@@ -25,7 +25,8 @@ export function DialogContent({ className, children, ...props }: ComponentProps<
         {children}
         <DialogPrimitive.Close asChild>
           <button
-            className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-hover"
+            type="button"
+            className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-muted"
             aria-label={t('common.close')}
           >
             <X className="h-4 w-4" />
