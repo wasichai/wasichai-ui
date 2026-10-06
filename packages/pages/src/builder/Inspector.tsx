@@ -1,6 +1,7 @@
 import { useRegistry, type ActionStyle, type Form, type ObjectDefinition, type PageLayout, type RelatedSide } from '@wasichai/core'
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@wasichai/ui'
 import { Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Node } from './pageTree'
 import { actionKinds, NAVIGATE, sanitizeModulePatch, useActionKindLabel, useTypeLabel } from './registrySlots'
@@ -149,12 +150,7 @@ export function Inspector({ node, parentLayout, definition, objectName, sides, f
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="inspector-fields">{t('pages.fields')}</Label>
-            <Input
-              id="inspector-fields"
-              value={(node.fields ?? []).join(', ')}
-              disabled={Boolean(node.form)}
-              onChange={(event) => patch({ fields: parseFields(event.target.value) })}
-            />
+            <FieldsInput key={node.uid} fields={node.fields ?? null} disabled={Boolean(node.form)} onChange={(fields) => patch({ fields })} />
             <p className="text-xs text-ink-muted">{t('pages.fieldsHint')}</p>
           </div>
         </>
@@ -266,6 +262,24 @@ function ActionSettings({
         </Select>
       </div>
     </div>
+  )
+}
+
+// the node keeps the parsed list, so the input keeps the raw text: drawn from the list alone, a comma
+// being typed parsed away at once. what the node holds wins when something else changed it (a form picked)
+function FieldsInput({ fields, disabled, onChange }: { fields: string[] | null; disabled: boolean; onChange: (fields: string[] | null) => void }) {
+  const [text, setText] = useState(() => (fields ?? []).join(', '))
+  const shown = (parseFields(text) ?? []).join(',') === (fields ?? []).join(',') ? text : (fields ?? []).join(', ')
+  return (
+    <Input
+      id="inspector-fields"
+      value={shown}
+      disabled={disabled}
+      onChange={(event) => {
+        setText(event.target.value)
+        onChange(parseFields(event.target.value))
+      }}
+    />
   )
 }
 

@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { coreModule, type WasichaiModule, type FieldMeta, type ObjectDefinition } from '@wasichai/core'
+import { coreModule, type Form, type WasichaiModule, type FieldMeta, type ObjectDefinition } from '@wasichai/core'
 import { renderWithProviders } from '@wasichai/testing'
 import { pagesModule } from '../module'
 import { pinModule, stampModule } from '../test/fakeModules'
@@ -129,5 +130,48 @@ describe('Inspector module components', () => {
     const onPatch = inspect(node('ROGUE'), [rogueModule])
     await userEvent.click(screen.getByRole('button', { name: 'patch' }))
     expect(onPatch).toHaveBeenCalledWith('n1', { color: 'x' })
+  })
+})
+
+// the page applies every patch to the node, as PageBuilderPage does, so the input sees its own edits
+function Live({ initial, onNode, forms = [] }: { initial: Node; onNode: (node: Node) => void; forms?: Form[] }) {
+  const [current, setCurrent] = useState(initial)
+  return (
+    <Inspector
+      node={current}
+      parentLayout="single-column"
+      definition={definition}
+      objectName="predio"
+      sides={[]}
+      forms={forms}
+      objects={['predio']}
+      onPatch={(_uid, patch) => {
+        const next = { ...current, ...patch }
+        setCurrent(next)
+        onNode(next)
+      }}
+      onRemove={() => {}}
+    />
+  )
+}
+
+describe('Inspector FORM fields', () => {
+  it('lets a list of field names be typed, commas and all', async () => {
+    const onNode = vi.fn()
+    renderWithProviders(<Live initial={node('FORM')} onNode={onNode} />, { modules: [coreModule, pagesModule()] })
+    await userEvent.type(screen.getByLabelText('Campos (separados por coma)'), 'codigo, area')
+    expect(screen.getByLabelText('Campos (separados por coma)')).toHaveValue('codigo, area')
+    expect(onNode).toHaveBeenLastCalledWith(expect.objectContaining({ fields: ['codigo', 'area'] }))
+  })
+
+  it('shows what the node holds once something else changes it', async () => {
+    const ficha = { id: 'fm1', name: 'ficha', label: 'Ficha' } as Form
+    renderWithProviders(<Live initial={node('FORM', { fields: ['codigo'] })} onNode={vi.fn()} forms={[ficha]} />, { modules: [coreModule, pagesModule()] })
+    await userEvent.type(screen.getByLabelText('Campos (separados por coma)'), ',')
+    expect(screen.getByLabelText('Campos (separados por coma)')).toHaveValue('codigo,')
+    // a stored form takes over the fields: the node drops them, and so does the input
+    await userEvent.selectOptions(screen.getByRole('option', { name: 'Ficha' }).closest('select') as HTMLSelectElement, 'ficha')
+    expect(screen.getByLabelText('Campos (separados por coma)')).toHaveValue('')
+    expect(screen.getByLabelText('Campos (separados por coma)')).toBeDisabled()
   })
 })
