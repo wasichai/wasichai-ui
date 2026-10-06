@@ -11,11 +11,13 @@ interface FieldInputProps {
   control: Control<Values>
   register: UseFormRegister<Values>
   invalid: boolean
+  // a field the caller may not write, or a read-along form: shown, never taken
+  disabled?: boolean
 }
 
 // one switch, every object. no per-object form component exists anywhere. ADR-003.
-export function FieldInput({ field, control, register, invalid }: FieldInputProps) {
-  const common = { id: field.name, 'aria-invalid': invalid }
+export function FieldInput({ field, control, register, invalid, disabled }: FieldInputProps) {
+  const common = { id: field.name, 'aria-invalid': invalid, disabled }
 
   switch (field.type) {
     case 'LONG_TEXT':
@@ -43,6 +45,7 @@ export function FieldInput({ field, control, register, invalid }: FieldInputProp
               type="checkbox"
               className="h-4 w-4 rounded border-border"
               checked={Boolean(controlled.value)}
+              disabled={disabled}
               onChange={(event) => controlled.onChange(event.target.checked)}
             />
           )}
@@ -54,7 +57,7 @@ export function FieldInput({ field, control, register, invalid }: FieldInputProp
           control={control}
           name={field.name}
           render={({ field: controlled }) => (
-            <Select value={(controlled.value as string) ?? ''} onValueChange={controlled.onChange}>
+            <Select value={(controlled.value as string) ?? ''} onValueChange={controlled.onChange} disabled={disabled}>
               <SelectTrigger aria-invalid={invalid} id={field.name}>
                 <SelectValue placeholder="—" />
               </SelectTrigger>
@@ -75,7 +78,14 @@ export function FieldInput({ field, control, register, invalid }: FieldInputProp
           control={control}
           name={field.name}
           render={({ field: controlled }) => (
-            <RelationField target={field.relationTarget ?? ''} value={(controlled.value as string) ?? ''} onChange={controlled.onChange} />
+            <RelationField
+              id={field.name}
+              invalid={invalid}
+              disabled={disabled}
+              target={field.relationTarget ?? ''}
+              value={(controlled.value as string) ?? ''}
+              onChange={controlled.onChange}
+            />
           )}
         />
       )

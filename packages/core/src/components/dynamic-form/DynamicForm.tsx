@@ -78,7 +78,7 @@ export function DynamicForm({ definition, form, record, submitting, error, onSub
       )
     }
     if (!CORE_TYPES.has(field.type)) return <UnavailableField key={field.id} field={field} />
-    return <FieldRow key={field.id} field={field} control={control} register={register} errors={errors} />
+    return <FieldRow key={field.id} field={field} control={control} register={register} errors={errors} disabled={readOnly || !field.editable} />
   }
 
   return (
@@ -120,12 +120,15 @@ function FieldRow({
   field,
   control,
   register,
-  errors
+  errors,
+  disabled
 }: {
   field: FieldMeta
   control: Control<Record<string, unknown>>
   register: UseFormRegister<Record<string, unknown>>
   errors: FieldErrors<Record<string, unknown>>
+  // toAttributes never sends a field the caller may not write: an input that took the edit would lie
+  disabled: boolean
 }) {
   return (
     <div className="space-y-1.5">
@@ -133,7 +136,7 @@ function FieldRow({
         {field.label}
         {field.required ? <span className="ml-1 text-danger">*</span> : null}
       </Label>
-      <FieldInput field={field} control={control} register={register} invalid={Boolean(errors[field.name])} />
+      <FieldInput field={field} control={control} register={register} invalid={Boolean(errors[field.name])} disabled={disabled} />
       {field.description ? <p className="text-xs text-ink-muted">{field.description}</p> : null}
       {errors[field.name] ? <p className="text-xs text-danger">{String(errors[field.name]?.message ?? '')}</p> : null}
     </div>

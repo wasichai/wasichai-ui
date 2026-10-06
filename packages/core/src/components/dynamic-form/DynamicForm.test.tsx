@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DynamicForm } from './DynamicForm'
-import { renderWithProviders } from '@wasichai/testing'
+import { mockFetch, renderWithProviders } from '@wasichai/testing'
 import { sketchModule } from '../../test/fakeModules'
 import type { FieldMeta, Form, ObjectDefinition } from '../../types/metadata'
 
@@ -217,5 +217,55 @@ describe('DynamicForm', () => {
     )
 
     expect(screen.getByLabelText(/Código/)).toHaveValue('P-009')
+  })
+
+  // the server keeps the stored value of a field the caller may not write: a live input there
+  // took the edit, and the save that followed dropped it without a word
+  it('locks a field the caller may not write', async () => {
+    const locked: ObjectDefinition = {
+      ...definition,
+      fields: [field({ name: 'codigo', label: 'Código' }), field({ id: 'f9', name: 'valor', label: 'Valor', editable: false })]
+    }
+    renderWithProviders(
+      <DynamicForm
+        definition={locked}
+        record={{ id: 'r1', createdAt: null, updatedAt: null, attributes: { codigo: 'P-1', valor: 'fijo' } }}
+        onSubmit={onSubmit}
+      />
+    )
+    expect(screen.getByLabelText('Valor')).toBeDisabled()
+    expect(screen.getByLabelText('Valor')).toHaveValue('fijo')
+    expect(screen.getByLabelText('Código')).toBeEnabled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled())
+    expect(onSubmit.mock.calls[0][0].attributes).toEqual({ codigo: 'P-1' })
+  })
+
+  it('locks every field of a read-along form', () => {
+    renderWithProviders(<DynamicForm definition={definition} onSubmit={onSubmit} readOnly />)
+    expect(screen.getByLabelText(/Código/)).toBeDisabled()
+    expect(screen.getByLabelText(/Área/)).toBeDisabled()
+    expect(screen.getByLabelText('Uso')).toBeDisabled()
+  })
+
+  it('names a relation picker by its label and marks it invalid', async () => {
+    const fetch = mockFetch([
+      { path: '/metadata/objects/persona', body: { ...definition, name: 'persona', fields: [] } },
+      { path: '/objects/persona/records', body: { content: [], page: 0, size: 100, totalElements: 0, totalPages: 0 } }
+    ])
+    try {
+      const related: ObjectDefinition = {
+        ...definition,
+        fields: [field({ name: 'dueno', label: 'Dueño', type: 'RELATION', relationTarget: 'persona', required: true })]
+      }
+      renderWithProviders(<DynamicForm definition={related} onSubmit={onSubmit} />)
+      expect(screen.getByLabelText(/Dueño/)).toHaveAttribute('role', 'combobox')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+      await waitFor(() => expect(screen.getByLabelText(/Dueño/)).toHaveAttribute('aria-invalid', 'true'))
+    } finally {
+      fetch.restore()
+    }
   })
 })
