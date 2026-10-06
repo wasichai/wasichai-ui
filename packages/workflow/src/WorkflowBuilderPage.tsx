@@ -103,11 +103,14 @@ export function WorkflowBuilderPage() {
     })
   }
 
-  const patchTransition = (name: string, patch: Partial<WorkflowTransition>) =>
+  const patchTransition = (name: string, patch: Partial<WorkflowTransition>) => {
+    // same as a state: the selection follows a rename, or the inspector loses it after one keystroke
+    if (patch.name !== undefined && patch.name !== name) setSelection({ kind: 'transition', name: patch.name })
     patchDefinition((states, transitions) => ({
       states,
       transitions: transitions.map((transition) => (transition.name === name ? { ...transition, ...patch } : transition))
     }))
+  }
 
   const moveState = (name: string, at: XY) => patchState(name, { x: Math.round(at.x), y: Math.round(at.y) })
 

@@ -235,4 +235,13 @@ describe('WorkflowBuilderPage', () => {
     expect(state.refetch).toHaveBeenCalled()
   })
 
+  // the workflow's own panel has a 'Nombre técnico' too: losing the selection would type into it
+  it('keeps a transition open while its name is typed', async () => {
+    await open()
+    act(() => canvas().onSelectTransition('send'))
+    await userEvent.clear(screen.getByLabelText('Nombre técnico'))
+    await userEvent.type(screen.getByLabelText('Nombre técnico'), 'enviar')
+    expect(canvas().definition.transitions[0].name).toBe('enviar')
+    expect(screen.getByRole('heading', { name: 'Transición' })).toBeInTheDocument()
+  })
 })
