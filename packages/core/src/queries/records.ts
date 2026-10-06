@@ -33,6 +33,8 @@ export function useSaveRecord(objectName: string, id?: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['records', objectName] })
       if (id) void queryClient.invalidateQueries({ queryKey: ['record', objectName, id] })
+      // the update is a history entry, and the history tab stays mounted next to the form
+      if (id) void queryClient.invalidateQueries({ queryKey: ['history', objectName, id] })
       // a relation field is a link: related lists on both sides are now stale
       void queryClient.invalidateQueries({ queryKey: ['related'] })
       invalidateModules(objectName)
