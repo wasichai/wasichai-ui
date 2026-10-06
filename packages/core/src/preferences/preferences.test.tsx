@@ -171,6 +171,16 @@ describe('preferences', () => {
     expect(localStorage.getItem('wasichai-test.lang')).toBe('en')
   })
 
+  // screen readers pick their voice from <html lang>, which index.html fixed once for every language
+  it('keeps the page language in step with the language the app shows', async () => {
+    document.documentElement.lang = 'xx'
+    fetch = mockFetch([{ path: '/auth/me/preferences', body: { theme: 'system', locale: 'en' } }])
+    renderWithProviders(<LocaleProbe />, { language: 'es' })
+    expect(document.documentElement.lang).toBe('es')
+    await screen.findByText('lang:en')
+    expect(document.documentElement.lang).toBe('en')
+  })
+
   it('ignores a stored locale the app does not offer', async () => {
     fetch = mockFetch([{ path: '/auth/me/preferences', body: { theme: 'system', locale: 'fr' } }])
     renderWithProviders(<LocaleProbe />, { language: 'es' })
