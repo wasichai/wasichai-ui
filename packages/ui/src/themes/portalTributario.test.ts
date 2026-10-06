@@ -12,12 +12,12 @@ const dir = join(__dirname, 'portal-tributario')
 const read = (file: string) => readFileSync(join(dir, file), 'utf8')
 
 const PORTAL = "[data-theme='portal-tributario']"
-const PARTIALS = ['controls.css', 'tables.css', 'tabs.css']
+const PARTIALS = ['controls.css', 'tables.css', 'tabs.css', 'alerts.css']
 
 // a partial paints the theme's subtree, but not one pinned to another theme inside it (the printed document sheet)
 const SCOPE = `@scope (${PORTAL}) to ([data-theme]:not(${PORTAL}))`
 
-// the hooks the library's components put (a sheet only styles those, rule 6)
+// the hooks the library's components put (a sheet only styles those, rule 6): ui's and core's
 const SLOTS = [
   'button',
   'card',
@@ -31,10 +31,14 @@ const SLOTS = [
   'tabs',
   'tabs-list',
   'tabs-trigger',
-  'tabs-content'
+  'tabs-content',
+  'alert',
+  'alert-text',
+  'alert-dismiss'
 ]
 const VARIANTS = ['primary', 'secondary', 'ghost', 'danger']
 const SIZES = ['sm', 'md', 'icon']
+const TONES = ['success', 'warning', 'danger', 'notice']
 
 const base = readFileSync(join(__dirname, '..', 'theme.css'), 'utf8')
 const tokens = rule(read('tokens.css'), PORTAL)
@@ -150,10 +154,12 @@ describe('partials', () => {
       .join('\n')
     expect(sheet).not.toMatch(/data-ui/)
     const values = (attribute: string) => [...sheet.matchAll(new RegExp(`\\[${attribute}='([^']+)'\\]`, 'g'))].map(([, value]) => value)
-    for (const [, name] of sheet.matchAll(/\[(data-[a-z-]+)/g)) expect(['data-theme', 'data-slot', 'data-variant', 'data-size'], name).toContain(name)
+    for (const [, name] of sheet.matchAll(/\[(data-[a-z-]+)/g))
+      expect(['data-theme', 'data-slot', 'data-variant', 'data-size', 'data-tone'], name).toContain(name)
     for (const slot of values('data-slot')) expect(SLOTS, slot).toContain(slot)
     for (const variant of values('data-variant')) expect(VARIANTS, variant).toContain(variant)
     for (const size of values('data-size')) expect(SIZES, size).toContain(size)
+    for (const tone of values('data-tone')) expect(TONES, tone).toContain(tone)
   })
 })
 
@@ -300,6 +306,47 @@ describe('tabs.css', () => {
       ['hovered', rule(css, `${TRIGGER}:hover:not(:disabled)`).get('color')!, inactive.get('background')!],
       ['active', rule(css, `${TRIGGER}[aria-selected='true']`).get('color')!, 'var(--surface)']
     ]
+    expect(failing(pairs)).toEqual([])
+  })
+})
+
+describe('alerts.css', () => {
+  const { unlayered: css } = layers(read('alerts.css'))
+  const ALERT = "[data-slot='alert']"
+
+  // bootstrap 3's borders (no token); background and text are the tone's tokens
+  it.each([
+    ['success', '#d6e9c6'],
+    ['warning', '#faebcc'],
+    ['danger', '#ebccd1'],
+    ['notice', '#e8e0c4']
+  ])('paints %s with its soft background, its text and its border', (tone, border) => {
+    const box = rule(css, `${ALERT}[data-tone='${tone}']`)
+    expect(box.get('background')).toBe(`var(--${tone}-soft)`)
+    expect(box.get('color')).toBe(`var(--${tone})`)
+    expect(box.get('border-color')).toBe(border)
+  })
+
+  it('draws the box as the prototype', () => {
+    const box = rule(css, ALERT)
+    expect(box.get('display')).toBe('flex')
+    expect(box.get('padding')).toBe('14px 18px')
+    expect(box.get('border')).toBe('1px solid')
+    expect(box.get('border-radius')).toBe('3px')
+    expect(box.get('font-size')).toBe('14.5px')
+    expect(box.get('line-height')).toBe('1.6')
+  })
+
+  // the text takes the width, so the check stays at the top right
+  it('keeps the dismiss check at the top right', () => {
+    expect(rule(css, "[data-slot='alert-text']").get('flex')).toBe('1')
+    const dismiss = rule(css, "[data-slot='alert-dismiss']")
+    expect(dismiss.get('margin-left')).toBe('0')
+    expect(dismiss.get('padding')).toBe('3px')
+  })
+
+  it('keeps AA for every tone on its box', () => {
+    const pairs = ['success', 'warning', 'danger', 'notice'].map((tone): [string, string, string] => [tone, `var(--${tone})`, `var(--${tone}-soft)`])
     expect(failing(pairs)).toEqual([])
   })
 })
