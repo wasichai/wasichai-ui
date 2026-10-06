@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.0](https://github.com/wasichai/wasichai-ui/compare/v0.4.1...v0.5.0) (2026-10-06)
+
+
+### Features
+
+* Alert and NavTree go up from the portal-tributario theme ([cde8fff](https://github.com/wasichai/wasichai-ui/commit/cde8ffff2fde60b9be240f1d5784a49a6dfe46e6))
+* **core:** NavTree, a foldable tree menu ([24526e5](https://github.com/wasichai/wasichai-ui/commit/24526e5d7cf646ef522755ed8f35da52315af357))
+* **core:** the nodes of a tree menu and its current leaf ([0073621](https://github.com/wasichai/wasichai-ui/commit/0073621c7a6d1b6bdf595bdd33ecc7f0de992656))
+* **ui:** Alert, a message in one of four tones ([fb03f6f](https://github.com/wasichai/wasichai-ui/commit/fb03f6f7dcd30b851f545a3262043db57df1d15a))
+* **ui:** portal-tributario paints Alert as the prototype's boxes ([8c338bb](https://github.com/wasichai/wasichai-ui/commit/8c338bb75ee6f84cb207198ca72ce68398603b52))
+* **ui:** portal-tributario paints NavTree with the prototype's greys ([854316a](https://github.com/wasichai/wasichai-ui/commit/854316a09328011d66c87230faaa985fb4e82151))
+
+
+### Bug Fixes
+
+* **core:** a trailing slash keeps the current leaf, and the READMEs say what NavTree and Alert do ([5b613da](https://github.com/wasichai/wasichai-ui/commit/5b613dadfc5784138035fe9fa8c71525fe6f20f8))
+
 ## [0.4.1](https://github.com/wasichai/wasichai-ui/compare/v0.4.0...v0.4.1) (2026-10-03)
 
 

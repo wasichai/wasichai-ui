@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/core",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "description": "Wasichai app shell, module registry, api client, auth, i18n and the core metadata features",
     "type": "module",
     "files": [
@@ -29,8 +29,8 @@
     "dependencies": {
         "@wasichai/ui": "*",
         "@hookform/resolvers": "5.9.1",
-        "lucide-react": "^1.47.0",
-        "react-hook-form": "^7.88.0",
+        "lucide-react": "^1.51.0",
+        "react-hook-form": "^7.89.0",
         "zod": "^4.6.5"
     },
     "peerDependencies": {
@@ -53,13 +53,13 @@
         "@vitejs/plugin-react": "6.1.1",
         "i18next": "26.4.2",
         "jsdom": "30.1.1",
-        "prettier": "3.8.2",
+        "prettier": "3.9.9",
         "react": "19.3.0",
         "react-dom": "19.3.0",
         "react-i18next": "17.0.14",
         "react-router": "8.4.0",
         "typescript": "5.9.3",
         "vite": "8.3.0",
-        "vitest": "5.0.1"
+        "vitest": "5.0.2"
     }
 }
