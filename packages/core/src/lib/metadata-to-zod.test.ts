@@ -92,6 +92,12 @@ describe('DATETIME form values', () => {
     expect(stored).toBe('2026-10-06T14:30:00.000Z')
   })
 
+  it('keeps the seconds a value was stored with', () => {
+    const values = toFormValues(cita, { cita: '2026-10-06T14:30:45Z' })
+    expect(values).toEqual({ cita: '2026-10-06T09:30:45' })
+    expect(toAttributes(cita, values).cita).toBe('2026-10-06T14:30:45.000Z')
+  })
+
   it('crosses midnight into the local day', () => {
     expect(toFormValues(cita, { cita: '2026-10-07T02:15:00Z' })).toEqual({ cita: '2026-10-06T21:15' })
   })

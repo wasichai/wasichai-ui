@@ -118,5 +118,7 @@ export function toFormValues(fields: FieldMeta[], attributes: Record<string, unk
 function toLocalInput(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value.slice(0, 16)
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString()
+  // seconds written by the api or an automation are kept; the input shows minutes otherwise
+  return local.slice(17, 19) === '00' ? local.slice(0, 16) : local.slice(0, 19)
 }
