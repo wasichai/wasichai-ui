@@ -108,13 +108,15 @@ export function PageRenderer({ page, definition, record, onSubmit, submitting, e
         )
 
       case 'TABS': {
-        const open = component.children.filter((child) => draws(child, known, drawable, actionDraws))
+        // the position among every tab, drawn or not: a tab that starts drawing late (its related
+        // lists wait for the relationships) must not shift the ids, and so the open tab, of those after it
+        const open = component.children.map((child, position) => ({ child, position })).filter(({ child }) => draws(child, known, drawable, actionDraws))
         if (open.length === 0) return null
         return (
           <Tabs
             key={key}
             label={t('pages.tabs.label')}
-            tabs={open.map((child, position) => ({
+            tabs={open.map(({ child, position }) => ({
               id: `${child.title ?? 'tab'}-${position}`,
               // a generated page names its tabs with keys, because the server has no language.
               // anything an admin typed is printed as they typed it.
