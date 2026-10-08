@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.5.1](https://github.com/wasichai/wasichai-ui/compare/v0.5.0...v0.5.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* a failed save, delete or sign in is announced, not only drawn in red ([d98be71](https://github.com/wasichai/wasichai-ui/commit/d98be71db1acf757fd7f22819e56118a426786b2))
+* **core:** a DATETIME keeps its seconds through the form ([ba0c518](https://github.com/wasichai/wasichai-ui/commit/ba0c518495b85bc0aae53eca377d59b2ac7a8543))
+* **core:** a DATETIME value keeps its instant when a record is saved ([b6801a8](https://github.com/wasichai/wasichai-ui/commit/b6801a87213b8817faaf859baa0287425f1c5c7b))
+* **core:** a failed refetch keeps the record page on screen ([421cac3](https://github.com/wasichai/wasichai-ui/commit/421cac3b795f080d7dfbe8f31b5d5488c5b0c926))
+* **core:** a page that fails shows an error in its place, not a white app ([3616ac9](https://github.com/wasichai/wasichai-ui/commit/3616ac9f199fa7cb67547a6edea0857f9a72da82))
+* **core:** a record list can be read and worked from the keyboard ([765eb85](https://github.com/wasichai/wasichai-ui/commit/765eb85203c136618b4d30c47d9252a81b1a1618))
+* **core:** a record page keeps its open tab when the relationships arrive ([c9db604](https://github.com/wasichai/wasichai-ui/commit/c9db60440450c241e95512acb75db46d7dba3161))
+* **core:** a record that cannot be loaded says so instead of loading for ever ([53cbe75](https://github.com/wasichai/wasichai-ui/commit/53cbe75f45e80e32d389a5464b3fa274f1605f84))
+* **core:** a refused delete stays on the list it happened on ([157e06a](https://github.com/wasichai/wasichai-ui/commit/157e06aca7941824ed8bd98fb0b7b94845ee27d0))
+* **core:** a refused delete, link or unlink says why ([9b98592](https://github.com/wasichai/wasichai-ui/commit/9b98592f083933f38e888224aa9776392525039b))
+* **core:** an error answer that is not json still reaches the screen as an ApiError ([aa64172](https://github.com/wasichai/wasichai-ui/commit/aa64172a858d79d8a246d5fea435cf278fb49ce1))
+* **core:** an error page with no status text still says something ([58d1204](https://github.com/wasichai/wasichai-ui/commit/58d12041cca93b214617812a9dfd2c2ca6f1ada7))
+* **core:** the page says which language it is in ([5db4c7a](https://github.com/wasichai/wasichai-ui/commit/5db4c7a9b682d8eaa2500064c6046c5dd8c2fd30))
+* **core:** the record form locks the fields it would not send ([7313910](https://github.com/wasichai/wasichai-ui/commit/7313910fb2c9681ea66ca1bffa76292653882c92))
+* **core:** the record history shows a save or a link at once ([fa7ff56](https://github.com/wasichai/wasichai-ui/commit/fa7ff563796de3dbe8debbc6d28f8b88f8e7c228))
+* **documents:** a document type that cannot be deleted says why ([d75c706](https://github.com/wasichai/wasichai-ui/commit/d75c7066f7c4f2ef9b6fc1dab531aacf0e99eaa8))
+* **documents:** a refused document-type delete reads like every other refusal ([e87561c](https://github.com/wasichai/wasichai-ui/commit/e87561cddd765c46c5be72a6b0dee962dfc9ff33))
+* frontend audit, first round: DATETIME drift, silent failures, keyboard access ([31a2d53](https://github.com/wasichai/wasichai-ui/commit/31a2d536db4cbbd2e0d9c741c8c1d3d4e15b9435))
+* **pages:** the FORM component's field list can be typed again ([ff415d6](https://github.com/wasichai/wasichai-ui/commit/ff415d656e4214e1cf0fad05289ccd6dbdec3e78))
+* **ui:** a disabled select or text area looks disabled, as an input does ([ca4555e](https://github.com/wasichai/wasichai-ui/commit/ca4555e05077a409384ccedcbc1e70bf610b1142))
+* **ui:** Tabs can be worked from the keyboard, and the open tab always shows ([7d4b7b9](https://github.com/wasichai/wasichai-ui/commit/7d4b7b9e27bdd65a20268051c954f3c17176c384))
+* **ui:** the dialog's close button shows its hover, and a test keeps classes real ([7ac5263](https://github.com/wasichai/wasichai-ui/commit/7ac526325e4ddf4c25a296a93f1ab721bf468899))
+* **workflow:** a workflow that fails to load is no longer offered as a new one ([de09d69](https://github.com/wasichai/wasichai-ui/commit/de09d69f54923dbe194de69067acd2d643c87844))
+* **workflow:** renaming a transition keeps it in the inspector ([fab64cc](https://github.com/wasichai/wasichai-ui/commit/fab64cc018e9473f804e6d48db4fd89ba2ecfc9a))
+
 ## [0.5.0](https://github.com/wasichai/wasichai-ui/compare/v0.4.1...v0.5.0) (2026-10-06)
 
 
