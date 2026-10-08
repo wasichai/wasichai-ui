@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Trash2 } from 'lucide-react'
-import { ApiError, PageHeader, useDeleteForm, useForms, useObjectDefinition, useObjects, useSaveStoredForm } from '@wasichai/core'
+import { PageHeader, describeError, useDeleteForm, useForms, useObjectDefinition, useObjects, useSaveStoredForm } from '@wasichai/core'
 import type { FieldMeta, Form, FormSection } from '@wasichai/core'
 import { Badge, Button, Card, CardBody, CardHeader, CardTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 
@@ -59,8 +59,7 @@ export function FormBuilderPage() {
     patchSection(index, { fields: names })
   }
 
-  const report = (cause: unknown) =>
-    setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+  const report = (cause: unknown) => setError(describeError(cause))
 
   const submit = async () => {
     if (!draft) return
@@ -162,7 +161,11 @@ export function FormBuilderPage() {
               </CardHeader>
               <CardBody className="space-y-4">
                 {draft.generated ? <p className="text-sm text-ink-muted">{t('forms.generatedHint')}</p> : null}
-                {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+                {error ? (
+                  <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+                    {error}
+                  </p>
+                ) : null}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">

@@ -68,7 +68,11 @@ export function RecordDocuments({ objectName, recordId }: RecordDocumentsProps) 
         ) : null}
       </CardHeader>
       <CardBody className="space-y-3">
-        {error ? <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
         {documents.isLoading ? (
           <p className="text-sm text-ink-muted">{t('common.loading')}</p>
         ) : (documents.data ?? []).length === 0 ? (

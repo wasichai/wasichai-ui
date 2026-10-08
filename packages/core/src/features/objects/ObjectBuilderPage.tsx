@@ -8,7 +8,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input, Textarea } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useCreateObject, useObjects, useSystemFields } from '../../queries'
 import type { FieldType } from '../../types/metadata'
 import { addableFieldTypes, emptyFieldDraft, fieldPayload, nameTaken, type FieldDraft as SharedFieldDraft } from './objectDraft'
@@ -67,7 +67,7 @@ export function ObjectBuilderPage() {
       const created = await createObject.mutateAsync(payload)
       void navigate(links.records(created.name))
     } catch (cause) {
-      setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+      setError(describeError(cause))
     }
   }
 
@@ -89,7 +89,11 @@ export function ObjectBuilderPage() {
       />
 
       <div className="space-y-5 p-8">
-        {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
 
         <Card>
           <CardHeader>

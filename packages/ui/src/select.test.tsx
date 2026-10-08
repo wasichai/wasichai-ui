@@ -16,3 +16,18 @@ describe('SelectTrigger', () => {
     expect(trigger).toHaveClass('h-9', 'rounded-md')
   })
 })
+
+describe('SelectTrigger disabled', () => {
+  it('looks locked, as Input does', () => {
+    render(
+      <Select disabled>
+        <SelectTrigger aria-label="Estado">
+          <SelectValue placeholder="Elegir" />
+        </SelectTrigger>
+      </Select>
+    )
+    const trigger = screen.getByRole('combobox', { name: 'Estado' })
+    expect(trigger).toBeDisabled()
+    expect(trigger).toHaveClass('disabled:cursor-not-allowed', 'disabled:bg-surface-muted')
+  })
+})

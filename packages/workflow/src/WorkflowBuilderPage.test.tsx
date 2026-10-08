@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from 'react'
 import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { coreModule } from '@wasichai/core'
+import { ApiError, coreModule } from '@wasichai/core'
 import { renderWithProviders as renderBase } from '@wasichai/testing'
 import { workflowModule } from './module'
 import type { Workflow, WorkflowPayload } from './types'
@@ -19,6 +19,9 @@ const { flow, state } = vi.hoisted(() => ({
   flow: { props: null as Record<string, never> | null },
   state: {
     workflow: null as Workflow | null,
+    // what GET answered instead of a workflow: a 404 means there is none yet
+    loadError: null as unknown,
+    refetch: vi.fn(),
     save: vi.fn(),
     remove: vi.fn()
   }
@@ -58,7 +61,13 @@ vi.mock('@wasichai/ui', async (importOriginal) => {
 })
 
 vi.mock('./api', () => ({
-  useWorkflow: () => ({ data: state.workflow, isLoading: false, isError: !state.workflow }),
+  useWorkflow: () => ({
+    data: state.workflow ?? undefined,
+    isLoading: false,
+    isError: state.loadError !== null,
+    error: state.loadError,
+    refetch: state.refetch
+  }),
   useSaveWorkflow: () => ({ mutateAsync: state.save, isPending: false }),
   useDeleteWorkflow: () => ({ mutateAsync: state.remove, isPending: false })
 }))
@@ -110,6 +119,8 @@ function saved(): WorkflowPayload {
 
 beforeEach(() => {
   state.workflow = workflow
+  state.loadError = null
+  state.refetch = vi.fn()
   state.save = vi.fn()
   state.remove = vi.fn()
   flow.props = null
@@ -204,8 +215,33 @@ describe('WorkflowBuilderPage', () => {
 
   it('offers a starting point when the object has no workflow yet', async () => {
     state.workflow = null
+    state.loadError = new ApiError(404, 'Not Found')
     await open()
     expect(canvas().definition.states.map((item) => item.name)).toEqual(['draft', 'review', 'approved', 'rejected'])
     expect(screen.queryByRole('button', { name: 'Eliminar flujo' })).not.toBeInTheDocument()
+  })
+
+  // a starter there would let Save put it over the workflow the server failed to send
+  it('shows a failed load with a retry, and offers nothing to save', async () => {
+    state.workflow = null
+    state.loadError = new ApiError(500, 'Database unavailable')
+    await open()
+    expect(screen.getByRole('alert')).toHaveTextContent('No se pudo cargar')
+    expect(screen.getByRole('alert')).toHaveTextContent('Database unavailable')
+    expect(flow.props).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Guardar flujo' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(state.refetch).toHaveBeenCalled()
+  })
+
+  // the workflow's own panel has a 'Nombre técnico' too: losing the selection would type into it
+  it('keeps a transition open while its name is typed', async () => {
+    await open()
+    act(() => canvas().onSelectTransition('send'))
+    await userEvent.clear(screen.getByLabelText('Nombre técnico'))
+    await userEvent.type(screen.getByLabelText('Nombre técnico'), 'enviar')
+    expect(canvas().definition.transitions[0].name).toBe('enviar')
+    expect(screen.getByRole('heading', { name: 'Transición' })).toBeInTheDocument()
   })
 })

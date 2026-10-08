@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock, type MockRoute } from '@wasichai/testing'
@@ -99,6 +99,25 @@ describe('RecordDetailPage', () => {
     expect(await screen.findByText('boom')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument()
+  })
+
+  // a link to a record deleted meanwhile (history, audit, an old tab): this read "Cargando…" for ever
+  it('says the record is gone instead of loading for ever', async () => {
+    mount([{ path: '/objects/predio/records/r1', status: 404, body: { title: 'Not Found', detail: 'Record not found' } }])
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se encontró el registro')
+    expect(screen.queryByText('Cargando…')).not.toBeInTheDocument()
+  })
+
+  // a save or a transition invalidates the record: one failed refetch must not take the page away
+  it('keeps the record on screen when a refetch of it fails', async () => {
+    const { queryClient } = mount([])
+    expect(await screen.findByRole('button', { name: 'Guardar' })).toBeInTheDocument()
+    fetch?.restore()
+    fetch = mockFetch([{ path: '/objects/predio/records/r1', status: 502, body: { title: 'Bad Gateway' } }, ...base])
+    await act(() => queryClient.invalidateQueries({ queryKey: ['record', 'predio', 'r1'] }))
+    await waitFor(() => expect(queryClient.getQueryState(['record', 'predio', 'r1'])?.status).toBe('error'))
+    expect(screen.getByRole('button', { name: 'Guardar' })).toBeInTheDocument()
+    expect(screen.queryByText('No se pudo cargar')).not.toBeInTheDocument()
   })
 
   it('saves what the form holds and draws module panels under the page', async () => {

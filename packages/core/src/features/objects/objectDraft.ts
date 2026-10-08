@@ -1,4 +1,3 @@
-import { ApiError } from '../../api/client'
 import type { FieldRenderer } from '../../registry/contract'
 import { CORE_FIELD_TYPES, type FieldType, type SystemField, type SystemFieldScope } from '../../types/metadata'
 
@@ -71,12 +70,4 @@ export function nameTaken(name: string, fields: { name: string }[], system: Syst
 export function scopeOf(column: SystemField, hasWorkflow: boolean): SystemFieldScope {
   if (column.scope === 'WORKFLOW') return hasWorkflow ? 'ALWAYS' : 'WORKFLOW'
   return column.scope
-}
-
-// a refusal names the field or the rule that blocked it. flattening it keeps that name on screen.
-export function describeError(cause: unknown): string {
-  if (cause instanceof ApiError) {
-    return [cause.message, ...cause.violations.map((violation) => `${violation.field}: ${violation.message}`)].join(' — ')
-  }
-  return String(cause)
 }

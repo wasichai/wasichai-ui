@@ -3,20 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useAuth } from '../../auth/AuthProvider'
 import { PageHeader } from '../../shell/PageHeader'
-import { Button } from '@wasichai/ui'
+import { Alert, Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useAdminUsers, useCreateUser, useDeleteUser, useRoles, useUpdateUser, useUpdateUserRoles } from './api'
 import type { AdminUser } from './types'
 
 const CHECKBOX = 'h-4 w-4 accent-brand'
-
-function describe(cause: unknown): string {
-  return cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause)
-}
 
 export function UsersPage() {
   const { t } = useTranslation()
@@ -70,7 +66,7 @@ export function UsersPage() {
       setPassword('')
       setNewRoles([])
     } catch (cause) {
-      setCreateError(describe(cause))
+      setCreateError(describeError(cause))
     }
   }
 
@@ -89,7 +85,7 @@ export function UsersPage() {
       await updateRoles.mutateAsync({ id: editing.id, roles: editRoles })
       setEditing(null)
     } catch (cause) {
-      setEditError(describe(cause))
+      setEditError(describeError(cause))
     }
   }
 
@@ -142,7 +138,11 @@ export function UsersPage() {
               </div>
 
               <div className="sm:col-span-3">
-                {createError ? <p className="mb-2 text-sm text-danger">{createError}</p> : null}
+                {createError ? (
+                  <p role="alert" className="mb-2 text-sm text-danger">
+                    {createError}
+                  </p>
+                ) : null}
                 <Button type="submit" disabled={!email || !password || create.isPending}>
                   <Plus className="h-4 w-4" />
                   {t('common.create')}
@@ -205,7 +205,11 @@ export function UsersPage() {
                 </div>
 
                 <div className="sm:col-span-3">
-                  {editError ? <p className="mb-2 text-sm text-danger">{editError}</p> : null}
+                  {editError ? (
+                    <p role="alert" className="mb-2 text-sm text-danger">
+                      {editError}
+                    </p>
+                  ) : null}
                   <Button type="submit" disabled={update.isPending || updateRoles.isPending}>
                     {t('common.save')}
                   </Button>
@@ -216,6 +220,11 @@ export function UsersPage() {
         ) : null}
 
         <Card>
+          {remove.isError ? (
+            <Alert tone="danger" className="border-b border-border bg-danger-soft px-5 py-3" onDismiss={() => remove.reset()}>
+              {describeError(remove.error)}
+            </Alert>
+          ) : null}
           {isLoading ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('common.loading')}</p>
           ) : users.length === 0 ? (

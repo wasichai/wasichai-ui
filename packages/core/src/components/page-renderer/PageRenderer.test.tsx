@@ -197,6 +197,31 @@ describe('PageRenderer tabs', () => {
 
     expect(screen.queryByRole('tab', { name: 'Fantasma' })).not.toBeInTheDocument()
   })
+
+  // relationships answer after the page: a tab of related lists then joins the strip in front of
+  // the open one. counting only the tabs drawn so far, the open tab's id moved and its form unmounted
+  it('keeps the open tab and what was typed in it when a tab before it starts drawing', async () => {
+    const page = rootPage([
+      node('TABS', {
+        children: [
+          node('TAB', { title: 'Vecinos', children: [node('RELATED_LIST', { relationship: 'predio_vecino' })] }),
+          node('TAB', { title: 'Detalles', children: [node('FORM')] })
+        ]
+      })
+    ])
+    const { rerender } = renderWithProviders(<PageRenderer page={page} definition={definition} record={record} onSubmit={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText('Código'), '-B')
+
+    sides.push({ relationship: 'predio_vecino', label: 'Vecinos', type: 'MANY_TO_MANY', objectName: 'predio', objectLabel: 'Predio', many: true })
+    try {
+      rerender(<PageRenderer page={page} definition={definition} record={record} onSubmit={vi.fn()} />)
+      expect(screen.getByRole('tab', { name: 'Vecinos' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Detalles' })).toHaveAttribute('aria-selected', 'true')
+      expect(screen.getByLabelText('Código')).toHaveValue('P-001-B')
+    } finally {
+      sides.pop()
+    }
+  })
 })
 
 describe('PageRenderer', () => {

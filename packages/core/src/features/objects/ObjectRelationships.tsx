@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge, Table, Td, Th } from '@wasichai/ui'
 import { useCreateRelationship, useDeleteRelationship, useObjects, useRelationships, useUpdateRelationship } from '../../queries'
 import type { RelationshipType } from '../../types/metadata'
-import { describeError } from './objectDraft'
+import { describeError } from '../../api/client'
 import { sidesOf } from './relationshipSides'
 import { useWasichaiLinks } from '../../app/context'
 

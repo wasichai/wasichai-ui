@@ -14,6 +14,7 @@ export function SelectTrigger({ className, children, ...props }: ComponentProps<
       className={cn(
         'flex h-9 w-full items-center justify-between rounded-md border border-border bg-surface px-3 text-sm text-ink',
         'data-[placeholder]:text-ink-muted/60 aria-[invalid=true]:border-danger',
+        'disabled:cursor-not-allowed disabled:bg-surface-muted',
         className
       )}
       {...props}

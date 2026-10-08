@@ -8,7 +8,7 @@ import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { Badge } from '@wasichai/ui'
-import { ApiError } from '@wasichai/core'
+import { describeError } from '@wasichai/core'
 import { useDeletePage, useForms, useObjectDefinition, useObjectRelationships, useObjects, useResolvedPage, useSavePage } from '@wasichai/core'
 import type { Page, PageLayout } from '@wasichai/core'
 import { Canvas } from './builder/Canvas'
@@ -108,7 +108,7 @@ export function PageBuilderPage() {
         }
       })
     } catch (cause) {
-      setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+      setError(describeError(cause))
     }
   }
 
@@ -119,7 +119,7 @@ export function PageBuilderPage() {
     try {
       await remove.mutateAsync({ name: draft.name, objectName: draft.objectName })
     } catch (cause) {
-      setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+      setError(describeError(cause))
     }
   }
 
@@ -179,7 +179,11 @@ export function PageBuilderPage() {
               </CardHeader>
               <CardBody className="space-y-4">
                 {draft.generated ? <p className="text-sm text-ink-muted">{t('pages.generatedHint')}</p> : null}
-                {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
+                {error ? (
+                  <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+                    {error}
+                  </p>
+                ) : null}
 
                 <div className="flex items-center gap-4">
                   <TemplatePreview template={draft.template} className="w-24 shrink-0" />

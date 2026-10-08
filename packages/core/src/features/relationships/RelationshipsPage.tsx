@@ -2,13 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus, Trash2 } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
-import { Button } from '@wasichai/ui'
+import { Alert, Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useCreateRelationship, useDeleteRelationship, useObjects, useRelationships } from '../../queries'
 import type { RelationshipType } from '../../types/metadata'
 
@@ -48,7 +48,7 @@ export function RelationshipsPage() {
       setInverseLabel('')
       setFieldName('')
     } catch (cause) {
-      setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+      setError(describeError(cause))
     }
   }
 
@@ -131,7 +131,11 @@ export function RelationshipsPage() {
               ) : null}
 
               <div className="sm:col-span-3">
-                {error ? <p className="mb-2 text-sm text-danger">{error}</p> : null}
+                {error ? (
+                  <p role="alert" className="mb-2 text-sm text-danger">
+                    {error}
+                  </p>
+                ) : null}
                 <Button type="submit" disabled={!source || !target || create.isPending}>
                   <Plus className="h-4 w-4" />
                   {t('common.create')}
@@ -142,6 +146,11 @@ export function RelationshipsPage() {
         </Card>
 
         <Card>
+          {remove.isError ? (
+            <Alert tone="danger" className="border-b border-border bg-danger-soft px-5 py-3" onDismiss={() => remove.reset()}>
+              {describeError(remove.error)}
+            </Alert>
+          ) : null}
           {isLoading ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('common.loading')}</p>
           ) : relationships.length === 0 ? (

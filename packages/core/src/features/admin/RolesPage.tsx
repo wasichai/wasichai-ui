@@ -2,21 +2,17 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
-import { Button } from '@wasichai/ui'
+import { Alert, Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { describeError } from '../../api/client'
 import { useCreateRole, useDeleteRole, useRoles, useUpdateRole } from './api'
 import { grantedCount } from './permissionMatrix'
 import { PROTECTED_ROLE, type Role } from './types'
 
 const CHECKBOX = 'h-4 w-4 accent-brand'
-
-function describe(cause: unknown): string {
-  return cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause)
-}
 
 export function RolesPage() {
   const { t } = useTranslation()
@@ -58,7 +54,7 @@ export function RolesPage() {
       setLabel('')
       setOwnRecordsOnly(false)
     } catch (cause) {
-      setCreateError(describe(cause))
+      setCreateError(describeError(cause))
     }
   }
 
@@ -74,7 +70,7 @@ export function RolesPage() {
       })
       setEditing(null)
     } catch (cause) {
-      setEditError(describe(cause))
+      setEditError(describeError(cause))
     }
   }
 
@@ -86,7 +82,7 @@ export function RolesPage() {
       return
     }
     if (window.confirm(t('admin.roles.confirmDelete', { name: role.name }))) {
-      remove.mutate(role.name)
+      remove.mutate(role.name, { onError: (cause) => setNotice(describeError(cause)) })
     }
   }
 
@@ -119,7 +115,11 @@ export function RolesPage() {
               </div>
 
               <div className="sm:col-span-3">
-                {createError ? <p className="mb-2 text-sm text-danger">{createError}</p> : null}
+                {createError ? (
+                  <p role="alert" className="mb-2 text-sm text-danger">
+                    {createError}
+                  </p>
+                ) : null}
                 <Button type="submit" disabled={!name.trim() || create.isPending}>
                   <Plus className="h-4 w-4" />
                   {t('common.create')}
@@ -153,7 +153,11 @@ export function RolesPage() {
                   </label>
                 </div>
                 <div className="sm:col-span-3">
-                  {editError ? <p className="mb-2 text-sm text-danger">{editError}</p> : null}
+                  {editError ? (
+                    <p role="alert" className="mb-2 text-sm text-danger">
+                      {editError}
+                    </p>
+                  ) : null}
                   <Button type="submit" disabled={update.isPending}>
                     {t('common.save')}
                   </Button>
@@ -164,7 +168,11 @@ export function RolesPage() {
         ) : null}
 
         <Card>
-          {notice ? <p className="border-b border-border bg-brand-soft px-5 py-3 text-sm text-danger">{notice}</p> : null}
+          {notice ? (
+            <Alert tone="danger" className="border-b border-border bg-danger-soft px-5 py-3" onDismiss={() => setNotice(null)}>
+              {notice}
+            </Alert>
+          ) : null}
           {isLoading ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('common.loading')}</p>
           ) : roles.length === 0 ? (

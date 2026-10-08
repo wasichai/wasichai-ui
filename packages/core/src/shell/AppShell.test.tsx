@@ -92,7 +92,7 @@ describe('AppShell', () => {
     ])
     renderWithProviders(<AppShell />, { modules: [coreModule], language: 'en' })
     await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Theme' }), 'dark')
-    expect(await screen.findByText('boom')).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('boom')
   })
 
   it('names the app from config, or from the strings when config says nothing', () => {

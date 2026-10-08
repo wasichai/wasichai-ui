@@ -7,7 +7,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
-import { ApiError } from '@wasichai/core'
+import { ApiError, describeError } from '@wasichai/core'
 import { useObjectDefinition, useObjectRelationships, useObjects } from '@wasichai/core'
 import { useDeleteDocumentType, useDocumentTypes, useSaveDocumentType } from './api'
 import { cn } from '@wasichai/ui'
@@ -120,10 +120,17 @@ export function DocumentTypesPage() {
                       variant="ghost"
                       size="icon"
                       aria-label={t('common.delete')}
+                      disabled={remove.isPending}
                       onClick={async () => {
                         if (!window.confirm(t('documents.confirmDelete'))) return
-                        await remove.mutateAsync(draft.name)
-                        setDraft(null)
+                        setError(null)
+                        // a type that ever issued a document is refused (409): say so, keep it open
+                        try {
+                          await remove.mutateAsync(draft.name)
+                          setDraft(null)
+                        } catch (cause) {
+                          setError(describeError(cause))
+                        }
                       }}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -135,7 +142,11 @@ export function DocumentTypesPage() {
                 </div>
               </CardHeader>
               <CardBody className="space-y-4">
-                {error ? <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p> : null}
+                {error ? (
+                  <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
+                    {error}
+                  </p>
+                ) : null}
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="type-name">{t('documents.name')}</Label>

@@ -15,6 +15,25 @@ export class ApiError extends Error {
   }
 }
 
+// a refusal names the field or the rule that blocked it. flattening it keeps that name on screen.
+export function describeError(cause: unknown): string {
+  if (cause instanceof ApiError) {
+    return [cause.message, ...cause.violations.map((violation) => `${violation.field}: ${violation.message}`)].join(' — ')
+  }
+  return String(cause)
+}
+
+// problem+json, or nothing to read: a proxy or gateway in front of the api answers in html or
+// text, and parsing that threw a SyntaxError before the status was even looked at (a 401 kept its token)
+function readProblem(text: string): { detail?: string; title?: string; errors?: FieldViolation[] } | null {
+  try {
+    const body: unknown = text ? JSON.parse(text) : null
+    return body !== null && typeof body === 'object' ? body : null
+  } catch {
+    return null
+  }
+}
+
 export interface ApiClientOptions {
   baseUrl: string
   storagePrefix: string
@@ -56,16 +75,17 @@ export function createApiClient({ baseUrl, storagePrefix }: ApiClientOptions): A
 
     if (response.status === 204) return undefined as T
     const text = await response.text()
-    const body = text ? JSON.parse(text) : null
 
     if (!response.ok) {
       if (response.status === 401) {
         setToken(null)
         onUnauthorized?.()
       }
-      throw new ApiError(response.status, body?.detail ?? body?.title ?? response.statusText, body?.errors ?? [])
+      const problem = readProblem(text)
+      // http/2 sends no status text: an html 502 behind a proxy would read as an empty error
+      throw new ApiError(response.status, problem?.detail ?? problem?.title ?? (response.statusText || `HTTP ${response.status}`), problem?.errors ?? [])
     }
-    return body as T
+    return (text ? JSON.parse(text) : null) as T
   }
 
   return { baseUrl: base, keys, request, getToken, setToken, setOnUnauthorized }

@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
-import { Button } from '@wasichai/ui'
+import { Alert, Button } from '@wasichai/ui'
 import { Card } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { DataTable } from '../../components/data-table/DataTable'
 import { effectiveSort, fallbackView, pickView, viewColumns, viewQueryParams } from './viewColumns'
 import { useDeleteRecord, useObjectDefinition, useRecords, useViews } from '../../queries'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
+import { describeError } from '../../api/client'
 
 export function RecordListPage() {
   const { object } = useParams()
@@ -33,6 +34,9 @@ export function RecordListPage() {
   const query = { page, search, sort, descending }
   const records = useRecords(object, viewQueryParams(view.definition, query))
   const remove = useDeleteRecord(object ?? '')
+  const resetRemove = remove.reset
+  // the page stays mounted from one object's list to the next: a refusal belongs to the list it happened on
+  useEffect(() => resetRemove(), [object, resetRemove])
 
   const columns = viewColumns(view.definition, fields)
   const active = effectiveSort(view.definition, query)
@@ -82,6 +86,12 @@ export function RecordListPage() {
 
       <div className="p-8">
         <Card>
+          {/* a refused delete (an append-only record points at it, no permission) says why */}
+          {remove.isError ? (
+            <Alert tone="danger" className="border-b border-border bg-danger-soft px-4 py-3" onDismiss={() => remove.reset()}>
+              {describeError(remove.error)}
+            </Alert>
+          ) : null}
           <DataTable
             fields={fields}
             columns={columns.length > 0 ? columns : undefined}

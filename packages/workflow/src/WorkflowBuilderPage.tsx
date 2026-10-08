@@ -6,7 +6,7 @@ import { Button } from '@wasichai/ui'
 import { Card, CardBody } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
-import { ApiError } from '@wasichai/core'
+import { ApiError, ErrorState } from '@wasichai/core'
 import { useObjects } from '@wasichai/core'
 import { useDeleteWorkflow, useSaveWorkflow, useWorkflow } from './api'
 import { WorkflowCanvas } from './WorkflowCanvas'
@@ -33,8 +33,10 @@ export function WorkflowBuilderPage() {
 
   // react-query keeps the last good data after an error, so a fresh 404 (deleted just now)
   // would still look like a stored workflow. the error wins.
-  const missing = workflow.isError
-  const stored = missing ? undefined : workflow.data
+  // only a 404 means "none yet": a starter after a 500 would let Save overwrite the stored one
+  const missing = workflow.error instanceof ApiError && workflow.error.status === 404
+  const failed = workflow.isError && !missing
+  const stored = workflow.isError ? undefined : workflow.data
   // the server is the source of truth. no workflow yet? hand out something worth editing.
   useEffect(() => {
     if (!objectName) {
@@ -58,6 +60,9 @@ export function WorkflowBuilderPage() {
       })
     } else if (stored) {
       setDraft({ name: stored.name, label: stored.label, enabled: stored.enabled, definition: stored.definition })
+    } else {
+      // loading or failed: the draft of the last object must not be saved over this one
+      setDraft(null)
     }
     setSelection(null)
     setError(null)
@@ -98,11 +103,14 @@ export function WorkflowBuilderPage() {
     })
   }
 
-  const patchTransition = (name: string, patch: Partial<WorkflowTransition>) =>
+  const patchTransition = (name: string, patch: Partial<WorkflowTransition>) => {
+    // same as a state: the selection follows a rename, or the inspector loses it after one keystroke
+    if (patch.name !== undefined && patch.name !== name) setSelection({ kind: 'transition', name: patch.name })
     patchDefinition((states, transitions) => ({
       states,
       transitions: transitions.map((transition) => (transition.name === name ? { ...transition, ...patch } : transition))
     }))
+  }
 
   const moveState = (name: string, at: XY) => patchState(name, { x: Math.round(at.x), y: Math.round(at.y) })
 
@@ -247,13 +255,23 @@ export function WorkflowBuilderPage() {
           </CardBody>
         </Card>
 
-        {!objectName ? null : workflow.isLoading || !draft ? (
+        {!objectName ? null : failed ? (
+          <ErrorState error={workflow.error} onRetry={() => void workflow.refetch()} />
+        ) : workflow.isLoading || !draft ? (
           <p className="text-sm text-ink-muted">{t('common.loading')}</p>
         ) : (
           <>
             {!stored ? <p className="text-sm text-ink-muted">{t('workflows.newHint')}</p> : null}
-            {error ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{error}</p> : null}
-            {refusal ? <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{refusal}</p> : null}
+            {error ? (
+              <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+                {error}
+              </p>
+            ) : null}
+            {refusal ? (
+              <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+                {refusal}
+              </p>
+            ) : null}
             {violations.length > 0 ? (
               <ul className="space-y-1 text-sm text-danger">
                 {violations.map((violation) => (

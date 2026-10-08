@@ -64,7 +64,12 @@ export function useDeleteRelationship() {
 // link/unlink only apply to many-to-many; the other kinds are a field on the record
 export function useLinkRelated(objectName: string, recordId: string, relationship: string) {
   const queryClient = useQueryClient()
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['related', objectName, recordId, relationship] })
+  const invalidate = () => {
+    // both records get an UPDATE entry (ADR-031 D9), and only one of them is known here
+    void queryClient.invalidateQueries({ queryKey: ['history'] })
+    // returned: the mutation settles once the list it changed has been read again, as before
+    return queryClient.invalidateQueries({ queryKey: ['related', objectName, recordId, relationship] })
+  }
 
   return {
     link: useMutation({

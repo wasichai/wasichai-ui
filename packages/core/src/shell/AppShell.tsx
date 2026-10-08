@@ -1,10 +1,11 @@
 import { Home, LogOut } from 'lucide-react'
 import { Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
 import { Button, cn } from '@wasichai/ui'
 import { ApiError } from '../api/client'
 import { useWasichaiConfig, useWasichaiLinks, useRegistry } from '../app/context'
+import { RouteErrorBoundary } from '../app/RouteErrorBoundary'
 import { useAuth } from '../auth/AuthProvider'
 import { useSetLocale } from '../preferences/preferences'
 import { useTheme } from '../theme/ThemeProvider'
@@ -24,6 +25,7 @@ export function AppShell() {
   const links = useWasichaiLinks()
   const { preference, themes, setPreference } = useTheme()
   const setLocale = useSetLocale()
+  const { pathname } = useLocation()
   const [prefsError, setPrefsError] = useState<string | null>(null)
 
   // errors inline, like the admin pages: a failed save rolls back and says why
@@ -101,7 +103,11 @@ export function AppShell() {
               </option>
             ))}
           </select>
-          {prefsError ? <p className="mt-1 text-[11px] text-danger">{prefsError}</p> : null}
+          {prefsError ? (
+            <p role="alert" className="mt-1 text-[11px] text-danger">
+              {prefsError}
+            </p>
+          ) : null}
           <div className="mt-2 flex items-center gap-1">
             {languages.length > 1 ? (
               <Button variant="ghost" size="sm" className="text-shell-muted hover:text-shell-ink" onClick={() => save(setLocale(next))}>
@@ -117,10 +123,12 @@ export function AppShell() {
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        {/* a lazy module page loads here while the sidebar stays */}
-        <Suspense fallback={<p className="p-8 text-sm text-ink-muted">{t('common.loading')}</p>}>
-          <Outlet />
-        </Suspense>
+        {/* a lazy module page loads here while the sidebar stays, and fails here while it stays too */}
+        <RouteErrorBoundary resetKey={pathname}>
+          <Suspense fallback={<p className="p-8 text-sm text-ink-muted">{t('common.loading')}</p>}>
+            <Outlet />
+          </Suspense>
+        </RouteErrorBoundary>
       </main>
     </div>
   )

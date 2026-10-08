@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@wasichai/ui'
-import { ApiError } from '../../api/client'
+import { ApiError, describeError } from '../../api/client'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { fallbackPage } from '../../components/page-renderer/fallbackPage'
 import { PageRenderer } from '../../components/page-renderer/PageRenderer'
+import { ErrorState } from '../../components/query-state/QueryState'
 import { useObjectDefinition, useObjectRelationships, useRecord, useResolvedPage, useSaveRecord } from '../../queries'
 import { PageHeader } from '../../shell/PageHeader'
 
@@ -37,10 +38,24 @@ export function RecordDetailPage() {
   if (page.isError && !notFound) {
     return (
       <div className="space-y-4 p-8">
-        <p className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">{pageError ? pageError.message : String(page.error)}</p>
+        <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
+          {pageError ? pageError.message : String(page.error)}
+        </p>
         <Button variant="secondary" onClick={() => void page.refetch()}>
           {t('common.retry')}
         </Button>
+      </div>
+    )
+  }
+
+  // the record or its object failed (a link to a record deleted meanwhile is a 404): they never
+  // arrive, so the loading guard below would wait for ever
+  // a failed refetch keeps what is on screen: only a read that never arrived replaces the page
+  const failed = definition.isError && !definition.data ? definition : record.isError && !record.data ? record : null
+  if (failed) {
+    return (
+      <div className="p-8">
+        <ErrorState error={failed.error} onRetry={() => void failed.refetch()} />
       </div>
     )
   }
@@ -72,7 +87,7 @@ export function RecordDetailPage() {
           try {
             await save.mutateAsync(payload)
           } catch (cause) {
-            setError(cause instanceof ApiError ? [cause.message, ...cause.violations.map((v) => `${v.field}: ${v.message}`)].join(' — ') : String(cause))
+            setError(describeError(cause))
           }
         }}
       />

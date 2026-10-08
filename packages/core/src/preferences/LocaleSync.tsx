@@ -10,8 +10,13 @@ export function LocaleSync() {
   const { keys } = useApiClient()
   const { languages } = useWasichaiConfig()
   const locale = usePreferences().data?.locale ?? null
+  const language = i18n.language
   useEffect(() => {
     if (locale && languages.includes(locale) && locale !== i18n.language) void changeLanguage(i18n, keys.lang, locale)
   }, [locale, languages, i18n, keys.lang])
+  // screen readers pick their voice from <html lang>, which index.html sets once for every language
+  useEffect(() => {
+    document.documentElement.lang = language
+  }, [language])
   return null
 }
