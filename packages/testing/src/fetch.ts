@@ -12,6 +12,8 @@ export interface RecordedCall {
   // url minus the api base url
   path: string
   body: unknown
+  // lower-cased names, as fetch's Headers keeps them
+  headers: Record<string, string>
 }
 
 export interface FetchMock {
@@ -35,7 +37,8 @@ export function mockFetch(routes: MockRoute[], options: { baseUrl?: string } = {
     const method = (init.method ?? 'GET').toUpperCase()
     const path = url.startsWith(baseUrl) ? url.slice(baseUrl.length) : url
     const body = typeof init.body === 'string' && init.body ? JSON.parse(init.body) : null
-    calls.push({ method, url, path, body })
+    const headers = Object.fromEntries(new Headers(init.headers).entries())
+    calls.push({ method, url, path, body, headers })
 
     const bare = path.split('?')[0]
     const route = routes.find(

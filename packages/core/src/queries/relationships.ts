@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
+import { changeReasonHeader } from '../lib/changeReason'
 import type { Paged, RecordItem, RelatedSide, Relationship } from '../types/metadata'
 
 export function useRelationships() {
@@ -61,6 +62,10 @@ export function useDeleteRelationship() {
   })
 }
 
+export type LinkRelatedInput = string | { otherId: string; reason?: string | null }
+
+const linkInput = (input: LinkRelatedInput) => (typeof input === 'string' ? { otherId: input, reason: undefined } : input)
+
 // link/unlink only apply to many-to-many; the other kinds are a field on the record
 export function useLinkRelated(objectName: string, recordId: string, relationship: string) {
   const queryClient = useQueryClient()
@@ -73,15 +78,24 @@ export function useLinkRelated(objectName: string, recordId: string, relationshi
 
   return {
     link: useMutation({
-      mutationFn: (otherId: string) =>
-        api<void>(`/objects/${objectName}/records/${recordId}/related/${relationship}`, {
+      mutationFn: (input: LinkRelatedInput) => {
+        const { otherId, reason } = linkInput(input)
+        return api<void>(`/objects/${objectName}/records/${recordId}/related/${relationship}`, {
           method: 'POST',
-          body: JSON.stringify({ otherId })
-        }),
+          body: JSON.stringify({ otherId }),
+          headers: changeReasonHeader(reason)
+        })
+      },
       onSuccess: invalidate
     }),
     unlink: useMutation({
-      mutationFn: (otherId: string) => api<void>(`/objects/${objectName}/records/${recordId}/related/${relationship}/${otherId}`, { method: 'DELETE' }),
+      mutationFn: (input: LinkRelatedInput) => {
+        const { otherId, reason } = linkInput(input)
+        return api<void>(`/objects/${objectName}/records/${recordId}/related/${relationship}/${otherId}`, {
+          method: 'DELETE',
+          headers: changeReasonHeader(reason)
+        })
+      },
       onSuccess: invalidate
     })
   }
