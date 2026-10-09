@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { resolveConfig } from '../app/config'
 import en from '../i18n/locales/en/common.json'
 import es from '../i18n/locales/es/common.json'
-import { availableThemes, BUILT_IN_THEMES, PORTAL_TRIBUTARIO_THEME, resolveTheme } from './themes'
+import { availableThemes, BUILT_IN_THEMES, PORTAL_TRIBUTARIO_THEME, resolveTheme, type ThemeDefinition } from './themes'
 
 // same trick as boundaries.test.ts: vite rewrites `new URL(_, import.meta.url)`, not import.meta.dirname
 const SHEET = join(import.meta.dirname, '..', '..', '..', 'ui', 'src', 'themes', 'portal-tributario', 'tokens.css')
@@ -37,5 +37,37 @@ describe('PORTAL_TRIBUTARIO_THEME', () => {
 
   it('pairs with the @wasichai/ui sheet that styles its id', () => {
     expect(readFileSync(SHEET, 'utf8')).toContain(`[data-theme='${PORTAL_TRIBUTARIO_THEME.id}']`)
+  })
+})
+
+const PINO: ThemeDefinition = { id: 'sgspe-pino', label: 'theme.pino', colorScheme: 'light' }
+const NOCHE: ThemeDefinition = { id: 'sgspe-noche', label: 'theme.noche', colorScheme: 'dark' }
+const PAIR = { light: 'sgspe-pino', dark: 'sgspe-noche' }
+
+describe('resolveTheme with systemThemes', () => {
+  const themes = availableThemes({ themes: [PINO, NOCHE] })
+
+  it('sends system to the configured pair', () => {
+    expect(resolveTheme('system', themes, false, PAIR)).toBe(PINO)
+    expect(resolveTheme('system', themes, true, PAIR)).toBe(NOCHE)
+  })
+
+  it('sends an unknown id to the configured pair', () => {
+    expect(resolveTheme('sepia', themes, false, PAIR)).toBe(PINO)
+    expect(resolveTheme('sepia', themes, true, PAIR)).toBe(NOCHE)
+  })
+
+  it('still honours a picked built-in', () => {
+    expect(resolveTheme('light', themes, true, PAIR).id).toBe('light')
+    expect(resolveTheme('dark', themes, false, PAIR).id).toBe('dark')
+  })
+
+  it('falls to light and dark without a pair', () => {
+    expect(resolveTheme('system', themes, false).id).toBe('light')
+    expect(resolveTheme('system', themes, true).id).toBe('dark')
+  })
+
+  it('falls to the first theme when the list lacks the pair', () => {
+    expect(resolveTheme('system', BUILT_IN_THEMES, true, PAIR).id).toBe('light')
   })
 })

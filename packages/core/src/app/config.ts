@@ -1,4 +1,4 @@
-import { availableThemes, type ThemeDefinition } from '../theme/themes'
+import { availableThemes, type SystemThemes, type ThemeDefinition } from '../theme/themes'
 
 export interface WasichaiConfig {
   // where the REST api lives: '/api', 'https://host/api'. a trailing slash is dropped
@@ -16,6 +16,8 @@ export interface WasichaiConfig {
   defaultLoginEmail: string
   // extra themes; light and dark are always there
   themes?: ThemeDefinition[]
+  // which themes "system" (and an unknown id) resolves to. unset = light / dark
+  systemThemes?: SystemThemes
 }
 
 export const DEFAULT_CONFIG: WasichaiConfig = {
@@ -42,8 +44,17 @@ export function resolveConfig(config: Partial<WasichaiConfig> = {}): WasichaiCon
   const merged: WasichaiConfig = { ...DEFAULT_CONFIG, ...given }
   if (merged.languages.length === 0) throw new Error('wasichai: config.languages needs at least one language')
   if (!merged.storagePrefix.trim()) throw new Error('wasichai: config.storagePrefix must not be empty')
-  const ids = availableThemes(merged).map((theme) => theme.id)
+  const themes = availableThemes(merged)
+  const ids = themes.map((theme) => theme.id)
   const repeated = ids.find((id, index) => ids.indexOf(id) !== index)
   if (repeated) throw new Error(`wasichai: theme '${repeated}' is defined twice`)
+  if (merged.systemThemes) {
+    for (const side of ['light', 'dark'] as const) {
+      const id = merged.systemThemes[side]
+      const theme = themes.find((candidate) => candidate.id === id)
+      if (!theme) throw new Error(`wasichai: config.systemThemes.${side} '${id}' is not one of the app's themes`)
+      if (theme.colorScheme !== side) throw new Error(`wasichai: config.systemThemes.${side} '${id}' is a ${theme.colorScheme} theme`)
+    }
+  }
   return { ...merged, apiBaseUrl: merged.apiBaseUrl.replace(/\/+$/, '') }
 }
