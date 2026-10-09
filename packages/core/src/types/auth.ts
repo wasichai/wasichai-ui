@@ -11,4 +11,6 @@ export interface AuthUser {
 export interface CallerPermissions {
   admin: boolean
   objects: Record<string, string[]>
+  // tenant-wide actions held with no object (ADR-053). absent on an older server
+  capabilities?: string[]
 }

@@ -1,8 +1,9 @@
-import { Boxes, Database, FileStack, KeyRound, Shield, Users } from 'lucide-react'
+import { Bot, Boxes, Database, FileStack, KeyRound, Shield, Users } from 'lucide-react'
 import { LoginPage } from '../auth/LoginPage'
 import { AuditPage } from '../features/admin/AuditPage'
 import { PermissionsPage } from '../features/admin/PermissionsPage'
 import { RolesPage } from '../features/admin/RolesPage'
+import { ServiceAccountsPage } from '../features/admin/ServiceAccountsPage'
 import { UsersPage } from '../features/admin/UsersPage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { ObjectBuilderPage } from '../features/objects/ObjectBuilderPage'
@@ -14,6 +15,12 @@ import { RecordListPage } from '../features/records/RecordListPage'
 import { RelationshipsPage } from '../features/relationships/RelationshipsPage'
 import { CORE_MODULE_ID, CORE_ROUTE_PATHS } from '../links/links'
 import type { WasichaiModule } from '../registry/contract'
+import type { CallerPermissions } from '../types/auth'
+
+// an older server sends no capabilities: show the entry and let its 403 decide
+function canManageOrganization(permissions: CallerPermissions | null): boolean {
+  return permissions !== null && (permissions.admin || permissions.capabilities === undefined || permissions.capabilities.includes('MANAGE_ORGANIZATION'))
+}
 
 // core is a module like the others: its screens, its sidebar. WasichaiApp registers it first.
 // the builder and automation groups are declared here so every module that fills them shares one.
@@ -38,7 +45,8 @@ export const coreModule: WasichaiModule = {
     { id: 'users', path: CORE_ROUTE_PATHS.users, component: UsersPage },
     { id: 'roles', path: CORE_ROUTE_PATHS.roles, component: RolesPage },
     { id: 'permissions', path: CORE_ROUTE_PATHS.permissions, component: PermissionsPage },
-    { id: 'audit', path: CORE_ROUTE_PATHS.audit, component: AuditPage }
+    { id: 'audit', path: CORE_ROUTE_PATHS.audit, component: AuditPage },
+    { id: 'serviceAccounts', path: CORE_ROUTE_PATHS.serviceAccounts, component: ServiceAccountsPage }
   ],
   nav: [
     { group: 'data', labelKey: 'nav.objects', order: 10, icon: Boxes, route: 'objects' },
@@ -46,6 +54,7 @@ export const coreModule: WasichaiModule = {
     { group: 'data', labelKey: 'nav.relationships', order: 30, icon: FileStack, route: 'relationships' },
     { group: 'administration', labelKey: 'nav.users', order: 10, icon: Users, route: 'users' },
     { group: 'administration', labelKey: 'nav.roles', order: 20, icon: Shield, route: 'roles' },
+    { group: 'administration', labelKey: 'nav.serviceAccounts', order: 25, icon: Bot, route: 'serviceAccounts', visible: canManageOrganization },
     { group: 'administration', labelKey: 'nav.permissions', order: 30, icon: KeyRound, route: 'permissions' },
     { group: 'administration', labelKey: 'nav.audit', order: 40, route: 'audit' }
   ]

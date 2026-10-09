@@ -17,7 +17,8 @@ export const CORE_ROUTE_PATHS = {
   users: 'admin/users',
   roles: 'admin/roles',
   permissions: 'admin/permissions',
-  audit: 'admin/audit'
+  audit: 'admin/audit',
+  serviceAccounts: 'admin/service-accounts'
 } as const
 
 export type CoreRouteId = keyof typeof CORE_ROUTE_PATHS
@@ -46,6 +47,7 @@ export interface WasichaiLinks {
   roles(): string
   permissions(): string
   audit(): string
+  serviceAccounts(): string
 }
 
 function withSearch(path: string, search?: Record<string, string>): string {
@@ -76,6 +78,7 @@ export function createLinks(registry: WasichaiRegistry): WasichaiLinks {
     users: () => core('users'),
     roles: () => core('roles'),
     permissions: () => core('permissions'),
-    audit: () => core('audit')
+    audit: () => core('audit'),
+    serviceAccounts: () => core('serviceAccounts')
   }
 }

@@ -253,6 +253,19 @@ Errors: `api()` rejects with an `ApiError` (`status`, `message`, `violations`). 
 the line every core screen shows for a refusal, `message — field: reason — …`, and `String(cause)` for anything
 else. `formError(cause)` splits it for a form instead: `{ message, violations }`, each violation drawn under its field.
 
+## Administration
+
+Core mounts the tenant's admin screens under `/admin`, in the sidebar's `administration` group: users
+(`users()`), roles (`roles()`), service accounts (`serviceAccounts()`), permissions (`permissions()`) and audit
+(`audit()`). Each is also exported (`UsersPage`, `RolesPage`, `ServiceAccountsPage`, `PermissionsPage`, `AuditPage`).
+
+`ServiceAccountsPage` administers the server-to-server callers of the tenant (ADR-043): create one with a name and
+roles (never `ADMIN`), change its roles, disable or enable it, rotate its secret, delete it. The secret is shown once,
+right after create or rotate, and only kept in the page's state until "I saved it"; it is never left in the
+react-query cache. Disable, rotate and delete ask first. The sidebar entry shows when `GET /api/auth/me/permissions`
+lists `MANAGE_ORGANIZATION` in `capabilities` (ADR-053) or the caller is the administrator; a server that sends no
+`capabilities` gets the entry anyway and its `403` decides.
+
 ## Write rules and change reason
 
 An object definition carries three write rules (backend 0.3.0; an older server sends none, read as `false`):

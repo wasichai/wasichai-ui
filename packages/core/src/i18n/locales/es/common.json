@@ -15,7 +15,8 @@
         "users": "Usuarios",
         "roles": "Roles",
         "permissions": "Permisos",
-        "audit": "Auditoría"
+        "audit": "Auditoría",
+        "serviceAccounts": "Cuentas de servicio"
     },
     "auth": {
         "signIn": "Iniciar sesión",
