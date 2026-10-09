@@ -1,18 +1,9 @@
 import { useEffect, useRef } from 'react'
-import {
-  GeoJSONSource,
-  Map as MapLibreMap,
-  NavigationControl,
-  Popup,
-  RasterTileSource,
-  ScaleControl,
-  setWorkerUrl,
-  type MapLayerMouseEvent,
-  type StyleSpecification
-} from 'maplibre-gl'
+import { GeoJSONSource, Map as MapLibreMap, NavigationControl, Popup, RasterTileSource, ScaleControl, setWorkerUrl, type MapLayerMouseEvent } from 'maplibre-gl'
 import { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { WMS_TILE_SIZE, wmsTileUrl } from '../lib/wms'
+import { DEFAULT_BASEMAP, DEFAULT_INITIAL_VIEW, basemapStyle, type BasemapSpec, type MapInitialView } from '../lib/basemap'
 import { boundsOf } from '../lib/geo'
 import { popupHtml } from '../lib/popup'
 import { applyMapWorkerUrl } from '../lib/mapWorker'
@@ -22,20 +13,6 @@ import type { Feature, FeatureCollection, GeoJsonGeometry } from '../types'
 const SOURCE = 'wasichai-features'
 // wms layers get their own id namespace so we can find ours again in the style
 const WMS_PREFIX = 'wasichai-wms-'
-
-// raster OSM basemap. swap for WMS/WMTS/vector tiles later without touching callers.
-const BASE_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors'
-    }
-  },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
-}
 
 export interface WmsLayerSpec {
   id: string
@@ -50,10 +27,14 @@ export interface MapViewProps {
   onDrawChange?: (geometry: GeoJsonGeometry | null) => void
   onFeatureClick?: (feature: Feature) => void
   wmsLayers?: WmsLayerSpec[]
+  // what the map draws under everything else. default: the OpenStreetMap raster
+  basemap?: BasemapSpec
+  // camera before features arrive. read once, when the map is built
+  initialView?: MapInitialView
   className?: string
 }
 
-export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, onFeatureClick, wmsLayers, className }: MapViewProps) {
+export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, onFeatureClick, wmsLayers, basemap, initialView, className }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MapLibreMap | null>(null)
   const draw = useRef<TerraDraw | null>(null)
@@ -68,6 +49,11 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
   const wms = useRef<WmsLayerSpec[]>([])
   wms.current = wmsLayers ?? []
   const wmsKey = JSON.stringify(wms.current)
+  // the build effect runs once: it reads the latest spec and view from refs
+  const basemapRef = useRef<BasemapSpec>(DEFAULT_BASEMAP)
+  basemapRef.current = basemap ?? DEFAULT_BASEMAP
+  const view = useRef<MapInitialView>(DEFAULT_INITIAL_VIEW)
+  view.current = initialView ?? DEFAULT_INITIAL_VIEW
 
   const whenReady = (task: () => void) => {
     if (ready.current) task()
@@ -79,9 +65,9 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
     applyMapWorkerUrl(setWorkerUrl)
     const instance = new MapLibreMap({
       container: container.current,
-      style: BASE_STYLE,
-      center: [-77.04, -12.05],
-      zoom: 11,
+      style: basemapStyle(basemapRef.current),
+      center: view.current.center,
+      zoom: view.current.zoom,
       attributionControl: { compact: true }
     })
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-right')
