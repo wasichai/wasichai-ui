@@ -38,7 +38,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [local, setLocal] = useState(() => localStorage.getItem(keys.theme) ?? SYSTEM_THEME)
   const preference = stored.data?.theme ?? local
   const dark = useSyncExternalStore(subscribeSystem, systemDark, () => false)
-  const theme = resolveTheme(preference, themes, dark)
+  const theme = resolveTheme(preference, themes, dark, config.systemThemes)
 
   // layout effect: before paint, so a switch never shows one frame of the old theme
   useLayoutEffect(() => {

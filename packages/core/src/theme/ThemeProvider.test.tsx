@@ -3,7 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
 import { useTheme } from './ThemeProvider'
-import { resolveTheme, BUILT_IN_THEMES } from './themes'
+import { resolveTheme, BUILT_IN_THEMES, type ThemeDefinition } from './themes'
+
+const PINO: ThemeDefinition = { id: 'sgspe-pino', label: 'theme.pino', colorScheme: 'light' }
+const NOCHE: ThemeDefinition = { id: 'sgspe-noche', label: 'theme.noche', colorScheme: 'dark' }
+const SGSPE = { themes: [PINO, NOCHE], systemThemes: { light: 'sgspe-pino', dark: 'sgspe-noche' } }
 
 function Probe() {
   const { preference, theme, setPreference } = useTheme()
@@ -89,5 +93,35 @@ describe('ThemeProvider', () => {
     localStorage.setItem('wasichai-test.theme', 'sepia')
     renderWithProviders(<Probe />)
     expect(screen.getByText('sepia:light')).toBeInTheDocument()
+  })
+
+  it('applies systemThemes.light before paint when nothing is stored', () => {
+    renderWithProviders(<Probe />, { config: SGSPE })
+    // no await: the layout effect ran inside render, before the browser could paint
+    expect(screen.getByText('system:sgspe-pino')).toBeInTheDocument()
+    expect(document.documentElement.dataset.theme).toBe('sgspe-pino')
+    expect(document.documentElement.style.colorScheme).toBe('light')
+  })
+
+  it('follows the os between the systemThemes pair', () => {
+    const os = stubMatchMedia(false)
+    renderWithProviders(<Probe />, { config: SGSPE })
+    act(() => os.flip(true))
+    expect(document.documentElement.dataset.theme).toBe('sgspe-noche')
+    expect(document.documentElement.style.colorScheme).toBe('dark')
+  })
+
+  it('reads an unknown stored id as the systemThemes pair', () => {
+    localStorage.setItem('wasichai-test.theme', 'sepia')
+    renderWithProviders(<Probe />, { config: SGSPE })
+    expect(screen.getByText('sepia:sgspe-pino')).toBeInTheDocument()
+  })
+
+  it('lands the api default system on the pair over a local copy', async () => {
+    fetch = mockFetch([{ path: '/auth/me/preferences', body: { theme: 'system', locale: null } }])
+    localStorage.setItem('wasichai-test.theme', 'dark')
+    renderWithProviders(<Probe />, { config: SGSPE })
+    expect(await screen.findByText('system:sgspe-pino')).toBeInTheDocument()
+    expect(document.documentElement.dataset.theme).toBe('sgspe-pino')
   })
 })
