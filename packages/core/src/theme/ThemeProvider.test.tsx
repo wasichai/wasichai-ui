@@ -103,6 +103,14 @@ describe('ThemeProvider', () => {
     expect(document.documentElement.style.colorScheme).toBe('light')
   })
 
+  it('applies systemThemes.dark on first render when the os is dark', () => {
+    stubMatchMedia(true)
+    renderWithProviders(<Probe />, { config: SGSPE })
+    expect(screen.getByText('system:sgspe-noche')).toBeInTheDocument()
+    expect(document.documentElement.dataset.theme).toBe('sgspe-noche')
+    expect(document.documentElement.style.colorScheme).toBe('dark')
+  })
+
   it('follows the os between the systemThemes pair', () => {
     const os = stubMatchMedia(false)
     renderWithProviders(<Probe />, { config: SGSPE })

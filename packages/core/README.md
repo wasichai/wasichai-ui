@@ -45,7 +45,7 @@ createRoot(document.getElementById('root')!).render(
 | `basename` | – | router basename when not served from `/` |
 | `defaultLoginEmail` | `''` | login form prefill (demo apps) |
 | `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there, see [Themes](#themes-and-preferences) |
-| `systemThemes` | `{ light: 'light', dark: 'dark' }` | the themes `system` (and an unknown stored id) resolves to on a light and on a dark OS; each must be a theme of that `colorScheme`, see [Themes](#themes-and-preferences) |
+| `systemThemes` | `{ light: 'light', dark: 'dark' }` | what `system` and an unknown id resolve to on a light / dark OS, see [Themes](#themes-and-preferences) |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -161,7 +161,8 @@ own `config.themes` ids in `schemes`.
   // system and an unknown id (an old build, another app's theme) follow the os to config.systemThemes, as core's resolveTheme does
   try {
     const schemes = { light: 'light', dark: 'dark', 'portal-tributario': 'light' }
-    const system = { light: 'light', dark: 'dark' } // config.systemThemes; light / dark when unset
+    // config.systemThemes; light / dark when unset. both ids must also be keys of schemes
+    const system = { light: 'light', dark: 'dark' }
     const stored = localStorage.getItem('wasichai.theme')
     const dark = matchMedia('(prefers-color-scheme: dark)').matches
     const theme = stored && Object.hasOwn(schemes, stored) ? stored : system[dark ? 'dark' : 'light']
