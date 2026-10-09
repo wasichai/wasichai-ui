@@ -303,6 +303,11 @@ the reason) and keeps a violation naming no drawn field in the banner. `PageRend
 no save on an append-only or api-only object; the detail page says why, and the new-record page draws no form on an
 api-only object.
 
+The record list hides **Nuevo registro** on an api-only object and the row delete on an append-only or api-only one,
+saying why; with `requiresReason` its delete asks for the reason in place of the plain confirmation. `RelatedList`
+(many-to-many) asks for the reason before a link or an unlink when either end requires one, holds both while the two
+definitions load, and replaces picker and unlink with a notice when either end is append-only or api-only.
+
 ## Adding a language / overriding strings
 
 Every module ships `es` and `en` (core's own strings too). A module's `i18n` is just

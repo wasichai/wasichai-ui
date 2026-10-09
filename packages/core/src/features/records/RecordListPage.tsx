@@ -11,6 +11,9 @@ import { effectiveSort, fallbackView, pickView, viewColumns, viewQueryParams } f
 import { useDeleteRecord, useObjectDefinition, useRecords, useViews } from '../../queries'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { describeError } from '../../api/client'
+import { useReasonPrompt } from '../../components/reason/useReasonPrompt'
+import { WritePolicyNotice } from '../../components/reason/WritePolicyNotice'
+import { writePolicy } from '../../lib/writePolicy'
 
 export function RecordListPage() {
   const { object } = useParams()
@@ -34,6 +37,8 @@ export function RecordListPage() {
   const query = { page, search, sort, descending }
   const records = useRecords(object, viewQueryParams(view.definition, query))
   const remove = useDeleteRecord(object ?? '')
+  const prompt = useReasonPrompt()
+  const policy = writePolicy(definition.data)
   const resetRemove = remove.reset
   // the page stays mounted from one object's list to the next: a refusal belongs to the list it happened on
   useEffect(() => resetRemove(), [object, resetRemove])
@@ -74,17 +79,21 @@ export function RecordListPage() {
               </div>
             ) : null}
             {loaded && object ? recordListActions.map((ListAction, index) => <ListAction key={index} objectName={object} definition={loaded} />) : null}
-            <Button asChild>
-              <Link to={links.newRecord(object ?? '')}>
-                <Plus className="h-4 w-4" />
-                {t('records.new')}
-              </Link>
-            </Button>
+            {policy.canCreate ? (
+              <Button asChild>
+                <Link to={links.newRecord(object ?? '')}>
+                  <Plus className="h-4 w-4" />
+                  {t('records.new')}
+                </Link>
+              </Button>
+            ) : null}
           </>
         }
       />
 
-      <div className="p-8">
+      <div className="space-y-4 p-8">
+        {/* append-only or api-only: says why a button the server would refuse is missing */}
+        <WritePolicyNotice policy={policy} />
         <Card>
           {/* a refused delete (an append-only record points at it, no permission) says why */}
           {remove.isError ? (
@@ -112,12 +121,24 @@ export function RecordListPage() {
             }}
             onPageChange={setPage}
             onOpen={(record) => void navigate(links.record(object ?? '', record.id))}
-            onDelete={(record) => {
-              if (window.confirm(t('common.confirmDelete'))) remove.mutate(record.id)
-            }}
+            onDelete={
+              policy.canDelete
+                ? (record) => {
+                    // the reason dialog is the confirmation: no second question
+                    if (policy.requiresReason)
+                      prompt.withReason((reason) => remove.mutateAsync({ id: record.id, reason }), {
+                        required: true,
+                        title: t('common.confirmDelete'),
+                        confirmLabel: t('common.delete')
+                      })
+                    else if (window.confirm(t('common.confirmDelete'))) remove.mutate(record.id)
+                  }
+                : undefined
+            }
           />
         </Card>
       </div>
+      {prompt.dialog}
     </>
   )
 }
