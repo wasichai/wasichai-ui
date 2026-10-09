@@ -177,5 +177,28 @@
     "views": {
         "pick": "Pick a view",
         "selector": "View"
+    },
+    "reason": {
+        "title": "Reason for the change",
+        "description": "This object asks for a note on every change. It is kept in the history.",
+        "label": "Reason",
+        "hint": "Required, up to {{max}} characters.",
+        "confirm": "Continue",
+        "count": "{{count}}/{{max}}",
+        "problems": {
+            "REQUIRED": "Write the reason for the change",
+            "TOO_LONG": "At most {{max}} characters",
+            "CONTROL": "Remove the control characters"
+        }
+    },
+    "writePolicy": {
+        "record": {
+            "appendOnly": "Records of this object can only be created: they are never edited or deleted.",
+            "apiOnly": "Only the application writes this object: it is read-only here."
+        },
+        "link": {
+            "appendOnly": "One of the two objects is append-only: links cannot change.",
+            "apiOnly": "One of the two objects is written only by the application: links are read-only."
+        }
     }
 }

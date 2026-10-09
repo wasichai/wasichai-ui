@@ -251,7 +251,49 @@ Links: `useWasichaiLinks()` gives `records(object)`, `record(object, id)`, … f
 
 Errors: `api()` rejects with an `ApiError` (`status`, `message`, `violations`). `describeError(cause)` gives
 the line every core screen shows for a refusal, `message — field: reason — …`, and `String(cause)` for anything
-else.
+else. `formError(cause)` splits it for a form instead: `{ message, violations }`, each violation drawn under its field.
+
+## Write rules and change reason
+
+An object definition carries three write rules (backend 0.3.0; an older server sends none, read as `false`):
+
+| flag | the generic UI does not offer | the server answers |
+|---|---|---|
+| `appendOnly` | edit, delete, link/unlink (either end), workflow transitions; create stays | `409` |
+| `apiOnly` | create, edit, delete, link/unlink (either end); transitions stay | `403` |
+| `requiresReason` | any write without a reason: create, edit, delete, link/unlink (either end), transitions | `400`, `errors: [{ field: "reason" }]` |
+
+`writePolicy(...objects)` turns the flags into `canCreate`, `canUpdate`, `canDelete`, `canLink`, `canTransition` and
+`requiresReason` (a link passes both ends). `useWritePolicy(objectName, otherObjectName?)` reads the definitions;
+`loaded` is `false` until they arrive (keep write buttons disabled: a write now would skip the prompt), and a failed
+read counts as loaded with no rules. `WritePolicyNotice` says why a write is missing (`scope="link"` for a link).
+
+The reason travels in `X-Change-Reason`, always in the RFC 8187 form `UTF-8''` + percent-encoded UTF-8, so accents,
+line breaks and emoji survive (`changeReasonHeader(reason)`; blank sends no header). It is trimmed and holds 1–500
+code points, no control characters but tab and line breaks (`reasonProblem(reason)`). `useSaveRecord`,
+`useDeleteRecord` and `useLinkRelated` take it beside their old input: `{ payload, reason }`, `{ id, reason }`,
+`{ otherId, reason }`. `ReasonDialog` asks for it; `useReasonPrompt` asks only when required, sends nothing on cancel,
+keeps the dialog open on a refused reason and never rethrows (read the mutation's `error`):
+
+```tsx
+function DeleteButton({ object, id }: { object: string; id: string }) {
+  const { t } = useTranslation()
+  const policy = useWritePolicy(object)
+  const remove = useDeleteRecord(object)
+  const prompt = useReasonPrompt()
+  if (policy.loaded && !policy.canDelete) return <WritePolicyNotice policy={policy} />
+  const onDelete = () => prompt.withReason((reason) => remove.mutateAsync({ id, reason }), { required: policy.requiresReason })
+  return (
+    <>
+      <Button disabled={!policy.loaded || remove.isPending} onClick={onDelete}>
+        {t('common.delete')}
+      </Button>
+      {remove.error && <Alert tone="danger">{describeError(remove.error)}</Alert>}
+      {prompt.dialog}
+    </>
+  )
+}
+```
 
 ## Adding a language / overriding strings
 

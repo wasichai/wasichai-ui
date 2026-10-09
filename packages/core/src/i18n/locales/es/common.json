@@ -180,5 +180,28 @@
     "views": {
         "pick": "Selecciona una vista",
         "selector": "Vista"
+    },
+    "reason": {
+        "title": "Motivo del cambio",
+        "description": "Este objeto pide una observación en cada cambio. Queda en el historial.",
+        "label": "Motivo",
+        "hint": "Obligatorio, hasta {{max}} caracteres.",
+        "confirm": "Continuar",
+        "count": "{{count}}/{{max}}",
+        "problems": {
+            "REQUIRED": "Escribe el motivo del cambio",
+            "TOO_LONG": "Como máximo {{max}} caracteres",
+            "CONTROL": "Quita los caracteres de control"
+        }
+    },
+    "writePolicy": {
+        "record": {
+            "appendOnly": "Los registros de este objeto solo se crean: no se editan ni se eliminan.",
+            "apiOnly": "Este objeto solo lo escribe la aplicación: aquí es de solo lectura."
+        },
+        "link": {
+            "appendOnly": "Uno de los dos objetos es de solo anexado: no se vincula ni se desvincula.",
+            "apiOnly": "Uno de los dos objetos solo lo escribe la aplicación: los vínculos son de solo lectura."
+        }
     }
 }
