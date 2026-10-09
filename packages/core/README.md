@@ -315,11 +315,14 @@ when one wrote it, `null` otherwise; an older server sends neither and they read
 reason under the entry, and the audit page in its own column. `AuditActor` names who wrote an entry: the service
 account with a **Cuenta de servicio** badge (never its backing address), else the user's email, else **Sistema**.
 
-The object editor sets the three rules, ticks `indexed` on a field (not on `LONG_TEXT`, nor on a module type that
-cannot be unique) and edits the composite `indexes` (1–32 fields, in index order) and `uniqueConstraints` (2–32; one
-field is `unique` on the field itself), checking each set as it is typed the way the server will. The object's `PUT`
-keeps whatever it is not sent, so the editor sends a rule or a list only when it changed (`objectUpdatePayload`):
-saving the labels never rewrites a rule someone else just set, and `[]` drops every set of a list.
+The object editor sets the three rules, ticks `indexed` on a field (not on `LONG_TEXT`, `FILE` or `IMAGE`, which the
+server will not index, nor on a module type that cannot be unique) and edits the composite `indexes` (1–32 fields, in
+index order) and `uniqueConstraints` (2–32; one field is `unique` on the field itself), checking each set as it is
+typed the way the server will. The object's `PUT` keeps whatever it is not sent, so the editor sends a rule or a list
+only when it changed (`objectUpdatePayload`): saving the labels never rewrites a rule someone else just set, and `[]`
+drops every set of a list. A refetch (every field or relationship change makes one) keeps each rule or list edited and
+not yet saved, and takes the server's value for the rest (`rebaseDetails`).
+
 It also lists the object's declared actions (ADR-042), declares one (`useCreateObjectAction`: the name is sent upper
 case, a blank label is left out and the server uses the name) and removes one with every grant of it
 (`useDeleteObjectAction`, which also refreshes the cached roles). `actionNameProblem(name, existing)` mirrors the

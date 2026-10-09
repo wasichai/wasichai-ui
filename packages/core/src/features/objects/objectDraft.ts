@@ -129,6 +129,16 @@ export function objectUpdatePayload(definition: ObjectDefinition, draft: ObjectD
   return payload
 }
 
+// a refetch (any field or relationship change does one) must not wipe an unsaved edit: each key the
+// editor changed since the last server answer stays, every other key takes the new answer
+export function rebaseDetails(current: ObjectDetailsDraft, before: ObjectDetailsDraft, next: ObjectDetailsDraft): ObjectDetailsDraft {
+  const rebased: Record<string, unknown> = { ...next }
+  for (const key of Object.keys(next) as (keyof ObjectDetailsDraft)[]) {
+    if (JSON.stringify(current[key]) !== JSON.stringify(before[key])) rebased[key] = current[key]
+  }
+  return rebased as unknown as ObjectDetailsDraft
+}
+
 export type FieldSetKind = 'indexes' | 'uniqueConstraints'
 
 export type FieldSetProblemCode = 'EMPTY' | 'UNKNOWN' | 'REPEATED_FIELD' | 'TOO_FEW' | 'TOO_MANY' | 'NOT_INDEXABLE' | 'DUPLICATE_SET'
@@ -149,9 +159,14 @@ export function parseFieldSet(text: string): string[] {
     .filter(Boolean)
 }
 
-// long text can outgrow a btree entry; a module type that cannot be unique is kept out of filters too
+// what the server refuses to index: long text can outgrow a btree entry, files it keeps out of
+// filters (FieldSets.requireIndexable). files have no renderer here to say so. the shape type it also
+// refuses comes from gis, whose renderer says uniqueAllowed: false (core must not name it).
+const NOT_INDEXABLE_TYPES: readonly string[] = ['LONG_TEXT', 'FILE', 'IMAGE']
+
+// a module type that cannot be unique is kept out of filters too
 export function indexable(type: FieldType, renderers: Renderers): boolean {
-  return type !== 'LONG_TEXT' && renderers[type]?.uniqueAllowed !== false
+  return !NOT_INDEXABLE_TYPES.includes(type) && renderers[type]?.uniqueAllowed !== false
 }
 
 // the 400s of FieldSets.kt, answered while typing. a set already in the list would be dropped

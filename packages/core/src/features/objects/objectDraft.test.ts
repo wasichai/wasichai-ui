@@ -7,9 +7,11 @@ import {
   emptyFieldDraft,
   fieldPayload,
   fieldSetProblem,
+  indexable,
   nameTaken,
   objectUpdatePayload,
   parseFieldSet,
+  rebaseDetails,
   scopeOf,
   type FieldSetKind
 } from './objectDraft'
@@ -159,6 +161,13 @@ describe('object details draft', () => {
   it('reads a server that sends no flags as all off', () =>
     expect(detailsDraft({ ...base })).toMatchObject({ appendOnly: false, apiOnly: false, requiresReason: false, indexes: [], uniqueConstraints: [] }))
 
+  it('keeps what the editor changed across a refetch and takes the rest from the server', () => {
+    const before = detailsDraft(definition)
+    const current = { ...before, appendOnly: false, uniqueConstraints: [['anio', 'codigo']] }
+    const next = { ...detailsDraft(definition), requiresReason: true, label: 'Cuota mensual' }
+    expect(rebaseDetails(current, before, next)).toEqual({ ...next, appendOnly: false, uniqueConstraints: [['anio', 'codigo']] })
+  })
+
   it('trims the labels and falls back the way the form always did', () =>
     expect(objectUpdatePayload(base, { ...detailsDraft(base), label: ' Pago ', pluralLabel: ' ', description: ' ' })).toEqual({
       label: 'Pago',
@@ -186,6 +195,9 @@ describe('field sets', () => {
     expect(fieldSetProblem(['anio', 'nope'], 'indexes', fields, [], {})).toEqual({ code: 'UNKNOWN', value: 'nope' })
     expect(fieldSetProblem(['mes', 'mes'], 'indexes', fields, [], {})).toEqual({ code: 'REPEATED_FIELD', value: 'mes' })
   })
+
+  // the server refuses these whatever renderers are installed; gis's own type says so through its renderer
+  it.each(['LONG_TEXT', 'FILE', 'IMAGE'])('says %s cannot be indexed', (type) => expect(indexable(type, {})).toBe(false))
 
   it('refuses a module type that cannot be unique', () =>
     expect(fieldSetProblem(['croquis', 'anio'], 'indexes', fields, [], renderers)).toEqual({ code: 'NOT_INDEXABLE', value: 'croquis' }))

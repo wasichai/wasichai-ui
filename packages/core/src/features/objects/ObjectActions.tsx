@@ -9,7 +9,8 @@ import { actionNameProblem } from './objectDraft'
 // the object's own verbs beyond CRUD (ADR-042). declared here, granted per role on the permissions page.
 export function ObjectActions({ objectName }: { objectName: string }) {
   const { t } = useTranslation()
-  const { data: actions = [] } = useObjectActions(objectName)
+  const query = useObjectActions(objectName)
+  const actions = query.data ?? []
   const create = useCreateObjectAction(objectName)
   const remove = useDeleteObjectAction(objectName)
 
@@ -54,7 +55,16 @@ export function ObjectActions({ objectName }: { objectName: string }) {
         </Alert>
       ) : null}
 
-      {actions.length === 0 ? (
+      {/* a failed read is not an empty list: say why instead */}
+      {query.error ? (
+        <Alert tone="danger" className="border-b border-border bg-danger-soft px-5 py-3">
+          {describeError(query.error)}
+        </Alert>
+      ) : null}
+
+      {query.isLoading ? (
+        <CardBody className="text-sm text-ink-muted">{t('common.loading')}</CardBody>
+      ) : query.error ? null : actions.length === 0 ? (
         <CardBody className="text-sm text-ink-muted">{t('objects.actions.empty')}</CardBody>
       ) : (
         <Table>

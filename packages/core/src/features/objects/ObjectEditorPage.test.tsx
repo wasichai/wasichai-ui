@@ -98,8 +98,17 @@ const definition: ObjectDefinition = {
   ]
 }
 
+// what the server answers now: a refetch after a field change swaps it for a new object
+let current: ObjectDefinition = definition
+// what the actions list answers now
+let actionsQuery: { data?: { name: string; label: string }[]; isLoading: boolean; error: unknown } = {
+  data: [{ name: 'ANULAR', label: 'Anular' }],
+  isLoading: false,
+  error: null
+}
+
 vi.mock('../../queries', () => ({
-  useObjectDefinition: () => ({ data: definition, isLoading: false }),
+  useObjectDefinition: () => ({ data: current, isLoading: false }),
   useObjects: () => ({ data: [] }),
   useSystemFields: () => ({ data: systemFields }),
   useUpdateObject: () => ({ mutateAsync: updateObject, isPending: false }),
@@ -111,7 +120,7 @@ vi.mock('../../queries', () => ({
   useCreateRelationship: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateRelationship: () => ({ mutateAsync: updateRelationship, isPending: false }),
   useDeleteRelationship: () => ({ mutateAsync: deleteRelationship, isPending: false }),
-  useObjectActions: () => ({ data: [{ name: 'ANULAR', label: 'Anular' }], isLoading: false }),
+  useObjectActions: () => actionsQuery,
   useCreateObjectAction: () => ({ mutateAsync: createAction, isPending: false }),
   useDeleteObjectAction: () => ({ mutateAsync: deleteAction, isPending: false })
 }))
@@ -130,7 +139,11 @@ async function openSystemFields(modules: WasichaiModule[] = []) {
 }
 
 describe('ObjectEditorPage', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    current = definition
+    actionsQuery = { data: [{ name: 'ANULAR', label: 'Anular' }], isLoading: false, error: null }
+  })
 
   // the server refuses a rename; the form must not invite one in the first place
   it('shows the technical name but does not let it be edited', () => {
@@ -354,6 +367,58 @@ describe('ObjectEditorPage', () => {
       await waitFor(() => expect(updateObject).toHaveBeenCalledWith(expect.objectContaining({ indexes: [] })))
     })
 
+    // every field or relationship change refetches the definition; an added set not saved yet must survive it
+    it('keeps unsaved rules and sets across a refetch, and takes what changed on the server', async () => {
+      const user = userEvent.setup()
+      const { rerender } = renderPage()
+      await user.type(screen.getByLabelText(/^Añadir restricción$|^Add constraint$/), 'revisado, titular')
+      await user.click(within(fieldSets()).getByRole('button', { name: /^Añadir restricción$|^Add constraint$/ }))
+      await user.click(screen.getByLabelText(/^Solo anexado$|^Append-only$/))
+
+      // someone else switched requiresReason meanwhile
+      current = { ...definition, requiresReason: true }
+      rerender(<ObjectEditorPage />)
+
+      expect(within(fieldSets()).getAllByText('revisado, titular')).toHaveLength(2)
+      expect(screen.getByLabelText(/^Solo anexado$|^Append-only$/)).not.toBeChecked()
+      expect(screen.getByLabelText(/^Pide motivo$|^Requires a reason$/)).toBeChecked()
+
+      await user.click(within(fieldSets()).getByRole('button', { name: /^Guardar$|^Save$/ }))
+      await waitFor(() =>
+        expect(updateObject).toHaveBeenCalledWith({
+          label: 'Predio',
+          pluralLabel: 'Predios',
+          description: null,
+          enabled: true,
+          appendOnly: false,
+          uniqueConstraints: [['revisado', 'titular']]
+        })
+      )
+    })
+
+    // same component, another object: nothing typed for the last one may follow
+    it('drops the edits when the editor moves to another object', async () => {
+      const user = userEvent.setup()
+      const { rerender } = renderPage()
+      await user.type(screen.getByLabelText(/^Añadir restricción$|^Add constraint$/), 'revisado, titular')
+      await user.click(within(fieldSets()).getByRole('button', { name: /^Añadir restricción$|^Add constraint$/ }))
+
+      current = { ...definition, id: 'obj-2', name: 'via', label: 'Vía', pluralLabel: 'Vías', appendOnly: false, indexes: undefined }
+      rerender(<ObjectEditorPage />)
+
+      expect(within(fieldSets()).queryByText('revisado, titular')).not.toBeInTheDocument()
+    })
+
+    // the field-sets Save skips the details form, and so its required label
+    it('sends nothing with a cleared label', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.clear(screen.getByDisplayValue('Predio'))
+      await user.click(within(fieldSets()).getByRole('button', { name: /^Guardar$|^Save$/ }))
+
+      expect(updateObject).not.toHaveBeenCalled()
+    })
+
     it('toggles a field index', async () => {
       const user = userEvent.setup()
       renderPage()
@@ -436,6 +501,21 @@ describe('ObjectEditorPage', () => {
       await user.click(within(actions()).getByRole('button', { name: /ANULAR/ }))
 
       expect(await within(actions()).findByRole('alert')).toHaveTextContent(/is not declared/)
+    })
+
+    // an empty list and a failed one are not the same thing
+    it('says it is loading, not that there are none', () => {
+      actionsQuery = { data: undefined, isLoading: true, error: null }
+      renderPage()
+      expect(within(actions()).getByText(/Cargando|Loading/)).toBeInTheDocument()
+      expect(within(actions()).queryByText(/aún no declara|declares no actions/)).not.toBeInTheDocument()
+    })
+
+    it('says why the list could not be read', () => {
+      actionsQuery = { data: undefined, isLoading: false, error: new ApiError(403, 'Forbidden: READ on predio') }
+      renderPage()
+      expect(within(actions()).getByRole('alert')).toHaveTextContent(/READ on predio/)
+      expect(within(actions()).queryByText(/aún no declara|declares no actions/)).not.toBeInTheDocument()
     })
   })
 })

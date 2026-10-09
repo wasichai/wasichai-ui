@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
@@ -30,6 +30,7 @@ import {
   indexable,
   nameTaken,
   objectUpdatePayload,
+  rebaseDetails,
   scopeOf,
   type FieldDraft,
   type ObjectDetailsDraft
@@ -63,15 +64,22 @@ export function ObjectEditorPage() {
 
   // labels, write rules and field sets: everything the object's PUT carries
   const [details, setDetails] = useState<ObjectDetailsDraft | null>(() => (definition ? detailsDraft(definition) : null))
+  // the server's answer the draft was last based on, to tell the user's edits from stale values.
+  // keyed by object: moving to another object's editor keeps this component, not its edits.
+  const baseline = useRef<{ name: string; draft: ObjectDetailsDraft } | null>(definition ? { name: definition.name, draft: detailsDraft(definition) } : null)
   const [draft, setDraft] = useState<FieldDraft | null>(null)
   const [confirmName, setConfirmName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [systemOpen, setSystemOpen] = useState(false)
 
-  // the server owns the truth; the form only borrows it once it arrives
+  // the server owns the truth; the form only borrows it. a refetch keeps what the user changed and has not saved.
   useEffect(() => {
-    if (definition) setDetails(detailsDraft(definition))
+    if (!definition) return
+    const next = detailsDraft(definition)
+    const before = baseline.current?.name === definition.name ? baseline.current.draft : null
+    setDetails((current) => (current && before ? rebaseDetails(current, before, next) : next))
+    baseline.current = { name: definition.name, draft: next }
   }, [definition])
 
   const run = async (action: () => Promise<unknown>) => {
@@ -87,7 +95,8 @@ export function ObjectEditorPage() {
 
   // only what changed of the rules and lists goes out: the PUT keeps what it is not sent
   const saveDetails = () => {
-    if (definition && details) void run(() => updateObject.mutateAsync(objectUpdatePayload(definition, details)))
+    // the field-sets Save skips the form's own required check
+    if (definition && details?.label.trim()) void run(() => updateObject.mutateAsync(objectUpdatePayload(definition, details)))
   }
 
   const submitField = () => {
