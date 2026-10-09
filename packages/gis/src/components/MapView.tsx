@@ -3,7 +3,7 @@ import { GeoJSONSource, Map as MapLibreMap, NavigationControl, Popup, RasterTile
 import { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { WMS_TILE_SIZE, wmsTileUrl } from '../lib/wms'
-import { DEFAULT_BASEMAP, DEFAULT_INITIAL_VIEW, basemapStyle, type BasemapSpec, type MapInitialView } from '../lib/basemap'
+import { DEFAULT_BASEMAP, DEFAULT_INITIAL_VIEW, basemapStyle, keepOverlays, type BasemapSpec, type MapInitialView } from '../lib/basemap'
 import { boundsOf } from '../lib/geo'
 import { popupHtml } from '../lib/popup'
 import { applyMapWorkerUrl } from '../lib/mapWorker'
@@ -52,6 +52,10 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
   // the build effect runs once: it reads the latest spec and view from refs
   const basemapRef = useRef<BasemapSpec>(DEFAULT_BASEMAP)
   basemapRef.current = basemap ?? DEFAULT_BASEMAP
+  // callers write the spec inline: compare by value, like wmsLayers
+  const basemapKey = JSON.stringify(basemapRef.current)
+  // key of the base map the map shows, or is switching to
+  const shown = useRef<string | null>(null)
   const view = useRef<MapInitialView>(DEFAULT_INITIAL_VIEW)
   view.current = initialView ?? DEFAULT_INITIAL_VIEW
 
@@ -70,6 +74,7 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
       zoom: view.current.zoom,
       attributionControl: { compact: true }
     })
+    shown.current = JSON.stringify(basemapRef.current)
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-right')
     instance.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
 
@@ -145,6 +150,7 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
       queued.current = []
       instance.remove()
       map.current = null
+      shown.current = null
     }
   }, [])
 
@@ -180,6 +186,15 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
     whenReady(() => syncWmsLayers(instance, wms.current))
   }, [wmsKey])
 
+  // base map swap: same map, our overlays merged into the new style. maplibre diffs it in, or rebuilds
+  // the style from scratch (other glyphs/sprite) and still carries them through transformStyle
+  useEffect(() => {
+    const instance = map.current
+    if (!instance || shown.current === basemapKey) return
+    shown.current = basemapKey
+    whenReady(() => instance.setStyle(basemapStyle(basemapRef.current), { transformStyle: keepOverlays }))
+  }, [basemapKey])
+
   // drawing is opt-in: only mounted when the object actually has geometry
   useEffect(() => {
     const instance = map.current
@@ -187,7 +202,8 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
 
     whenReady(() => {
       const terraDraw = new TerraDraw({
-        adapter: new TerraDrawMapLibreGLAdapter({ map: instance }),
+        // our prefix, not terra-draw's 'td': keepOverlays carries the drawing across a base map swap
+        adapter: new TerraDrawMapLibreGLAdapter({ map: instance, prefixId: 'wasichai-draw' }),
         modes: [new TerraDrawPointMode(), new TerraDrawLineStringMode(), new TerraDrawPolygonMode()]
       })
       terraDraw.start()

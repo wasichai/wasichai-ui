@@ -1,6 +1,7 @@
 import type { StyleSpecification } from 'maplibre-gl'
-import { render } from '@testing-library/react'
+import { act, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { keepOverlays } from '../lib/basemap'
 import { MapView } from './MapView'
 
 // maplibre cannot run in jsdom: the double records what the map was built with and lets the test fire its events
@@ -123,5 +124,66 @@ describe('MapView base map', () => {
   it('opens on the initial view it is given', () => {
     render(<MapView initialView={{ center: [-71.54, -16.41], zoom: 13 }} />)
     expect(FakeMap.instances[0].options).toMatchObject({ center: [-71.54, -16.41], zoom: 13 })
+  })
+})
+
+describe('MapView base map swap', () => {
+  const A = { type: 'raster' as const, tiles: [ORG] }
+  const B = { type: 'raster' as const, tiles: ['https://other.example.org/{z}/{x}/{y}.png'] }
+  const loaded = () => act(() => FakeMap.instances[0].fire('load'))
+
+  it('swaps the base map in place, never rebuilding the map', () => {
+    const { rerender } = render(<MapView basemap={A} />)
+    loaded()
+    rerender(<MapView basemap={B} />)
+    const map = FakeMap.instances[0]
+    expect(FakeMap.instances).toHaveLength(1)
+    expect(map.remove).not.toHaveBeenCalled()
+    expect(map.setStyle).toHaveBeenCalledTimes(1)
+    expect(map.setStyle.mock.calls[0][0]).toMatchObject({ sources: { basemap: { tiles: B.tiles } } })
+  })
+
+  it('carries features, wms layers and the drawing over through transformStyle', () => {
+    const { rerender } = render(<MapView basemap={A} />)
+    loaded()
+    rerender(<MapView basemap={{ type: 'style', url: 'https://tiles.example.org/style.json' }} />)
+    const [style, options] = FakeMap.instances[0].setStyle.mock.calls[0]
+    expect(style).toBe('https://tiles.example.org/style.json')
+    const previous: StyleSpecification = {
+      version: 8,
+      sources: { 'wasichai-features': { type: 'geojson', data: { type: 'FeatureCollection', features: [] } } },
+      layers: [{ id: 'wasichai-features-fill', type: 'fill', source: 'wasichai-features' }]
+    }
+    const next: StyleSpecification = { version: 8, sources: {}, layers: [{ id: 'water', type: 'background' }] }
+    expect(options.transformStyle(previous, next)).toStrictEqual(keepOverlays(previous, next))
+  })
+
+  it('ignores a new basemap object with the same value', () => {
+    const { rerender } = render(<MapView basemap={A} />)
+    loaded()
+    rerender(<MapView basemap={{ type: 'raster', tiles: [ORG] }} />)
+    expect(FakeMap.instances[0].setStyle).not.toHaveBeenCalled()
+  })
+
+  it('waits for the first load before swapping', () => {
+    const { rerender } = render(<MapView basemap={A} />)
+    rerender(<MapView basemap={B} />)
+    expect(FakeMap.instances[0].setStyle).not.toHaveBeenCalled()
+    loaded()
+    expect(FakeMap.instances[0].setStyle).toHaveBeenCalledTimes(1)
+  })
+
+  it('goes back to the default when the prop is dropped', () => {
+    const { rerender } = render(<MapView basemap={B} />)
+    loaded()
+    rerender(<MapView />)
+    expect(FakeMap.instances[0].setStyle.mock.calls[0][0]).toMatchObject({ sources: { basemap: { tiles: [OSM] } } })
+  })
+
+  it('draws under its own prefix, so a swap keeps the drawing', () => {
+    render(<MapView drawMode="polygon" />)
+    loaded()
+    expect(adapters).toHaveLength(1)
+    expect(adapters[0]).toMatchObject({ prefixId: 'wasichai-draw' })
   })
 })
