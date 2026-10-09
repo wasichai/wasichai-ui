@@ -315,6 +315,12 @@ when one wrote it, `null` otherwise; an older server sends neither and they read
 reason under the entry, and the audit page in its own column. `AuditActor` names who wrote an entry: the service
 account with a **Cuenta de servicio** badge (never its backing address), else the user's email, else **Sistema**.
 
+The object editor sets the three rules, ticks `indexed` on a field (not on `LONG_TEXT`, nor on a module type that
+cannot be unique) and edits the composite `indexes` (1–32 fields, in index order) and `uniqueConstraints` (2–32; one
+field is `unique` on the field itself), checking each set as it is typed the way the server will. The object's `PUT`
+keeps whatever it is not sent, so the editor sends a rule or a list only when it changed (`objectUpdatePayload`):
+saving the labels never rewrites a rule someone else just set, and `[]` drops every set of a list.
+
 ## Adding a language / overriding strings
 
 Every module ships `es` and `en` (core's own strings too). A module's `i18n` is just

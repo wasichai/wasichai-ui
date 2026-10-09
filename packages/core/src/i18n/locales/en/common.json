@@ -119,7 +119,37 @@
             "DUPLICATE": "There is already a field «{{name}}»."
         },
         "showSystemFields": "System fields ({{n}})",
-        "hideSystemFields": "Hide the system fields"
+        "hideSystemFields": "Hide the system fields",
+        "writeRules": "Write rules",
+        "appendOnly": "Append-only",
+        "appendOnlyHint": "Records are created and never edited or deleted, not even by ADMIN.",
+        "apiOnly": "Application only",
+        "apiOnlyHint": "The generic API does not write it: only the application's code does.",
+        "requiresReason": "Requires a reason",
+        "requiresReasonHint": "Every change to its records carries a note, kept in the history.",
+        "fieldIndexed": "Indexed",
+        "indexes": {
+            "title": "Composite indexes",
+            "hint": "Comma-separated fields, in index order. Up to 32.",
+            "add": "Add index"
+        },
+        "uniqueConstraints": {
+            "title": "Composite uniqueness",
+            "hint": "2 to 32 fields that cannot repeat together. For one field, mark it unique.",
+            "add": "Add constraint"
+        },
+        "fieldSets": {
+            "remove": "Remove",
+            "problems": {
+                "EMPTY": "Write at least one field",
+                "UNKNOWN": "There is no field «{{name}}»",
+                "REPEATED_FIELD": "«{{name}}» is there twice",
+                "TOO_FEW": "At least 2 fields are needed",
+                "TOO_MANY": "At most 32 fields",
+                "NOT_INDEXABLE": "«{{name}}» cannot be indexed",
+                "DUPLICATE_SET": "Already in the list"
+            }
+        }
     },
     "records": {
         "new": "New record",

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@wasichai/testing'
@@ -7,6 +7,7 @@ import type { WasichaiModule } from '../../registry/contract'
 import type { ObjectDefinition, Relationship, SystemField } from '../../types/metadata'
 import { sketchModule } from '../../test/fakeModules'
 
+const updateObject = vi.fn()
 const deleteObject = vi.fn()
 const deleteField = vi.fn()
 const updateField = vi.fn()
@@ -54,6 +55,9 @@ const definition: ObjectDefinition = {
   pluralLabel: 'Predios',
   description: null,
   enabled: true,
+  // a rule and a list already set: saving the labels must leave both alone
+  appendOnly: true,
+  indexes: [['revisado', 'titular']],
   geometry: null,
   fields: [
     {
@@ -96,7 +100,7 @@ vi.mock('../../queries', () => ({
   useObjectDefinition: () => ({ data: definition, isLoading: false }),
   useObjects: () => ({ data: [] }),
   useSystemFields: () => ({ data: systemFields }),
-  useUpdateObject: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateObject: () => ({ mutateAsync: updateObject, isPending: false }),
   useDeleteObject: () => ({ mutateAsync: deleteObject, isPending: false }),
   useAddField: () => ({ mutateAsync: addField, isPending: false }),
   useUpdateField: () => ({ mutateAsync: updateField, isPending: false }),
@@ -151,7 +155,7 @@ describe('ObjectEditorPage', () => {
     deleteField.mockRejectedValue(new ApiError(409, "Field 'revisado' is used by automation 'marca'"))
 
     renderPage()
-    await user.click(screen.getByRole('button', { name: /revisado/i }))
+    await user.click(screen.getByRole('button', { name: /Eliminar campo revisado|Delete field revisado/ }))
 
     expect(await screen.findByText(/is used by automation 'marca'/)).toBeInTheDocument()
   })
@@ -161,7 +165,7 @@ describe('ObjectEditorPage', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
 
     renderPage()
-    await user.click(screen.getByRole('button', { name: /revisado/i }))
+    await user.click(screen.getByRole('button', { name: /Eliminar campo revisado|Delete field revisado/ }))
 
     expect(deleteField).not.toHaveBeenCalled()
   })
@@ -286,5 +290,83 @@ describe('ObjectEditorPage', () => {
     } finally {
       definition.fields.pop()
     }
+  })
+
+  describe('write rules and field sets', () => {
+    const details = () => screen.getByText(/^Datos del objeto$|^Object details$/).closest('form') as HTMLElement
+    const fieldSets = () => screen.getByText(/^Unicidad compuesta$|^Composite uniqueness$/).closest('[data-slot="card"]') as HTMLElement
+
+    // the PUT keeps what it leaves out: an untouched rule or list must not go out at all
+    it('saves the details without touching write rules or lists', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(within(details()).getByRole('button', { name: /^Guardar$|^Save$/ }))
+
+      await waitFor(() => expect(updateObject).toHaveBeenCalledWith({ label: 'Predio', pluralLabel: 'Predios', description: null, enabled: true }))
+    })
+
+    it('switches a write rule', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      const appendOnly = screen.getByLabelText(/^Solo anexado$|^Append-only$/)
+      expect(appendOnly).toBeChecked()
+
+      await user.click(appendOnly)
+      await user.click(within(details()).getByRole('button', { name: /^Guardar$|^Save$/ }))
+
+      await waitFor(() => expect(updateObject).toHaveBeenCalledWith(expect.objectContaining({ appendOnly: false })))
+      expect(updateObject.mock.calls[0][0]).not.toHaveProperty('indexes')
+    })
+
+    it('adds a unique constraint and saves it', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.type(screen.getByLabelText(/^Añadir restricción$|^Add constraint$/), 'revisado, titular')
+      await user.click(within(fieldSets()).getByRole('button', { name: /^Añadir restricción$|^Add constraint$/ }))
+      expect(within(fieldSets()).getAllByText('revisado, titular')).toHaveLength(2)
+
+      await user.click(within(fieldSets()).getByRole('button', { name: /^Guardar$|^Save$/ }))
+      await waitFor(() => expect(updateObject).toHaveBeenCalledWith(expect.objectContaining({ uniqueConstraints: [['revisado', 'titular']] })))
+      expect(updateObject.mock.calls[0][0]).not.toHaveProperty('indexes')
+    })
+
+    // one field is unique: true on the field, which the server insists on
+    it('refuses a one-field unique constraint', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.type(screen.getByLabelText(/^Añadir restricción$|^Add constraint$/), 'revisado')
+
+      expect(screen.getByText(/Hacen falta al menos 2 campos|At least 2 fields/)).toBeInTheDocument()
+      expect(within(fieldSets()).getByRole('button', { name: /^Añadir restricción$|^Add constraint$/ })).toBeDisabled()
+    })
+
+    it('removes a composite index', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByRole('button', { name: /^(Quitar|Remove) revisado, titular$/ }))
+      await user.click(within(fieldSets()).getByRole('button', { name: /^Guardar$|^Save$/ }))
+
+      await waitFor(() => expect(updateObject).toHaveBeenCalledWith(expect.objectContaining({ indexes: [] })))
+    })
+
+    it('toggles a field index', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByLabelText(/^Indexado revisado$|^Indexed revisado$/))
+
+      await waitFor(() => expect(updateField).toHaveBeenCalledWith({ field: 'revisado', payload: { indexed: true } }))
+    })
+
+    it('offers the index toggle on a new field', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByRole('button', { name: /Añadir campo|Add field/ }))
+      await user.type(screen.getByLabelText(/^Nombre$|^Name$/), 'anio')
+      // by role: the table's own boxes are named after their field
+      await user.click(screen.getByRole('checkbox', { name: /^Indexado$|^Indexed$/ }))
+      await user.click(screen.getByRole('button', { name: /^Crear$|^Create$/ }))
+
+      await waitFor(() => expect(addField).toHaveBeenCalledWith(expect.objectContaining({ name: 'anio', indexed: true })))
+    })
   })
 })

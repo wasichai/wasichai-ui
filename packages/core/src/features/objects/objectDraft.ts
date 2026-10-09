@@ -1,5 +1,5 @@
 import type { FieldRenderer } from '../../registry/contract'
-import { CORE_FIELD_TYPES, type FieldType, type SystemField, type SystemFieldScope } from '../../types/metadata'
+import { CORE_FIELD_TYPES, type FieldMeta, type FieldType, type ObjectDefinition, type SystemField, type SystemFieldScope } from '../../types/metadata'
 
 type Renderers = Readonly<Record<string, FieldRenderer>>
 
@@ -16,6 +16,7 @@ export interface FieldDraft {
   unique: boolean
   enumOptions: string
   relationTarget: string
+  indexed: boolean
   // module settings as typed, keyed by the module's names; the payload converts them
   settings: Record<string, string>
 }
@@ -25,7 +26,7 @@ export interface FieldDraft {
 export function emptyFieldDraft(renderers: Renderers = {}): FieldDraft {
   const settings: Record<string, string> = {}
   for (const renderer of Object.values(renderers)) Object.assign(settings, renderer.settings?.defaults)
-  return { name: '', label: '', type: 'TEXT', required: false, unique: false, enumOptions: '', relationTarget: '', settings }
+  return { name: '', label: '', type: 'TEXT', required: false, unique: false, enumOptions: '', relationTarget: '', indexed: false, settings }
 }
 
 // the field as the api takes it. a module's settings go out only with the module's own type.
@@ -45,6 +46,8 @@ export function fieldPayload(draft: FieldDraft, renderers: Renderers): Record<st
             .filter(Boolean)
         : null,
     relationTarget: draft.type === 'RELATION' ? draft.relationTarget : null,
+    // the server omits it unless true. a box ticked before the type changed to one it refuses stays home.
+    ...(draft.indexed && indexable(draft.type, renderers) ? { indexed: true } : {}),
     ...(settings ? settings.toPayload(draft.settings) : {})
   }
 }
@@ -70,4 +73,93 @@ export function nameTaken(name: string, fields: { name: string }[], system: Syst
 export function scopeOf(column: SystemField, hasWorkflow: boolean): SystemFieldScope {
   if (column.scope === 'WORKFLOW') return hasWorkflow ? 'ALWAYS' : 'WORKFLOW'
   return column.scope
+}
+
+export interface ObjectDetailsDraft {
+  label: string
+  pluralLabel: string
+  description: string
+  enabled: boolean
+  appendOnly: boolean
+  apiOnly: boolean
+  requiresReason: boolean
+  indexes: string[][]
+  uniqueConstraints: string[][]
+}
+
+// a server before 0.3.0 sends no flags and no lists: all off, none
+export function detailsDraft(definition: ObjectDefinition): ObjectDetailsDraft {
+  return {
+    label: definition.label,
+    pluralLabel: definition.pluralLabel,
+    description: definition.description ?? '',
+    enabled: definition.enabled,
+    appendOnly: definition.appendOnly ?? false,
+    apiOnly: definition.apiOnly ?? false,
+    requiresReason: definition.requiresReason ?? false,
+    indexes: definition.indexes ?? [],
+    uniqueConstraints: definition.uniqueConstraints ?? []
+  }
+}
+
+const FLAGS = ['appendOnly', 'apiOnly', 'requiresReason'] as const
+const LISTS = ['indexes', 'uniqueConstraints'] as const
+
+// the PUT keeps whatever it leaves out, so a rule or a list goes out only when the editor changed it:
+// saving the labels must never rewrite a rule someone else just set. enabled defaults to true when
+// omitted, so it always goes.
+export function objectUpdatePayload(definition: ObjectDefinition, draft: ObjectDetailsDraft): Record<string, unknown> {
+  const before = detailsDraft(definition)
+  const payload: Record<string, unknown> = {
+    label: draft.label.trim(),
+    pluralLabel: draft.pluralLabel.trim() || draft.label.trim(),
+    description: draft.description.trim() || null,
+    enabled: draft.enabled
+  }
+  for (const flag of FLAGS) if (draft[flag] !== before[flag]) payload[flag] = draft[flag]
+  for (const list of LISTS) if (JSON.stringify(draft[list]) !== JSON.stringify(before[list])) payload[list] = draft[list]
+  return payload
+}
+
+export type FieldSetKind = 'indexes' | 'uniqueConstraints'
+
+export type FieldSetProblemCode = 'EMPTY' | 'UNKNOWN' | 'REPEATED_FIELD' | 'TOO_FEW' | 'TOO_MANY' | 'NOT_INDEXABLE' | 'DUPLICATE_SET'
+
+export interface FieldSetProblem {
+  code: FieldSetProblemCode
+  value?: string
+}
+
+// postgres INDEX_MAX_KEYS, the server's cap too
+const MAX_SET_FIELDS = 32
+
+// as the server normalises it. repeats stay, so the check can name them.
+export function parseFieldSet(text: string): string[] {
+  return text
+    .split(',')
+    .map((name) => name.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+// long text can outgrow a btree entry; a module type that cannot be unique is kept out of filters too
+export function indexable(type: FieldType, renderers: Renderers): boolean {
+  return type !== 'LONG_TEXT' && renderers[type]?.uniqueAllowed !== false
+}
+
+// the 400s of FieldSets.kt, answered while typing. a set already in the list would be dropped
+// silently by the server, so it is refused here instead.
+export function fieldSetProblem(set: string[], kind: FieldSetKind, fields: FieldMeta[], existing: string[][], renderers: Renderers): FieldSetProblem | null {
+  if (set.length === 0) return { code: 'EMPTY' }
+  const repeated = set.find((name, index) => set.indexOf(name) !== index)
+  if (repeated) return { code: 'REPEATED_FIELD', value: repeated }
+  for (const name of set) {
+    const field = fields.find((candidate) => candidate.name === name)
+    if (!field) return { code: 'UNKNOWN', value: name }
+    if (!indexable(field.type, renderers)) return { code: 'NOT_INDEXABLE', value: name }
+  }
+  // one field unique is unique: true on the field itself (ADR-037)
+  if (kind === 'uniqueConstraints' && set.length < 2) return { code: 'TOO_FEW' }
+  if (set.length > MAX_SET_FIELDS) return { code: 'TOO_MANY' }
+  if (existing.some((other) => other.join(',') === set.join(','))) return { code: 'DUPLICATE_SET' }
+  return null
 }

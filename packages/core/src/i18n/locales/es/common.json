@@ -122,7 +122,37 @@
             "DUPLICATE": "Ya hay un campo «{{name}}»."
         },
         "showSystemFields": "Campos del sistema ({{n}})",
-        "hideSystemFields": "Ocultar los campos del sistema"
+        "hideSystemFields": "Ocultar los campos del sistema",
+        "writeRules": "Reglas de escritura",
+        "appendOnly": "Solo anexado",
+        "appendOnlyHint": "Los registros se crean y nunca se editan ni eliminan, ni siquiera ADMIN.",
+        "apiOnly": "Solo por la aplicación",
+        "apiOnlyHint": "La API genérica no lo escribe: solo el código de la aplicación.",
+        "requiresReason": "Pide motivo",
+        "requiresReasonHint": "Cada cambio de sus registros lleva una observación, que queda en el historial.",
+        "fieldIndexed": "Indexado",
+        "indexes": {
+            "title": "Índices compuestos",
+            "hint": "Campos separados por coma, en el orden del índice. Hasta 32.",
+            "add": "Añadir índice"
+        },
+        "uniqueConstraints": {
+            "title": "Unicidad compuesta",
+            "hint": "De 2 a 32 campos que no pueden repetirse juntos. Para uno solo, marca el campo como único.",
+            "add": "Añadir restricción"
+        },
+        "fieldSets": {
+            "remove": "Quitar",
+            "problems": {
+                "EMPTY": "Escribe al menos un campo",
+                "UNKNOWN": "No hay un campo «{{name}}»",
+                "REPEATED_FIELD": "«{{name}}» está dos veces",
+                "TOO_FEW": "Hacen falta al menos 2 campos",
+                "TOO_MANY": "Como máximo 32 campos",
+                "NOT_INDEXABLE": "«{{name}}» no se puede indexar",
+                "DUPLICATE_SET": "Ya está en la lista"
+            }
+        }
     },
     "records": {
         "new": "Nuevo registro",
