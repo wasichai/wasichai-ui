@@ -295,6 +295,14 @@ function DeleteButton({ object, id }: { object: string; id: string }) {
 }
 ```
 
+The core record screens follow these rules on their own. `DynamicForm` draws a required **Motivo** field when the
+object has `requiresReason` (checked with the other fields, emptied once the saved record's `updatedAt` moves) and
+calls `onSubmit(payload, reason)`; without the rule it calls `onSubmit(payload)` as before. Its `violations` prop
+puts each refused field's message under that field (a 409 on a unique pair marks both fields, a 400 on `reason` marks
+the reason) and keeps a violation naming no drawn field in the banner. `PageRenderer` passes both through and offers
+no save on an append-only or api-only object; the detail page says why, and the new-record page draws no form on an
+api-only object.
+
 ## Adding a language / overriding strings
 
 Every module ships `es` and `en` (core's own strings too). A module's `i18n` is just

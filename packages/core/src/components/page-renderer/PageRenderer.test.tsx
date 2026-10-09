@@ -266,6 +266,44 @@ describe('PageRenderer', () => {
     expect(onSubmit).toHaveBeenCalledTimes(1)
   })
 
+  // the server refuses the update anyway (409 append-only, 403 api-only): no button that only fails
+  it('offers no save on an append-only object', () => {
+    const page = rootPage([node('FORM'), node('DYNAMIC_FORM', { children: [node('FIELD', { field: 'nombre' })] })])
+
+    renderWithProviders(<PageRenderer page={page} definition={{ ...definition, appendOnly: true }} record={record} onSubmit={vi.fn()} />)
+
+    expect(screen.queryByRole('button', { name: /guardar/i })).toBeNull()
+    expect(screen.getAllByLabelText('Código').every((input) => (input as HTMLInputElement).disabled)).toBe(true)
+    expect(screen.getAllByLabelText('Nombre').every((input) => (input as HTMLInputElement).disabled)).toBe(true)
+  })
+
+  it('offers no save on an api-only object', () => {
+    const page = rootPage([node('FORM')])
+
+    renderWithProviders(<PageRenderer page={page} definition={{ ...definition, apiOnly: true }} record={record} onSubmit={vi.fn()} />)
+
+    expect(screen.queryByRole('button', { name: /guardar/i })).toBeNull()
+    expect(screen.getByLabelText('Código')).toBeDisabled()
+  })
+
+  it('hands the server violations to the form that saves', () => {
+    const page = rootPage([node('FORM', { fields: ['codigo'] })])
+
+    renderWithProviders(
+      <PageRenderer
+        page={page}
+        definition={definition}
+        record={record}
+        onSubmit={vi.fn()}
+        error="Conflict"
+        violations={[{ field: 'codigo', message: 'must be unique' }]}
+      />
+    )
+
+    expect(screen.getByText('must be unique')).toBeInTheDocument()
+    expect(screen.getByLabelText('Código')).toHaveAttribute('aria-invalid', 'true')
+  })
+
   it('lays a two-column section out in two columns inside a one-column page', () => {
     const page = rootPage([
       node('SECTION', { title: 'Datos', layout: 'two-column', children: [node('FORM'), node('TEXT', { column: 2, content: 'al lado' })] })
