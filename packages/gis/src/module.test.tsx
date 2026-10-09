@@ -1,6 +1,24 @@
+import { render } from '@testing-library/react'
 import { coreModule, createLinks, createRegistry } from '@wasichai/core'
 import { describe, expect, it } from 'vitest'
+import { useMapDefaults, type MapDefaults } from './components/MapDefaults'
 import { gisModule } from './module'
+
+// what a MapView under the module's provider reads
+function defaultsUnder(module: ReturnType<typeof gisModule>): MapDefaults {
+  let seen: MapDefaults | undefined
+  function Probe() {
+    seen = useMapDefaults()
+    return null
+  }
+  const [Provider] = module.providers!
+  render(
+    <Provider>
+      <Probe />
+    </Provider>
+  )
+  return seen!
+}
 
 describe('gisModule', () => {
   it('registers next to core without a conflict', () => {
@@ -46,7 +64,13 @@ describe('gisModule', () => {
   })
 
   it('hands its map defaults to the app through one provider', () => {
-    expect(gisModule().providers).toHaveLength(1)
-    expect(gisModule({ basemap: { type: 'none' } }).providers).toHaveLength(1)
+    const basemap = { type: 'none' } as const
+    const initialView = { center: [-71.54, -16.41] as [number, number], zoom: 13 }
+    expect(gisModule({ basemap, initialView }).providers).toHaveLength(1)
+    expect(defaultsUnder(gisModule({ basemap, initialView }))).toEqual({ basemap, initialView })
+  })
+
+  it('leaves every map on its built-in default without options', () => {
+    expect(defaultsUnder(gisModule())).toEqual({ basemap: undefined, initialView: undefined })
   })
 })

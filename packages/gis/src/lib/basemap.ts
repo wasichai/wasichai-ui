@@ -40,7 +40,7 @@ export function basemapStyle(spec: BasemapSpec): StyleSpecification | string {
         type: 'raster',
         tiles: spec.tiles,
         tileSize: spec.tileSize ?? RASTER_TILE_SIZE,
-        // left out, not undefined: an undefined key still lands in the style json
+        // left out, not undefined: maplibre validates every key it is handed
         ...(spec.attribution !== undefined && { attribution: spec.attribution }),
         ...(spec.maxzoom !== undefined && { maxzoom: spec.maxzoom })
       }

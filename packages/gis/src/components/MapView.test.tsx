@@ -118,9 +118,24 @@ describe('MapView base map', () => {
     expect(FakeMap.instances[0].options.style).toMatchObject({ sources: { basemap: { tiles: [ORG], attribution: '© Example' } } })
   })
 
-  it('loads a style url as the whole base map', () => {
+  it('loads a style url over its own background, once the map is up', () => {
     render(<MapView basemap={{ type: 'style', url: 'https://tiles.example.org/style.json' }} />)
-    expect(FakeMap.instances[0].options.style).toBe('https://tiles.example.org/style.json')
+    const map = FakeMap.instances[0]
+    expect(map.options.style).toMatchObject({ layers: [{ type: 'background' }] })
+    expect(map.setStyle).not.toHaveBeenCalled()
+    act(() => map.fire('load'))
+    expect(map.setStyle).toHaveBeenCalledTimes(1)
+    const [style, options] = map.setStyle.mock.calls[0]
+    expect(style).toBe('https://tiles.example.org/style.json')
+    expect(options.transformStyle).toBe(keepOverlays)
+  })
+
+  it('still draws when the style url never loads', () => {
+    render(<MapView basemap={{ type: 'style', url: 'https://unreachable.example.org/style.json' }} drawMode="polygon" />)
+    const map = FakeMap.instances[0]
+    // maplibre fires 'load' only once its first style is in: a url that never answers never gets there
+    if (typeof map.options.style !== 'string') act(() => map.fire('load'))
+    expect(adapters).toHaveLength(1)
   })
 
   it('opens on the initial view it is given', () => {

@@ -95,6 +95,9 @@ gisModule({
 
 A `MapView` takes the same `basemap` and `initialView` props, which win over the module's. Changing `basemap` at
 runtime keeps the map, its features, its WMS layers and the shape being drawn; `initialView` is read once.
+A style URL loads over the plain background once the map is up. If it fails (CSP, host down), the map keeps its
+previous base map, the overlays keep working, and MapLibre reports a map `error`; switching to another spec and back
+retries it.
 
 ### Content-Security-Policy
 

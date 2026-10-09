@@ -70,14 +70,18 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
   useEffect(() => {
     if (!container.current || map.current) return
     applyMapWorkerUrl(setWorkerUrl)
+    const first = basemapRef.current
+    // 'load' never fires if the first style fails to fetch (csp, host down): start on our own background
+    // so features, wms and drawing never wait on that host, then swap the style url in like any change
     const instance = new MapLibreMap({
       container: container.current,
-      style: basemapStyle(basemapRef.current),
+      style: basemapStyle(first.type === 'style' ? { type: 'none' } : first),
       center: view.current.center,
       zoom: view.current.zoom,
       attributionControl: { compact: true }
     })
-    shown.current = JSON.stringify(basemapRef.current)
+    shown.current = JSON.stringify(first)
+    if (first.type === 'style') whenReady(() => instance.setStyle(basemapStyle(basemapRef.current), { transformStyle: keepOverlays }))
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-right')
     instance.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
 
