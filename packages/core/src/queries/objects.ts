@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
-import type { FieldMeta, ObjectDefinition, ObjectSummary, SystemField } from '../types/metadata'
+import type { DeclaredAction, FieldMeta, ObjectDefinition, ObjectSummary, SystemField } from '../types/metadata'
 import { useModuleQueryInvalidation } from './moduleQueries'
 
 export function useObjects() {
@@ -86,5 +86,41 @@ export function useDeleteField(objectName: string) {
   return useMutation({
     mutationFn: (field: string) => api<void>(`/metadata/objects/${objectName}/fields/${field}`, { method: 'DELETE' }),
     onSuccess: () => invalidate(objectName)
+  })
+}
+
+// the key useDeclaredActions shares: under ['objects', name], so an object's invalidation refreshes them too
+const actionsKey = (objectName: string | undefined) => ['objects', objectName, 'actions']
+
+export function useObjectActions(objectName: string | undefined) {
+  return useQuery({
+    queryKey: actionsKey(objectName),
+    queryFn: () => api<DeclaredAction[]>(`/metadata/objects/${objectName}/actions`),
+    enabled: Boolean(objectName)
+  })
+}
+
+export function useCreateObjectAction(objectName: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    // a blank label stays home: the server then uses the name
+    mutationFn: ({ name, label }: { name: string; label: string }) =>
+      api<DeclaredAction>(`/metadata/objects/${objectName}/actions`, {
+        method: 'POST',
+        body: JSON.stringify({ name: name.trim().toUpperCase(), ...(label.trim() ? { label: label.trim() } : {}) })
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: actionsKey(objectName) })
+  })
+}
+
+export function useDeleteObjectAction(objectName: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (name: string) => api<void>(`/metadata/objects/${objectName}/actions/${name}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: actionsKey(objectName) })
+      // its grants go with it: every cached role may have held one
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'roles'] })
+    }
   })
 }

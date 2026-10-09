@@ -14,6 +14,8 @@ const updateField = vi.fn()
 const addField = vi.fn()
 const updateRelationship = vi.fn()
 const deleteRelationship = vi.fn()
+const createAction = vi.fn()
+const deleteAction = vi.fn()
 
 // predio owns the column of 'titular'; 'ajena' has nothing to do with this object
 const relationships: Relationship[] = [
@@ -108,7 +110,10 @@ vi.mock('../../queries', () => ({
   useRelationships: () => ({ data: relationships }),
   useCreateRelationship: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateRelationship: () => ({ mutateAsync: updateRelationship, isPending: false }),
-  useDeleteRelationship: () => ({ mutateAsync: deleteRelationship, isPending: false })
+  useDeleteRelationship: () => ({ mutateAsync: deleteRelationship, isPending: false }),
+  useObjectActions: () => ({ data: [{ name: 'ANULAR', label: 'Anular' }], isLoading: false }),
+  useCreateObjectAction: () => ({ mutateAsync: createAction, isPending: false }),
+  useDeleteObjectAction: () => ({ mutateAsync: deleteAction, isPending: false })
 }))
 
 // predio has no workflow here: no module says otherwise, so the state column reads as reserved
@@ -367,6 +372,70 @@ describe('ObjectEditorPage', () => {
       await user.click(screen.getByRole('button', { name: /^Crear$|^Create$/ }))
 
       await waitFor(() => expect(addField).toHaveBeenCalledWith(expect.objectContaining({ name: 'anio', indexed: true })))
+    })
+  })
+
+  describe('declared actions', () => {
+    const actions = () => screen.getByText(/^Acciones propias$|^Declared actions$/).closest('[data-slot="card"]') as HTMLElement
+
+    it('lists what the object declares', () => {
+      renderPage()
+      expect(within(actions()).getByText('ANULAR')).toBeInTheDocument()
+      expect(within(actions()).getByText('Anular')).toBeInTheDocument()
+    })
+
+    // the server stores it upper case; the screen shows it the way it will be stored
+    it('declares an action upper-cased', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.type(within(actions()).getByLabelText(/^Nombre técnico$|^Technical name$/), 'anular_ajeno')
+      expect(within(actions()).getByLabelText(/^Nombre técnico$|^Technical name$/)).toHaveValue('ANULAR_AJENO')
+      await user.type(within(actions()).getByLabelText(/^Etiqueta$|^Label$/), 'Anular ajeno')
+      await user.click(within(actions()).getByRole('button', { name: /^Declarar acción$|^Declare action$/ }))
+
+      await waitFor(() => expect(createAction).toHaveBeenCalledWith({ name: 'ANULAR_AJENO', label: 'Anular ajeno' }))
+      await waitFor(() => expect(within(actions()).getByLabelText(/^Nombre técnico$|^Technical name$/)).toHaveValue(''))
+    })
+
+    it('refuses a built-in or repeated name before asking the server', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      const name = within(actions()).getByLabelText(/^Nombre técnico$|^Technical name$/)
+      const declare = within(actions()).getByRole('button', { name: /^Declarar acción$|^Declare action$/ })
+
+      await user.type(name, 'update')
+      expect(within(actions()).getByText(/acción de la plataforma|built-in action/)).toBeInTheDocument()
+      expect(declare).toBeDisabled()
+
+      await user.clear(name)
+      await user.type(name, 'anular')
+      expect(within(actions()).getByText(/Ya está declarada|Already declared/)).toBeInTheDocument()
+      expect(declare).toBeDisabled()
+    })
+
+    it('removes an action after confirming', async () => {
+      const user = userEvent.setup()
+      const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+      renderPage()
+      const remove = within(actions()).getByRole('button', { name: /ANULAR/ })
+
+      await user.click(remove)
+      expect(deleteAction).not.toHaveBeenCalled()
+
+      await user.click(remove)
+      expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/ANULAR/))
+      await waitFor(() => expect(deleteAction).toHaveBeenCalledWith('ANULAR'))
+    })
+
+    it('says why the server refused', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(window, 'confirm').mockReturnValue(true)
+      deleteAction.mockRejectedValueOnce(new ApiError(404, "Action 'ANULAR' is not declared"))
+      renderPage()
+
+      await user.click(within(actions()).getByRole('button', { name: /ANULAR/ }))
+
+      expect(await within(actions()).findByRole('alert')).toHaveTextContent(/is not declared/)
     })
   })
 })

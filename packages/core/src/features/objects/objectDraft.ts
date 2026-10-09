@@ -1,5 +1,13 @@
 import type { FieldRenderer } from '../../registry/contract'
-import { CORE_FIELD_TYPES, type FieldMeta, type FieldType, type ObjectDefinition, type SystemField, type SystemFieldScope } from '../../types/metadata'
+import {
+  CORE_FIELD_TYPES,
+  type DeclaredAction,
+  type FieldMeta,
+  type FieldType,
+  type ObjectDefinition,
+  type SystemField,
+  type SystemFieldScope
+} from '../../types/metadata'
 
 type Renderers = Readonly<Record<string, FieldRenderer>>
 
@@ -161,5 +169,19 @@ export function fieldSetProblem(set: string[], kind: FieldSetKind, fields: Field
   if (kind === 'uniqueConstraints' && set.length < 2) return { code: 'TOO_FEW' }
   if (set.length > MAX_SET_FIELDS) return { code: 'TOO_MANY' }
   if (existing.some((other) => other.join(',') === set.join(','))) return { code: 'DUPLICATE_SET' }
+  return null
+}
+
+// the platform's own actions: an object cannot declare one of these (ADR-042)
+export const BUILT_IN_ACTIONS = ['READ', 'CREATE', 'UPDATE', 'DELETE', 'MANAGE_METADATA', 'MANAGE_ORGANIZATION', 'MANAGE_TENANTS'] as const
+
+const ACTION_NAME = /^[A-Z][A-Z0-9_]{1,48}$/
+
+// the server's 400s and its 409, answered while typing. it upper-cases first, and so does this.
+export function actionNameProblem(name: string, existing: DeclaredAction[]): 'SHAPE' | 'BUILT_IN' | 'DUPLICATE' | null {
+  const wanted = name.trim().toUpperCase()
+  if (!ACTION_NAME.test(wanted)) return 'SHAPE'
+  if ((BUILT_IN_ACTIONS as readonly string[]).includes(wanted)) return 'BUILT_IN'
+  if (existing.some((action) => action.name === wanted)) return 'DUPLICATE'
   return null
 }

@@ -152,6 +152,20 @@
                 "NOT_INDEXABLE": "«{{name}}» no se puede indexar",
                 "DUPLICATE_SET": "Ya está en la lista"
             }
+        },
+        "actions": {
+            "title": "Acciones propias",
+            "hint": "Verbos del objeto más allá de leer, crear, editar y eliminar. Se conceden por rol en Permisos.",
+            "name": "Nombre técnico",
+            "label": "Etiqueta",
+            "add": "Declarar acción",
+            "empty": "Este objeto aún no declara acciones.",
+            "confirmDelete": "Se quitará la acción «{{name}}» y todos los permisos que la conceden.",
+            "problems": {
+                "SHAPE": "En mayúsculas, letras, números y _, de 2 a 49 caracteres",
+                "BUILT_IN": "Es una acción de la plataforma",
+                "DUPLICATE": "Ya está declarada"
+            }
         }
     },
     "records": {

@@ -60,6 +60,12 @@ export interface ObjectDefinition extends ObjectSummary {
   fields: FieldMeta[]
 }
 
+// an object's own verb beyond CRUD (ADR-042), from GET /api/metadata/objects/{object}/actions
+export interface DeclaredAction {
+  name: string
+  label: string
+}
+
 export interface RecordItem {
   id: string
   createdAt: string | null

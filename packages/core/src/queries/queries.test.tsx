@@ -3,7 +3,16 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
 import type { WasichaiModule } from '../registry/contract'
-import { useDeleteField, useDeleteRecord, useLinkRelated, useResolvedPage, useSaveRecord, type SaveRecordInput } from './index'
+import {
+  useCreateObjectAction,
+  useDeleteField,
+  useDeleteObjectAction,
+  useDeleteRecord,
+  useLinkRelated,
+  useResolvedPage,
+  useSaveRecord,
+  type SaveRecordInput
+} from './index'
 
 let fetch: FetchMock | null = null
 afterEach(() => fetch?.restore())
@@ -48,6 +57,17 @@ function Links() {
 function DropField() {
   const drop = useDeleteField('predio')
   return <button onClick={() => drop.mutate('area')}>{drop.isSuccess ? 'dropped' : 'drop'}</button>
+}
+
+function Actions({ label }: { label: string }) {
+  const create = useCreateObjectAction('predio')
+  const remove = useDeleteObjectAction('predio')
+  return (
+    <>
+      <button onClick={() => create.mutate({ name: 'anular', label })}>{create.isSuccess ? 'declared' : 'declare'}</button>
+      <button onClick={() => remove.mutate('ANULAR')}>{remove.isSuccess ? 'removed' : 'remove'}</button>
+    </>
+  )
 }
 
 function PageName() {
@@ -208,6 +228,45 @@ describe('field queries', () => {
       ['records', 'predio'],
       ['sketch-tiles', 'predio']
     ])
+  })
+})
+
+describe('declared action queries', () => {
+  it('declares an action and refreshes the list', async () => {
+    fetch = mockFetch([{ method: 'POST', path: '/metadata/objects/predio/actions', status: 201, body: { name: 'ANULAR', label: 'Anular' } }])
+    const { queryClient } = renderWithProviders(<Actions label=" Anular " />)
+    const spy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    await userEvent.click(screen.getByRole('button', { name: 'declare' }))
+
+    await screen.findByText('declared')
+    expect(fetch.calls.find((call) => call.method === 'POST')?.body).toEqual({ name: 'ANULAR', label: 'Anular' })
+    expect(invalidatedKeys(spy)).toContainEqual(['objects', 'predio', 'actions'])
+  })
+
+  // the server defaults a missing label to the name; an empty one would be stored empty
+  it('leaves a blank label out', async () => {
+    fetch = mockFetch([{ method: 'POST', path: '/metadata/objects/predio/actions', status: 201, body: { name: 'ANULAR', label: 'ANULAR' } }])
+    renderWithProviders(<Actions label="  " />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'declare' }))
+
+    await screen.findByText('declared')
+    expect(fetch.calls.find((call) => call.method === 'POST')?.body).toEqual({ name: 'ANULAR' })
+  })
+
+  // its grants go with it, so every cached role is stale
+  it('removes an action and the roles that granted it go stale', async () => {
+    fetch = mockFetch([{ method: 'DELETE', path: '/metadata/objects/predio/actions/ANULAR', status: 204 }])
+    const { queryClient } = renderWithProviders(<Actions label="" />)
+    const spy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    await userEvent.click(screen.getByRole('button', { name: 'remove' }))
+
+    await screen.findByText('removed')
+    expect(fetch.calls.find((call) => call.method === 'DELETE')?.path).toBe('/metadata/objects/predio/actions/ANULAR')
+    expect(invalidatedKeys(spy)).toContainEqual(['objects', 'predio', 'actions'])
+    expect(invalidatedKeys(spy)).toContainEqual(['admin', 'roles'])
   })
 })
 

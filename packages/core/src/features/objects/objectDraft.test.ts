@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { FieldMeta, ObjectDefinition, SystemField } from '../../types/metadata'
 import {
+  actionNameProblem,
   addableFieldTypes,
   detailsDraft,
   emptyFieldDraft,
@@ -199,4 +200,19 @@ describe('field sets', () => {
     expect(fieldSetProblem(names, 'indexes', many, [], {})?.code).toBe('TOO_MANY')
     expect(fieldSetProblem(names.slice(0, 32), 'uniqueConstraints', many, [], {})).toBeNull()
   })
+})
+
+describe('declared action names', () => {
+  // the server upper-cases what it is sent, so lower case typed is fine
+  it('accepts an upper snake name however it was typed', () => expect(actionNameProblem('anular_ajeno', [])).toBeNull())
+
+  it('refuses a built-in action', () => expect(actionNameProblem('MANAGE_TENANTS', [])).toBe('BUILT_IN'))
+
+  it('refuses a bad shape', () => {
+    expect(actionNameProblem('X', [])).toBe('SHAPE')
+    expect(actionNameProblem('1ABC', [])).toBe('SHAPE')
+    expect(actionNameProblem('A'.repeat(50), [])).toBe('SHAPE')
+  })
+
+  it('refuses a name the object already declares', () => expect(actionNameProblem('anular', [{ name: 'ANULAR', label: 'x' }])).toBe('DUPLICATE'))
 })

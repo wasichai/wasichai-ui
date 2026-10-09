@@ -7,11 +7,7 @@ export type BuiltInAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'MANAGE_ME
 // a closed union here dropped those on save and the replace-all PUT deleted them.
 export type Action = string
 
-// an object's own verb beyond CRUD, from GET /api/metadata/objects/{object}/actions
-export interface DeclaredAction {
-  name: string
-  label: string
-}
+export type { DeclaredAction } from '../../types/metadata'
 
 export interface AdminUser {
   id: string

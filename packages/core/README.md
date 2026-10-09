@@ -320,6 +320,10 @@ cannot be unique) and edits the composite `indexes` (1–32 fields, in index ord
 field is `unique` on the field itself), checking each set as it is typed the way the server will. The object's `PUT`
 keeps whatever it is not sent, so the editor sends a rule or a list only when it changed (`objectUpdatePayload`):
 saving the labels never rewrites a rule someone else just set, and `[]` drops every set of a list.
+It also lists the object's declared actions (ADR-042), declares one (`useCreateObjectAction`: the name is sent upper
+case, a blank label is left out and the server uses the name) and removes one with every grant of it
+(`useDeleteObjectAction`, which also refreshes the cached roles). `actionNameProblem(name, existing)` mirrors the
+server's refusals: not `^[A-Z][A-Z0-9_]{1,48}$`, one of `BUILT_IN_ACTIONS`, or already declared.
 
 ## Adding a language / overriding strings
 

@@ -34,6 +34,7 @@ import {
   type FieldDraft,
   type ObjectDetailsDraft
 } from './objectDraft'
+import { ObjectActions } from './ObjectActions'
 import { ObjectFieldSets } from './ObjectFieldSets'
 import { ObjectRelationships } from './ObjectRelationships'
 import { relationshipOfField } from './relationshipSides'
@@ -446,6 +447,8 @@ export function ObjectEditorPage() {
         />
 
         <ObjectRelationships objectName={object} />
+
+        <ObjectActions objectName={object} />
 
         <Card className="border-danger/40">
           <CardHeader>

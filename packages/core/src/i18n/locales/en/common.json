@@ -149,6 +149,20 @@
                 "NOT_INDEXABLE": "«{{name}}» cannot be indexed",
                 "DUPLICATE_SET": "Already in the list"
             }
+        },
+        "actions": {
+            "title": "Declared actions",
+            "hint": "Verbs of the object beyond read, create, update and delete. Granted per role in Permissions.",
+            "name": "Technical name",
+            "label": "Label",
+            "add": "Declare action",
+            "empty": "This object declares no actions yet.",
+            "confirmDelete": "Action {{name}} and every grant of it will be removed.",
+            "problems": {
+                "SHAPE": "Upper case letters, digits and _, 2 to 49 characters",
+                "BUILT_IN": "That is a built-in action",
+                "DUPLICATE": "Already declared"
+            }
         }
     },
     "records": {
