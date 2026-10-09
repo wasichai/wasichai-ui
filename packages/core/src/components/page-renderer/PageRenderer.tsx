@@ -25,8 +25,8 @@ import { ROW_CLASS, regionStyle } from './layout'
 type SubmitHandler = (payload: RecordPayload, reason?: string) => void
 
 const CORE_TYPES: readonly string[] = CORE_PAGE_COMPONENT_TYPES
-// a form that does not save must never offer a widget whose value it would drop: a module field
-// leaves regardless of whether some module claims it, and so does a leftover type nothing claims.
+// a read-along form after the first drops module fields, claimed or not, and leftover types: the
+// first form already shows them (read-only when it cannot save), and its values are the ones saved.
 const CORE_FIELD_TYPE_SET = new Set<string>(CORE_FIELD_TYPES)
 
 export interface PageRendererProps {
@@ -50,7 +50,8 @@ export function PageRenderer({ page, definition, record, onSubmit, submitting, e
   // one record, one save button: the first form in document order owns submission, the rest are
   // read-along field groups whose submit does nothing. an object the server will not let this ui
   // update (append-only, api-only) has no owner: every form reads along.
-  const owner = writePolicy(definition).canUpdate ? firstForm(page.definition.page) : null
+  const first = firstForm(page.definition.page)
+  const owner = writePolicy(definition).canUpdate ? first : null
   // a leaf draws when core or some module knows its type
   const drawable = (type: string) => CORE_TYPES.includes(type) || Object.hasOwn(pageComponents, type)
   // an ACTION leaf draws only when its own kind resolves: NAVIGATE is core's, any other kind needs
@@ -192,6 +193,8 @@ export function PageRenderer({ page, definition, record, onSubmit, submitting, e
                   definition={definition}
                   record={record}
                   owner={isOwner}
+                  // the first form shows the record's module fields (its shape) even when it cannot save
+                  keepModuleFields={component === first}
                   submitting={submitting}
                   error={error}
                   violations={violations}
@@ -199,7 +202,7 @@ export function PageRenderer({ page, definition, record, onSubmit, submitting, e
                 />
               ) : (
                 <DynamicForm
-                  definition={narrowDefinition(definition, component.fields, isOwner)}
+                  definition={narrowDefinition(definition, component.fields, component === first)}
                   record={record}
                   submitting={isOwner ? submitting : false}
                   error={isOwner ? error : null}
@@ -265,6 +268,7 @@ function StoredFormComponent({
   definition,
   record,
   owner,
+  keepModuleFields,
   submitting,
   error,
   violations,
@@ -274,6 +278,7 @@ function StoredFormComponent({
   definition: ObjectDefinition
   record: RecordItem
   owner: boolean
+  keepModuleFields: boolean
   submitting?: boolean
   error?: string | null
   violations?: FieldViolation[]
@@ -286,9 +291,8 @@ function StoredFormComponent({
 
   return (
     <DynamicForm
-      // a form that does not save keeps only core-typed fields: a module or leftover type never
-      // gets an editable widget whose value this form would drop on submit
-      definition={owner ? definition : { ...definition, fields: definition.fields.filter((field) => CORE_FIELD_TYPE_SET.has(field.type)) }}
+      // only the page's first form keeps module and leftover types: the others are core fields alone
+      definition={keepModuleFields ? definition : { ...definition, fields: definition.fields.filter((field) => CORE_FIELD_TYPE_SET.has(field.type)) }}
       form={form.data}
       record={record}
       submitting={owner ? submitting : false}
@@ -313,9 +317,9 @@ function placedFields(component: PageComponent, definition: ObjectDefinition): F
     .filter((field): field is FieldMeta => field !== null)
 }
 
-// `fields` picks a subset in the author's order. a module field is picked the same way, except in
-// the form that does not save, which keeps only core types: a claimed module type and an unclaimed
-// leftover type both leave, since neither one's value would travel with this form's submit.
+// `fields` picks a subset in the author's order. a module field is picked the same way, except in a
+// read-along form after the first, which keeps only core types: a claimed module type and an
+// unclaimed leftover type both leave, since neither one's value would travel with its submit.
 function narrowDefinition(definition: ObjectDefinition, fields: string[] | null, keepModuleFields: boolean): ObjectDefinition {
   const byName = new Map(definition.fields.map((field) => [field.name, field]))
   const picked = fields ? fields.map((name) => byName.get(name)).filter((field): field is FieldMeta => field !== undefined) : definition.fields

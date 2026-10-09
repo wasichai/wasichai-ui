@@ -92,15 +92,30 @@ export function DynamicForm({ definition, form, record, submitting, error, viola
   const renderField = (field: FieldMeta) => {
     const renderer = fieldRenderers[field.type]
     if (renderer) {
+      const value = extra[renderer.section]?.[field.name] ?? null
+      // a form that saves nothing shows the value and takes no edit it would drop
+      if (readOnly && renderer.display) {
+        const FieldDisplay = renderer.display
+        return (
+          <div key={field.id} className="space-y-1.5 sm:col-span-2">
+            <p className="text-sm font-medium text-ink">{field.label}</p>
+            <FieldDisplay field={field} value={value} />
+          </div>
+        )
+      }
       const FieldWidget = renderer.input
+      const widget = (
+        <FieldWidget
+          field={field}
+          value={value}
+          onChange={(next) => setExtra((current) => ({ ...current, [renderer.section]: { ...current[renderer.section], [field.name]: next } }))}
+        />
+      )
       const refused = serverError(field.name)
       return (
         <div key={field.id} className="space-y-1.5 sm:col-span-2">
-          <FieldWidget
-            field={field}
-            value={extra[renderer.section]?.[field.name] ?? null}
-            onChange={(value) => setExtra((current) => ({ ...current, [renderer.section]: { ...current[renderer.section], [field.name]: value } }))}
-          />
+          {/* no display to draw it with: the widget stays visible, inert */}
+          {readOnly ? <div inert>{widget}</div> : widget}
           {refused ? <p className="text-xs text-danger">{refused}</p> : null}
         </div>
       )

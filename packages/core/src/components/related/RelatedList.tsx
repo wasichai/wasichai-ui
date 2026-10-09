@@ -10,7 +10,7 @@ import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { describeError } from '../../api/client'
 import { useWritePolicy } from '../../lib/writePolicy'
 import { FieldCell } from '../field-value'
-import { useReasonPrompt } from '../reason/useReasonPrompt'
+import { reasonRefusal, useReasonPrompt } from '../reason/useReasonPrompt'
 import { WritePolicyNotice } from '../reason/WritePolicyNotice'
 import { useLinkRelated, useObjectDefinition, useRecords, useRelatedRecords } from '../../queries'
 import type { RelatedSide } from '../../types/metadata'
@@ -35,8 +35,10 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
   const policy = useWritePolicy(objectName, side.objectName)
   const prompt = useReasonPrompt()
   const linkable = manyToMany && policy.canLink
-  // the last link or unlink the server refused says why; the next attempt clears it
-  const refused = link.error ?? unlink.error
+  // the last link or unlink the server refused says why; the next attempt clears it.
+  // a refused reason is said in the open dialog, once
+  const lastError = link.error ?? unlink.error
+  const refused = prompt.dialog && reasonRefusal(lastError) !== undefined ? null : lastError
 
   return (
     <Card>

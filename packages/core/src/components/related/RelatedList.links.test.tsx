@@ -77,8 +77,9 @@ describe('RelatedList links', () => {
 
   describe('write rules', () => {
     // either end's rules hold for a link
-    const mountLinks = (rules: { predio?: Record<string, boolean>; titular?: Record<string, boolean> }, linked: string[] = []) => {
+    const mountLinks = (rules: { predio?: Record<string, boolean>; titular?: Record<string, boolean> }, linked: string[] = [], answers: MockRoute[] = []) => {
       const routes: MockRoute[] = [
+        ...answers,
         { path: '/metadata/objects/predio', body: { ...predio, ...rules.predio } },
         { path: '/metadata/objects/titular', body: { ...titular, ...rules.titular } },
         { path: '/objects/predio/records/r1/related/predio_titular', body: page(linked) },
@@ -120,6 +121,47 @@ describe('RelatedList links', () => {
       expect(fetch?.calls.some((call) => call.method === 'POST')).toBe(false)
       expect(screen.getByRole('combobox')).toHaveValue('t1')
       expect(screen.queryByRole('alert')).toBeNull()
+    })
+
+    it('keeps the earlier refusal on screen when the next prompt is cancelled', async () => {
+      const conflict = { title: 'Conflict', detail: 'El otro lado es de solo anexado' }
+      mountLinks(
+        { titular: { requiresReason: true } },
+        [],
+        [{ method: 'POST', path: '/objects/predio/records/r1/related/predio_titular', status: 409, body: conflict }]
+      )
+
+      await pick()
+      await userEvent.type(within(screen.getByRole('dialog')).getByLabelText('Motivo'), 'primero')
+      await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Vincular' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('El otro lado es de solo anexado')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Vincular' }))
+      await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancelar' }))
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(screen.getByRole('alert')).toHaveTextContent('El otro lado es de solo anexado')
+      expect(fetch?.calls.filter((call) => call.method === 'POST')).toHaveLength(1)
+    })
+
+    // the dialog stays open to fix the reason: saying it again behind the dialog is noise
+    it('says a refused reason once, in the dialog', async () => {
+      const refusal = { title: 'Bad Request', detail: 'A reason is required', errors: [{ field: 'reason', message: 'send the X-Change-Reason header' }] }
+      mountLinks(
+        { predio: { requiresReason: true } },
+        ['t1'],
+        [{ method: 'DELETE', path: '/objects/predio/records/r1/related/predio_titular/t1', status: 400, body: refusal }]
+      )
+
+      const unlink = await screen.findByRole('button', { name: 'Desvincular' })
+      await waitFor(() => expect(unlink).toBeEnabled())
+      await userEvent.click(unlink)
+      const dialog = screen.getByRole('dialog')
+      await userEvent.type(within(dialog).getByLabelText('Motivo'), 'motivo')
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Desvincular' }))
+
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('send the X-Change-Reason header')
+      expect(screen.queryByText(/A reason is required/)).toBeNull()
     })
 
     it('unlinks with a reason', async () => {

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DynamicForm } from './DynamicForm'
 import { mockFetch, renderWithProviders } from '@wasichai/testing'
-import { sketchModule } from '../../test/fakeModules'
+import { annotationModule, sketchModule } from '../../test/fakeModules'
 import type { FieldMeta, Form, ObjectDefinition } from '../../types/metadata'
 
 function field(overrides: Partial<FieldMeta>): FieldMeta {
@@ -247,6 +247,36 @@ describe('DynamicForm', () => {
     expect(screen.getByLabelText(/Código/)).toBeDisabled()
     expect(screen.getByLabelText(/Área/)).toBeDisabled()
     expect(screen.getByLabelText('Uso')).toBeDisabled()
+  })
+
+  it('draws a module field of a read-along form inert: shown, never taken', () => {
+    const lote = field({ id: 'f9', name: 'lote', label: 'Lote', type: 'SKETCH' })
+    renderWithProviders(
+      <DynamicForm
+        definition={{ ...definition, fields: [...definition.fields, lote] }}
+        record={{ id: 'r1', createdAt: null, updatedAt: null, attributes: {}, sketches: { lote: 'trazado' } }}
+        onSubmit={onSubmit}
+        readOnly
+      />,
+      { modules: [sketchModule] }
+    )
+    expect(screen.getByTestId('sketch-field')).toHaveTextContent('trazado')
+    expect(screen.getByTestId('sketch-field').closest('[inert]')).not.toBeNull()
+  })
+
+  it('shows a module field through its display on a read-along form', () => {
+    const nota = field({ id: 'f9', name: 'nota', label: 'Nota', type: 'NOTE_FIELD' })
+    renderWithProviders(
+      <DynamicForm
+        definition={{ ...definition, fields: [...definition.fields, nota] }}
+        record={{ id: 'r1', createdAt: null, updatedAt: null, attributes: {}, notes: { nota: 'hola' } }}
+        onSubmit={onSubmit}
+        readOnly
+      />,
+      { modules: [annotationModule] }
+    )
+    expect(screen.getByText('Nota')).toBeInTheDocument()
+    expect(screen.getByTestId('note-display')).toHaveTextContent('nota: hola')
   })
 
   it('names a relation picker by its label and marks it invalid', async () => {

@@ -20,6 +20,11 @@ interface Pending {
   options: ReasonPromptOptions
 }
 
+// the refusal an open prompt shows itself: a caller's banner skips it while the dialog is up
+export function reasonRefusal(cause: unknown): string | undefined {
+  return cause instanceof ApiError ? cause.violations.find((violation) => violation.field === 'reason')?.message : undefined
+}
+
 // a failed write is never rethrown: the caller passes mutation.mutateAsync and reads mutation.error
 const swallow = () => {}
 
@@ -55,7 +60,7 @@ export function useReasonPrompt(): ReasonPrompt {
       await current.write(reason)
     } catch (cause) {
       // a refused reason stays in the dialog to be fixed; anything else is the caller's banner
-      refused = cause instanceof ApiError ? cause.violations.find((violation) => violation.field === 'reason')?.message : undefined
+      refused = reasonRefusal(cause)
     }
     // cancelled during the write, maybe another prompt open now: freeing its button would let it send twice
     if (shown.current !== current) return

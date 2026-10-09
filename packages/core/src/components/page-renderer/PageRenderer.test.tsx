@@ -277,6 +277,26 @@ describe('PageRenderer', () => {
     expect(screen.getAllByLabelText('Nombre').every((input) => (input as HTMLInputElement).disabled)).toBe(true)
   })
 
+  // the record's shape is still the record's: an object nobody may update keeps showing it
+  it('still shows the module fields of an append-only record, read-only', () => {
+    const page = rootPage([node('FORM')])
+
+    renderWithProviders(<PageRenderer page={page} definition={{ ...definition, appendOnly: true }} record={record} onSubmit={vi.fn()} />)
+
+    expect(screen.getByTestId('sketch-field').closest('[inert]')).not.toBeNull()
+    expect(screen.queryByRole('button', { name: /guardar/i })).toBeNull()
+  })
+
+  // a read-along form drew a live widget whose edit nothing would save
+  it('draws the module field of a read-along form inert', () => {
+    const page = rootPage([node('FORM', { fields: ['codigo'] }), node('DYNAMIC_FORM', { children: [node('FIELD', { field: 'lote' })] })])
+
+    renderWithProviders(<PageRenderer page={page} definition={definition} record={record} onSubmit={vi.fn()} />)
+
+    expect(screen.getByTestId('sketch-field').closest('[inert]')).not.toBeNull()
+    expect(screen.getAllByRole('button', { name: /guardar/i })).toHaveLength(1)
+  })
+
   it('offers no save on an api-only object', () => {
     const page = rootPage([node('FORM')])
 

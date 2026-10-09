@@ -11,7 +11,7 @@ import { effectiveSort, fallbackView, pickView, viewColumns, viewQueryParams } f
 import { useDeleteRecord, useObjectDefinition, useRecords, useViews } from '../../queries'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { describeError } from '../../api/client'
-import { useReasonPrompt } from '../../components/reason/useReasonPrompt'
+import { reasonRefusal, useReasonPrompt } from '../../components/reason/useReasonPrompt'
 import { WritePolicyNotice } from '../../components/reason/WritePolicyNotice'
 import { writePolicy } from '../../lib/writePolicy'
 
@@ -39,6 +39,8 @@ export function RecordListPage() {
   const remove = useDeleteRecord(object ?? '')
   const prompt = useReasonPrompt()
   const policy = writePolicy(definition.data)
+  // a refused reason is said in the open dialog, once
+  const refused = remove.isError && !(prompt.dialog && reasonRefusal(remove.error) !== undefined)
   const resetRemove = remove.reset
   // the page stays mounted from one object's list to the next: a refusal belongs to the list it happened on
   useEffect(() => resetRemove(), [object, resetRemove])
@@ -96,7 +98,7 @@ export function RecordListPage() {
         <WritePolicyNotice policy={policy} />
         <Card>
           {/* a refused delete (an append-only record points at it, no permission) says why */}
-          {remove.isError ? (
+          {refused ? (
             <Alert tone="danger" className="border-b border-border bg-danger-soft px-4 py-3" onDismiss={() => remove.reset()}>
               {describeError(remove.error)}
             </Alert>

@@ -301,7 +301,8 @@ calls `onSubmit(payload, reason)`; without the rule it calls `onSubmit(payload)`
 puts each refused field's message under that field (a 409 on a unique pair marks both fields, a 400 on `reason` marks
 the reason) and keeps a violation naming no drawn field in the banner. `PageRenderer` passes both through and offers
 no save on an append-only or api-only object; the detail page says why, and the new-record page draws no form on an
-api-only object.
+api-only object. A read-only form still shows the page's module fields (a geometry, …): through the renderer's
+`display` when it has one, otherwise as its input widget made `inert`.
 
 The record list hides **Nuevo registro** on an api-only object and the row delete on an append-only or api-only one,
 saying why; with `requiresReason` its delete asks for the reason in place of the plain confirmation. `RelatedList`

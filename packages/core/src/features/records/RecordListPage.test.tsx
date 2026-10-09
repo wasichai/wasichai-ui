@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
+import { mockFetch, renderWithProviders, type FetchMock, type MockRoute } from '@wasichai/testing'
 import type { WasichaiModule } from '../../registry/contract'
 import { Link } from 'react-router'
 import { RecordListPage } from './RecordListPage'
@@ -86,8 +86,9 @@ describe('RecordListPage', () => {
   describe('write rules', () => {
     const predio = { id: 'o1', name: 'predio', label: 'Predio', pluralLabel: 'Predios', description: null, enabled: true, fields: [] }
     const one = { content: [{ id: 'r1', createdAt: null, updatedAt: null, attributes: {} }], page: 0, size: 20, totalElements: 1, totalPages: 1 }
-    const mountList = (rules: Record<string, boolean>) => {
+    const mountList = (rules: Record<string, boolean>, answers: MockRoute[] = []) => {
       fetch = mockFetch([
+        ...answers,
         { path: '/metadata/objects/predio', body: { ...predio, ...rules } },
         { path: '/objects/predio/views', status: 404, body: { title: 'Not Found' } },
         { path: '/objects/predio/records', body: one },
@@ -121,6 +122,37 @@ describe('RecordListPage', () => {
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
       expect(fetch?.calls.some((call) => call.method === 'DELETE')).toBe(false)
       expect(screen.queryByRole('alert')).toBeNull()
+    })
+
+    it('keeps the earlier refusal on screen when the next prompt is cancelled', async () => {
+      mountList({ requiresReason: true }, [
+        { method: 'DELETE', path: '/objects/predio/records/r1', status: 409, body: { title: 'Conflict', detail: 'Refused' } }
+      ])
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Eliminar' }))
+      await userEvent.type(within(screen.getByRole('dialog')).getByLabelText('Motivo'), 'duplicado')
+      await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Eliminar' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('Refused')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Eliminar' }))
+      await userEvent.keyboard('{Escape}')
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(screen.getByRole('alert')).toHaveTextContent('Refused')
+      expect(fetch?.calls.filter((call) => call.method === 'DELETE')).toHaveLength(1)
+    })
+
+    it('says a refused reason once, in the dialog', async () => {
+      const refusal = { title: 'Bad Request', detail: 'A reason is required', errors: [{ field: 'reason', message: 'send the X-Change-Reason header' }] }
+      mountList({ requiresReason: true }, [{ method: 'DELETE', path: '/objects/predio/records/r1', status: 400, body: refusal }])
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Eliminar' }))
+      const dialog = screen.getByRole('dialog')
+      await userEvent.type(within(dialog).getByLabelText('Motivo'), 'duplicado')
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Eliminar' }))
+
+      expect(await within(dialog).findByRole('alert')).toHaveTextContent('send the X-Change-Reason header')
+      expect(screen.queryByText(/A reason is required/)).toBeNull()
     })
 
     it('offers no delete and says why on an append-only object', async () => {
