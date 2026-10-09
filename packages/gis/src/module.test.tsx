@@ -44,4 +44,9 @@ describe('gisModule', () => {
     expect(gisModule()).not.toBe(gisModule())
     expect(gisModule().fieldRenderers!.GEOMETRY.settings!.defaults).not.toBe(gisModule().fieldRenderers!.GEOMETRY.settings!.defaults)
   })
+
+  it('hands its map defaults to the app through one provider', () => {
+    expect(gisModule().providers).toHaveLength(1)
+    expect(gisModule({ basemap: { type: 'none' } }).providers).toHaveLength(1)
+  })
 })

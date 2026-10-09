@@ -8,6 +8,7 @@ import { boundsOf } from '../lib/geo'
 import { popupHtml } from '../lib/popup'
 import { applyMapWorkerUrl } from '../lib/mapWorker'
 import { cn } from '@wasichai/ui'
+import { useMapDefaults } from './MapDefaults'
 import type { Feature, FeatureCollection, GeoJsonGeometry } from '../types'
 
 const SOURCE = 'wasichai-features'
@@ -49,15 +50,17 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
   const wms = useRef<WmsLayerSpec[]>([])
   wms.current = wmsLayers ?? []
   const wmsKey = JSON.stringify(wms.current)
+  // prop, then gisModule's default, then OSM over Lima
+  const defaults = useMapDefaults()
   // the build effect runs once: it reads the latest spec and view from refs
   const basemapRef = useRef<BasemapSpec>(DEFAULT_BASEMAP)
-  basemapRef.current = basemap ?? DEFAULT_BASEMAP
+  basemapRef.current = basemap ?? defaults.basemap ?? DEFAULT_BASEMAP
   // callers write the spec inline: compare by value, like wmsLayers
   const basemapKey = JSON.stringify(basemapRef.current)
   // key of the base map the map shows, or is switching to
   const shown = useRef<string | null>(null)
   const view = useRef<MapInitialView>(DEFAULT_INITIAL_VIEW)
-  view.current = initialView ?? DEFAULT_INITIAL_VIEW
+  view.current = initialView ?? defaults.initialView ?? DEFAULT_INITIAL_VIEW
 
   const whenReady = (task: () => void) => {
     if (ready.current) task()
@@ -187,7 +190,7 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
   }, [wmsKey])
 
   // base map swap: same map, our overlays merged into the new style. maplibre diffs it in, or rebuilds
-  // the style from scratch (other glyphs/sprite) and still carries them through transformStyle
+  // the style when it cannot diff, and transformStyle carries them either way
   useEffect(() => {
     const instance = map.current
     if (!instance || shown.current === basemapKey) return

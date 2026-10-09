@@ -1,7 +1,9 @@
 import type { StyleSpecification } from 'maplibre-gl'
 import { act, render } from '@testing-library/react'
+import { renderWithProviders } from '@wasichai/testing'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { keepOverlays } from '../lib/basemap'
+import { gisModule } from '../module'
 import { MapView } from './MapView'
 
 // maplibre cannot run in jsdom: the double records what the map was built with and lets the test fire its events
@@ -185,5 +187,31 @@ describe('MapView base map swap', () => {
     loaded()
     expect(adapters).toHaveLength(1)
     expect(adapters[0]).toMatchObject({ prefixId: 'wasichai-draw' })
+  })
+})
+
+describe('MapView module default', () => {
+  const app = () => [gisModule({ basemap: { type: 'raster', tiles: [ORG], attribution: '© Example' }, initialView: { center: [-71.54, -16.41], zoom: 13 } })]
+
+  // the map page, the geometry editor, the MAP component and the layers preview all mount this MapView inside the app
+  it('takes the base map and camera from gisModule', () => {
+    renderWithProviders(<MapView />, { modules: app() })
+    expect(FakeMap.instances[0].options).toMatchObject({
+      style: { sources: { basemap: { tiles: [ORG], attribution: '© Example' } } },
+      center: [-71.54, -16.41],
+      zoom: 13
+    })
+  })
+
+  it('lets a MapView prop override the module default', () => {
+    renderWithProviders(<MapView basemap={{ type: 'none' }} initialView={{ center: [0, 0], zoom: 2 }} />, { modules: app() })
+    expect(FakeMap.instances[0].options).toMatchObject({ style: { layers: [{ type: 'background' }] }, center: [0, 0], zoom: 2 })
+  })
+
+  it('falls back to the module default when the prop is dropped', () => {
+    const { rerender } = renderWithProviders(<MapView basemap={{ type: 'none' }} />, { modules: app() })
+    act(() => FakeMap.instances[0].fire('load'))
+    rerender(<MapView />)
+    expect(FakeMap.instances[0].setStyle.mock.calls[0][0]).toMatchObject({ sources: { basemap: { tiles: [ORG] } } })
   })
 })

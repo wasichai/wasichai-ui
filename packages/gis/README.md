@@ -70,6 +70,44 @@ Calling `gisModule({ workerUrl })` more than once (with different urls) is unusu
 does it, the last call wins for every `MapView` mounted anywhere on the page: the url lives in
 module-level state, not per module instance.
 
+## Base map
+
+Every map (the map page, the geometry editor, the `MAP` page component, the layers preview, and any `MapView`
+your app mounts inside `WasichaiApp`) draws the same base map. The default is the public OpenStreetMap raster
+(`https://tile.openstreetmap.org/{z}/{x}/{y}.png`, "© OpenStreetMap contributors"), whose usage policy forbids heavy
+use: a production app should point at its own tile service.
+
+```tsx
+gisModule({
+  workerUrl,
+  basemap: { type: 'raster', tiles: ['https://tiles.example.org/{z}/{x}/{y}.png'], attribution: '© Example', maxzoom: 19 },
+  initialView: { center: [-71.54, -16.41], zoom: 13 }
+})
+```
+
+`BasemapSpec` (exported) is one of:
+
+| Spec | Draws |
+|---|---|
+| `{ type: 'raster', tiles, tileSize?, attribution?, maxzoom? }` | a raster tile template (`tileSize` default 256) |
+| `{ type: 'style', url }` | a MapLibre style JSON, vector tiles included |
+| `{ type: 'none' }` | no base map: a plain background under the overlays |
+
+A `MapView` takes the same `basemap` and `initialView` props, which win over the module's. Changing `basemap` at
+runtime keeps the map, its features, its WMS layers and the shape being drawn; `initialView` is read once.
+
+### Content-Security-Policy
+
+MapLibre fetches tiles, styles, glyphs and sprites with `fetch` and decodes images through `blob:` urls:
+
+- `connect-src`: the tile host, or the style host and every host its style names (tiles, glyphs, sprite); also the
+  GeoServer host the layers preview reads WMS from.
+- `img-src`: the same hosts, plus `blob:` and `data:`.
+- `worker-src`: `'self'` when `workerUrl` is served from the app's origin; add `blob:` when it is not (MapLibre then
+  wraps the worker in a `blob:` url).
+
+The OpenStreetMap default needs `https://tile.openstreetmap.org` in `connect-src` and `img-src`.
+
 ## What it adds
 
 | Slot | Contribution |
@@ -82,6 +120,7 @@ module-level state, not per module instance.
 | dashboardCards / objectTileDetails / objectColumns | spatial object count, `TYPE · EPSG:n` lines, objects-table column |
 | auditValueFormatters / auditFieldLabels | shape changes read "geometry updated", never coordinates |
 | recordQueryKeys | `['features', object]` goes stale on every record write |
+| providers | the `basemap` and `initialView` options, read by every `MapView` in the app |
 
 ## Options
 
@@ -89,6 +128,8 @@ module-level state, not per module instance.
 |---|---|---|
 | `basePath` | `'gis'` | url prefix of the map and layers pages |
 | `workerUrl` | none | MapLibre worker script url (see above). Module-level: the last `gisModule({ workerUrl })` call wins for every `MapView` on the page. |
+| `basemap` | OpenStreetMap raster | base map of every `MapView` in the app (see "Base map"). A `MapView`'s own `basemap` prop wins. |
+| `initialView` | `{ center: [-77.04, -12.05], zoom: 11 }` | camera of every map before its features load. A `MapView`'s own `initialView` prop wins. |
 
 ## Backend
 
