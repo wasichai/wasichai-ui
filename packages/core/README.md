@@ -45,6 +45,7 @@ createRoot(document.getElementById('root')!).render(
 | `basename` | – | router basename when not served from `/` |
 | `defaultLoginEmail` | `''` | login form prefill (demo apps) |
 | `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there, see [Themes](#themes-and-preferences) |
+| `systemThemes` | `{ light: 'light', dark: 'dark' }` | what `system` and an unknown id resolve to on a light / dark OS, see [Themes](#themes-and-preferences) |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -133,21 +134,38 @@ import { PORTAL_TRIBUTARIO_THEME } from '@wasichai/core'
 // config: { themes: [PORTAL_TRIBUTARIO_THEME] }
 ```
 
+A new user's preference is `system` (nothing stored, or the API's `{ "theme": "system" }`), so an app makes its own
+themes the default with `systemThemes`: a new user opens on `systemThemes.light` (`.dark` on a dark OS), following the
+system switches between the two, `light` and `dark` stay in the selector, and `resolveConfig` throws when an id is not
+a theme or has the other `colorScheme`.
+
+```ts
+// config
+themes: [
+  { id: 'acme-day', label: 'theme.acmeDay', colorScheme: 'light' },
+  { id: 'acme-night', label: 'theme.acmeNight', colorScheme: 'dark' }
+],
+systemThemes: { light: 'acme-day', dark: 'acme-night' }
+```
+
 To avoid a flash of the light theme before React mounts, put this boot script in `index.html`, before the
 bundle. It lists every theme the app offers with its color scheme, so a stored app theme gets its
-`colorScheme` before the bundle loads and an unknown id falls to the OS, as `resolveTheme` does. This one
-is for an app with `portal-tributario`; put your own `config.themes` ids in `schemes`.
+`colorScheme` before the bundle loads and an unknown id falls to the OS, as `resolveTheme` does. `system` lists
+the app's `config.systemThemes` (light/dark when unset). This one is for an app with `portal-tributario`; put your
+own `config.themes` ids in `schemes`.
 
 ```html
 <script>
   // before the bundle: apply the stored theme so a dark user never sees a light flash. `wasichai` = storagePrefix.
   // every theme the app offers, id -> color scheme: light, dark and each config.themes entry.
-  // system and an unknown id (an old build, another app's theme) follow the os, as core's resolveTheme does
+  // system and an unknown id (an old build, another app's theme) follow the os to config.systemThemes, as core's resolveTheme does
   try {
     const schemes = { light: 'light', dark: 'dark', 'portal-tributario': 'light' }
+    // config.systemThemes; light / dark when unset. both ids must also be keys of schemes
+    const system = { light: 'light', dark: 'dark' }
     const stored = localStorage.getItem('wasichai.theme')
     const dark = matchMedia('(prefers-color-scheme: dark)').matches
-    const theme = stored && Object.hasOwn(schemes, stored) ? stored : dark ? 'dark' : 'light'
+    const theme = stored && Object.hasOwn(schemes, stored) ? stored : system[dark ? 'dark' : 'light']
     document.documentElement.dataset.theme = theme
     document.documentElement.style.colorScheme = schemes[theme]
   } catch {}
