@@ -4,7 +4,7 @@ import { RecordHistory } from './RecordHistory'
 import { renderWithProviders } from '@wasichai/testing'
 import { issueModule } from '../../test/fakeModules'
 import type { WasichaiModule } from '../../registry/contract'
-import type { AuditEntry, AuditEntryPayload } from '../../types/audit'
+import type { AuditEntry } from '../../types/audit'
 import type { FieldMeta, ObjectDefinition } from '../../types/metadata'
 
 // the mock factory runs at import time, so the mutable fixture has to be hoisted with it
@@ -213,8 +213,9 @@ describe('RecordHistory', () => {
   it('reads old entries without a reason', () => {
     // what a server from before the reason sends: neither key
     const { reason: _reason, serviceAccount: _serviceAccount, ...old }: AuditEntry = created
-    const payload: AuditEntryPayload = old
-    state.entries = [payload as AuditEntry]
+    // both keys optional: a consumer's fixture without them still type-checks
+    const entry: AuditEntry = old
+    state.entries = [entry]
     renderHistory()
     expect(screen.getByText('ana@wasichai.test')).toBeInTheDocument()
     expect(screen.queryByText('Motivo:')).not.toBeInTheDocument()

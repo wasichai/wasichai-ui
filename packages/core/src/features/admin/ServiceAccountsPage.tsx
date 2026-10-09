@@ -37,6 +37,7 @@ export function ServiceAccountsPage() {
   const [newRoles, setNewRoles] = useState<string[]>([])
   const [createError, setCreateError] = useState<string | null>(null)
 
+  // while set, create and rotate wait: a new secret would replace this one before anyone saved it
   const [revealed, setRevealed] = useState<Revealed | null>(null)
 
   const [editing, setEditing] = useState<ServiceAccount | null>(null)
@@ -56,7 +57,7 @@ export function ServiceAccountsPage() {
 
   const submitCreate = async (event: FormEvent) => {
     event.preventDefault()
-    if (!SERVICE_ACCOUNT_NAME.test(trimmed)) return
+    if (!SERVICE_ACCOUNT_NAME.test(trimmed) || revealed) return
     setCreateError(null)
     try {
       reveal(await create.mutateAsync({ name: trimmed, roles: newRoles }), create.reset)
@@ -105,7 +106,7 @@ export function ServiceAccountsPage() {
   }
 
   const rotateSecret = (account: ServiceAccount) => {
-    if (!window.confirm(t('admin.serviceAccounts.confirmRotate'))) return
+    if (revealed || !window.confirm(t('admin.serviceAccounts.confirmRotate'))) return
     void run(async () => {
       try {
         reveal(await rotate.mutateAsync(account.id), rotate.reset)
@@ -180,7 +181,7 @@ export function ServiceAccountsPage() {
                     {createError}
                   </Alert>
                 ) : null}
-                <Button type="submit" disabled={!SERVICE_ACCOUNT_NAME.test(trimmed) || create.isPending}>
+                <Button type="submit" disabled={!SERVICE_ACCOUNT_NAME.test(trimmed) || create.isPending || revealed !== null}>
                   <Plus className="h-4 w-4" />
                   {t('common.create')}
                 </Button>
@@ -326,7 +327,7 @@ export function ServiceAccountsPage() {
                           variant="ghost"
                           size="icon"
                           aria-label={`${t('admin.serviceAccounts.rotate')} ${account.name}`}
-                          disabled={rotate.isPending}
+                          disabled={rotate.isPending || revealed !== null}
                           onClick={() => rotateSecret(account)}
                         >
                           <RotateCw className="h-4 w-4" />

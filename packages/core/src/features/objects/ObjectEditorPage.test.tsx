@@ -410,13 +410,14 @@ describe('ObjectEditorPage', () => {
     })
 
     // the field-sets Save skips the details form, and so its required label
-    it('sends nothing with a cleared label', async () => {
+    it('sends nothing with a cleared label and says why', async () => {
       const user = userEvent.setup()
       renderPage()
       await user.clear(screen.getByDisplayValue('Predio'))
       await user.click(within(fieldSets()).getByRole('button', { name: /^Guardar$|^Save$/ }))
 
       expect(updateObject).not.toHaveBeenCalled()
+      expect(screen.getByRole('alert')).toHaveTextContent(/^Escribe la etiqueta del objeto antes de guardar\.$|^Write the object's label before saving\.$/)
     })
 
     it('toggles a field index', async () => {

@@ -103,6 +103,7 @@
         "enabledHint": "Un objeto inactivo conserva sus datos, pero no admite altas ni cambios.",
         "disabled": "Inactivo",
         "saved": "Cambios guardados",
+        "labelRequired": "Escribe la etiqueta del objeto antes de guardar.",
         "fieldVisible": "Visible",
         "fieldEditable": "Editable",
         "fieldOptions": "Opciones",

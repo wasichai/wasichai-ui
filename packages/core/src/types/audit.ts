@@ -18,19 +18,17 @@ export interface AuditEntry {
   changes: AuditChange[]
   // the document this entry is about. set only on ISSUE, by the documents module; absent everywhere else.
   documentId?: string | null
-  // what the writer said (X-Change-Reason). null when none was given. api layer defaults it.
-  reason: string | null
-  // the service account that wrote it; userEmail is then its backing address. null for a person or the platform.
-  serviceAccount: string | null
+  // what the writer said (X-Change-Reason). null or absent when none was given; a server before the
+  // change reason omits it. optional so a consumer's fixture without it still type-checks.
+  reason?: string | null
+  // the service account that wrote it; userEmail is then its backing address. null or absent for a person or the platform.
+  serviceAccount?: string | null
 }
 
 // what the server sends: `changes` may be missing, old rows carry no `documentId`, and a server before
 // the change reason sends neither `reason` nor `serviceAccount` (a person's entry never has `serviceAccount`).
-export type AuditEntryPayload = Omit<AuditEntry, 'changes' | 'documentId' | 'reason' | 'serviceAccount'> & {
+export type AuditEntryPayload = Omit<AuditEntry, 'changes'> & {
   changes?: AuditChange[]
-  documentId?: string | null
-  reason?: string | null
-  serviceAccount?: string | null
 }
 
 // one change, ready to paint: label resolved, values already strings.

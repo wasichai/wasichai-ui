@@ -95,8 +95,14 @@ export function ObjectEditorPage() {
 
   // only what changed of the rules and lists goes out: the PUT keeps what it is not sent
   const saveDetails = () => {
-    // the field-sets Save skips the form's own required check
-    if (definition && details?.label.trim()) void run(() => updateObject.mutateAsync(objectUpdatePayload(definition, details)))
+    if (!definition || !details) return
+    // the field-sets Save skips the form's own required check: say it here
+    if (!details.label.trim()) {
+      setSaved(false)
+      setError(t('objects.labelRequired'))
+      return
+    }
+    void run(() => updateObject.mutateAsync(objectUpdatePayload(definition, details)))
   }
 
   const submitField = () => {

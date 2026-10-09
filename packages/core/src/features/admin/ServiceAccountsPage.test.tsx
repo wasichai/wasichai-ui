@@ -104,6 +104,26 @@ describe('ServiceAccountsPage', () => {
     expect(await navigator.clipboard.readText()).toBe(SECRET)
   })
 
+  // a second create or rotate would replace the secret before anyone saved it
+  it('holds create and rotate until the shown secret is saved', async () => {
+    serve([{ method: 'POST', path: '/service-accounts', status: 201, body: { ...accounts[0], id: 'sa3', clientId: 'sa3', clientSecret: SECRET } }])
+    renderWithProviders(<ServiceAccountsPage />)
+    await screen.findByText('catastro-sync')
+
+    await userEvent.type(screen.getByLabelText('Nombre'), 'rentas')
+    await userEvent.click(screen.getByRole('button', { name: 'Crear' }))
+    await screen.findByDisplayValue(SECRET)
+
+    await userEvent.type(screen.getByLabelText('Nombre'), 'otra')
+    expect(screen.getByRole('button', { name: 'Crear' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Rotar secreto rentas' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Rotar secreto catastro-sync' })).toBeDisabled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ya lo guardé' }))
+    expect(screen.getByRole('button', { name: 'Crear' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Rotar secreto rentas' })).toBeEnabled()
+  })
+
   it('refuses a name the server would refuse', async () => {
     const calls = serve()
     renderWithProviders(<ServiceAccountsPage />)

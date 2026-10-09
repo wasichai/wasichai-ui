@@ -323,8 +323,9 @@ saying why; with `requiresReason` its delete asks for the reason in place of the
 (many-to-many) asks for the reason before a link or an unlink when either end requires one, holds both while the two
 definitions load, and replaces picker and unlink with a notice when either end is append-only or api-only.
 
-Every history and audit entry carries `reason` (`null` when none was given) and `serviceAccount` (the account's name
-when one wrote it, `null` otherwise; an older server sends neither and they read as `null`). `RecordHistory` shows the
+Every history and audit entry may carry `reason` (`null` or absent when none was given) and `serviceAccount` (the
+account's name when one wrote it, `null` or absent otherwise; both optional in `AuditEntry`, since an older server sends
+neither; `useRecordHistory` and `useAuditLog` fill them with `null`). `RecordHistory` shows the
 reason under the entry, and the audit page in its own column. `AuditActor` names who wrote an entry: the service
 account with a **Cuenta de servicio** badge (never its backing address), else the user's email, else **Sistema**.
 
@@ -332,14 +333,15 @@ The object editor sets the three rules, ticks `indexed` on a field (not on `LONG
 server will not index, nor on a module type that cannot be unique) and edits the composite `indexes` (1–32 fields, in
 index order) and `uniqueConstraints` (2–32; one field is `unique` on the field itself), checking each set as it is
 typed the way the server will. The object's `PUT` keeps whatever it is not sent, so the editor sends a rule or a list
-only when it changed (`objectUpdatePayload`): saving the labels never rewrites a rule someone else just set, and `[]`
-drops every set of a list. A refetch (every field or relationship change makes one) keeps each rule or list edited and
-not yet saved, and takes the server's value for the rest (`rebaseDetails`).
+only when it changed: saving the labels never rewrites a rule someone else just set, and `[]` drops every set of a
+list. A refetch (every field or relationship change makes one) keeps each rule or list edited and not yet saved, and
+takes the server's value for the rest. A blank label is refused on screen before anything is sent.
 
 It also lists the object's declared actions (ADR-042), declares one (`useCreateObjectAction`: the name is sent upper
 case, a blank label is left out and the server uses the name) and removes one with every grant of it
-(`useDeleteObjectAction`, which also refreshes the cached roles). `actionNameProblem(name, existing)` mirrors the
-server's refusals: not `^[A-Z][A-Z0-9_]{1,48}$`, one of `BUILT_IN_ACTIONS`, or already declared.
+(`useDeleteObjectAction`, which also refreshes the cached roles). Before sending, the editor checks a new name the way
+the server refuses it: not `^[A-Z][A-Z0-9_]{1,48}$`, one of the built-in actions (`READ`, `CREATE`, `UPDATE`,
+`DELETE`, `MANAGE_METADATA`, `MANAGE_ORGANIZATION`, `MANAGE_TENANTS`), or already declared.
 
 ## Adding a language / overriding strings
 

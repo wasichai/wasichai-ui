@@ -100,6 +100,7 @@
         "enabledHint": "An inactive object keeps its data but accepts no new or changed records.",
         "disabled": "Inactive",
         "saved": "Changes saved",
+        "labelRequired": "Write the object's label before saving.",
         "fieldVisible": "Visible",
         "fieldEditable": "Editable",
         "fieldOptions": "Options",

@@ -51,9 +51,9 @@ export function RecordHistory({ objectName, recordId, definition }: RecordHistor
                       {relativeTime(entry.occurredAt)}
                     </time>
                   </div>
-                  {/* any operation may carry one; line breaks are the writer's */}
+                  {/* any operation may carry one; line breaks are the writer's. wrap-anywhere: a long unbroken reason must not overflow */}
                   {entry.reason ? (
-                    <p className="whitespace-pre-line text-xs text-ink">
+                    <p className="whitespace-pre-line wrap-anywhere text-xs text-ink">
                       <span className="font-medium">{t('history.reason')}:</span> {entry.reason}
                     </p>
                   ) : null}
