@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useRef, useState, type ReactNode } from 'react'
 import { ApiError } from '../../api/client'
 import { ReasonDialog } from './ReasonDialog'
 
@@ -27,33 +27,41 @@ export function useReasonPrompt(): ReasonPrompt {
   const [pending, setPending] = useState<Pending | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const withReason = useCallback((write: Pending['write'], options: ReasonPromptOptions) => {
-    if (!options.required) {
-      write(undefined).catch(swallow)
-      return
-    }
-    setBusy(false)
-    setError(null)
-    setPending({ write, options })
+  // the prompt on screen now: a write settling after its prompt was cancelled must not touch the next one
+  const shown = useRef<Pending | null>(null)
+  const show = useCallback((next: Pending | null) => {
+    shown.current = next
+    setPending(next)
   }, [])
+
+  const withReason = useCallback(
+    (write: Pending['write'], options: ReasonPromptOptions) => {
+      if (!options.required) {
+        write(undefined).catch(swallow)
+        return
+      }
+      setBusy(false)
+      setError(null)
+      show({ write, options })
+    },
+    [show]
+  )
 
   const confirm = async (current: Pending, reason: string) => {
     setBusy(true)
     setError(null)
-    // only closes the prompt it answered: a cancel during the write may have opened another
-    const close = () => setPending((open) => (open === current ? null : open))
+    let refused: string | undefined
     try {
       await current.write(reason)
-      close()
     } catch (cause) {
       // a refused reason stays in the dialog to be fixed; anything else is the caller's banner
-      const refused = cause instanceof ApiError ? cause.violations.find((violation) => violation.field === 'reason') : undefined
-      if (refused) setError(refused.message)
-      else close()
-    } finally {
-      setBusy(false)
+      refused = cause instanceof ApiError ? cause.violations.find((violation) => violation.field === 'reason')?.message : undefined
     }
+    // cancelled during the write, maybe another prompt open now: freeing its button would let it send twice
+    if (shown.current !== current) return
+    setBusy(false)
+    if (refused !== undefined) setError(refused)
+    else show(null)
   }
 
   const dialog = pending ? (
@@ -64,7 +72,7 @@ export function useReasonPrompt(): ReasonPrompt {
       busy={busy}
       error={error}
       onConfirm={(reason) => void confirm(pending, reason)}
-      onCancel={() => setPending(null)}
+      onCancel={() => show(null)}
     />
   ) : null
 

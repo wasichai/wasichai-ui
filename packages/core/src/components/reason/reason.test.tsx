@@ -136,6 +136,73 @@ describe('useReasonPrompt', () => {
     expect(write).not.toHaveBeenCalled()
   })
 
+  it('sends nothing when the prompt is closed by a click outside', async () => {
+    const write = vi.fn(async () => undefined)
+    renderWithProviders(<Harness required write={write} />, { language: 'es' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'escribir' }))
+    // the overlay is Dialog's: no role, no slot. it is the one element painted bg-overlay
+    await userEvent.click(document.querySelector('.bg-overlay')!)
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(write).not.toHaveBeenCalled()
+  })
+
+  // each click opens a prompt whose write waits until the test settles it
+  function Writes({ writes }: { writes: { resolve: () => void; reject: (cause: unknown) => void }[] }) {
+    const prompt = useReasonPrompt()
+    const write = () =>
+      new Promise<void>((resolve, reject) => {
+        writes.push({ resolve, reject })
+      })
+    return (
+      <>
+        <button onClick={() => prompt.withReason(write, { required: true })}>escribir</button>
+        {prompt.dialog}
+      </>
+    )
+  }
+
+  async function confirmPrompt(reason: string) {
+    await userEvent.click(screen.getByRole('button', { name: 'escribir' }))
+    await userEvent.type(screen.getByLabelText('Motivo'), reason)
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+  }
+
+  it('keeps the next prompt held while its own write runs, whatever an earlier cancelled write does', async () => {
+    const writes: { resolve: () => void; reject: (cause: unknown) => void }[] = []
+    renderWithProviders(<Writes writes={writes} />, { language: 'es' })
+
+    await confirmPrompt('primero')
+    // cancelled while its write is in flight
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await confirmPrompt('segundo')
+    expect(screen.getByRole('button', { name: 'Continuar' })).toBeDisabled()
+
+    writes[0].resolve()
+    await settle()
+
+    // the first write settling must not free the second one's button: a second send
+    expect(screen.getByRole('button', { name: 'Continuar' })).toBeDisabled()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('shows a reason refusal only in the prompt it belongs to', async () => {
+    const writes: { resolve: () => void; reject: (cause: unknown) => void }[] = []
+    renderWithProviders(<Writes writes={writes} />, { language: 'es' })
+
+    await confirmPrompt('primero')
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await userEvent.click(screen.getByRole('button', { name: 'escribir' }))
+
+    writes[0].reject(new ApiError(400, 'Bad', [{ field: 'reason', message: 'mínimo 10' }]))
+    await settle()
+
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('keeps the dialog open when the server refuses the reason', async () => {
     const write = vi.fn(async () => {
       throw new ApiError(400, 'Bad', [{ field: 'reason', message: 'mínimo 10' }])
