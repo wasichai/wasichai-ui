@@ -46,6 +46,12 @@ export function App() {
 | object flag `workflow` | `true` when the object has a workflow (core's object editor shows the state column's scope) |
 | i18n namespace | `workflow` (es, en) |
 
+Transitions follow the record object's write rules: on a `requiresReason` object the WORKFLOW panel and the
+TRANSITION button ask for the change reason first (cancel sends nothing), and on an `appendOnly` object they are shut
+and say why (an `apiOnly` object still moves). Both hold their buttons until the object definition arrives, and both
+show the server's refusal. `useApplyTransition(object, id)` takes `{ name, reason }` beside the bare name it took
+before; the reason travels in `X-Change-Reason`.
+
 With `@wasichai/pages` installed, a freshly dropped ACTION defaults to TRANSITION, as it did in the original
 app. Without this module, the page builder offers NAVIGATE only, and a stored TRANSITION button draws nothing.
 

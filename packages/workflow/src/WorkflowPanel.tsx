@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react'
 import { Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Badge } from '@wasichai/ui'
-import { ApiError } from '@wasichai/core'
+import { ApiError, reasonRefusal, useReasonPrompt, useWritePolicy, WritePolicyNotice } from '@wasichai/core'
 import { useRecord } from '@wasichai/core'
 import { cn } from '@wasichai/ui'
 import { useApplyTransition, useAvailableTransitions, useWorkflow } from './api'
@@ -24,6 +24,8 @@ export function WorkflowPanel({ objectName, recordId }: WorkflowPanelProps) {
   // already in cache: the detail page fetched it. here only for `state`.
   const record = useRecord(objectName, recordId)
   const apply = useApplyTransition(objectName, recordId)
+  const policy = useWritePolicy(objectName)
+  const prompt = useReasonPrompt()
 
   // no workflow, endpoint missing, or switched off: nothing to draw
   if (!workflow.data || !workflow.data.enabled) return null
@@ -31,7 +33,10 @@ export function WorkflowPanel({ objectName, recordId }: WorkflowPanelProps) {
   const states = workflow.data.definition.states
   const current = (record.data as RecordWithState | undefined)?.state ?? null
   const available = transitions.data ?? []
-  const error = describeError(apply.error, t('workflows.conflict'))
+  // a refused reason is said in the open dialog, once
+  const error = prompt.dialog && reasonRefusal(apply.error) !== undefined ? null : describeError(apply.error, t('workflows.conflict'))
+  // until the rules arrive a transition could skip the reason; append-only refuses every move (409)
+  const shut = !policy.loaded || !policy.canTransition
 
   return (
     <Card>
@@ -42,6 +47,8 @@ export function WorkflowPanel({ objectName, recordId }: WorkflowPanelProps) {
         </Badge>
       </CardHeader>
       <CardBody className="space-y-3">
+        {/* api-only still moves: transitions are not a generic write */}
+        {policy.appendOnly ? <WritePolicyNotice policy={policy} /> : null}
         {error ? (
           <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
             {error}
@@ -56,10 +63,16 @@ export function WorkflowPanel({ objectName, recordId }: WorkflowPanelProps) {
               <div key={transition.name} className="space-y-1">
                 <Button
                   variant={transition.allowed ? 'primary' : 'secondary'}
-                  disabled={!transition.allowed || apply.isPending}
+                  disabled={!transition.allowed || apply.isPending || shut}
                   // a blocked transition still says where it would go and why it is blocked
                   title={transition.allowed ? t('workflows.moveTo', { state: transition.toLabel }) : (transition.reason ?? t('workflows.notAllowed'))}
-                  onClick={() => apply.mutate(transition.name)}
+                  onClick={() =>
+                    prompt.withReason((reason) => apply.mutateAsync({ name: transition.name, reason }), {
+                      required: policy.requiresReason,
+                      title: transition.label,
+                      confirmLabel: transition.label
+                    })
+                  }
                 >
                   {transition.label}
                   <ArrowRight className="h-4 w-4" />
@@ -72,6 +85,7 @@ export function WorkflowPanel({ objectName, recordId }: WorkflowPanelProps) {
           </div>
         )}
       </CardBody>
+      {prompt.dialog}
     </Card>
   )
 }

@@ -17,7 +17,7 @@ export { buildRecordSchema, toAttributes, toFormValues } from './lib/metadata-to
 export { CHANGE_REASON_HEADER, CHANGE_REASON_MAX_LENGTH, changeReasonHeader, normalizeReason, reasonProblem, type ReasonProblem } from './lib/changeReason'
 export { useWritePolicy, writePolicy, type WritePolicy, type WriteRules } from './lib/writePolicy'
 export { ReasonDialog, type ReasonDialogProps } from './components/reason/ReasonDialog'
-export { useReasonPrompt, type ReasonPrompt, type ReasonPromptOptions } from './components/reason/useReasonPrompt'
+export { reasonRefusal, useReasonPrompt, type ReasonPrompt, type ReasonPromptOptions } from './components/reason/useReasonPrompt'
 export { WritePolicyNotice, type WritePolicyNoticeProps } from './components/reason/WritePolicyNotice'
 export type { AuthUser, CallerPermissions } from './types/auth'
 export type { AuditChange, AuditEntry, AuditEntryPayload, AuditFilters, AuditOperation, ChangeDescription } from './types/audit'

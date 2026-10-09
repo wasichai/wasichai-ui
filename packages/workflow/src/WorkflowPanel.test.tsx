@@ -1,8 +1,8 @@
-import { screen } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorkflowPanel } from './WorkflowPanel'
-import { ApiError, coreModule } from '@wasichai/core'
+import { ApiError, coreModule, writePolicy, type WritePolicy } from '@wasichai/core'
 import type { ReactElement } from 'react'
 import { renderWithProviders as renderBase } from '@wasichai/testing'
 import { workflowModule } from './module'
@@ -20,6 +20,7 @@ const { state } = vi.hoisted(() => ({
     record: null as RecordWithState | null,
     apply: vi.fn(),
     pending: false,
+    policy: null as WritePolicy | null,
     error: null as unknown
   }
 }))
@@ -28,7 +29,7 @@ vi.mock('./api', () => ({
   useWorkflow: () => ({ data: state.workflow, isLoading: false, isError: !state.workflow }),
   useAvailableTransitions: () => ({ data: state.transitions, isLoading: false, isError: false }),
   useApplyTransition: () => ({
-    mutate: state.apply,
+    mutateAsync: state.apply,
     isPending: state.pending,
     error: state.error
   })
@@ -36,7 +37,8 @@ vi.mock('./api', () => ({
 
 vi.mock('@wasichai/core', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@wasichai/core')>()),
-  useRecord: () => ({ data: state.record })
+  useRecord: () => ({ data: state.record }),
+  useWritePolicy: () => state.policy
 }))
 
 const workflow: Workflow = {
@@ -88,8 +90,9 @@ beforeEach(() => {
       reason: 'Necesitas el rol SUPERVISOR'
     }
   ]
-  state.apply = vi.fn()
+  state.apply = vi.fn(async () => undefined)
   state.pending = false
+  state.policy = writePolicy({})
   state.error = null
 })
 
@@ -114,7 +117,55 @@ describe('WorkflowPanel', () => {
   it('applies the transition the button names', async () => {
     renderWithProviders(<WorkflowPanel objectName="predio" recordId="r-1" />)
     await userEvent.click(screen.getByRole('button', { name: /Aprobar/ }))
-    expect(state.apply).toHaveBeenCalledWith('approve')
+    expect(state.apply).toHaveBeenCalledWith({ name: 'approve' })
+  })
+
+  it('asks for a reason on a requiresReason object, and sends nothing when cancelled', async () => {
+    state.policy = writePolicy({ requiresReason: true })
+    renderWithProviders(<WorkflowPanel objectName="predio" recordId="r-1" />)
+
+    await userEvent.click(screen.getByRole('button', { name: /Aprobar/ }))
+    expect(screen.getByRole('dialog', { name: 'Aprobar' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(state.apply).not.toHaveBeenCalled()
+  })
+
+  it('applies with the typed reason', async () => {
+    state.policy = writePolicy({ requiresReason: true })
+    renderWithProviders(<WorkflowPanel objectName="predio" recordId="r-1" />)
+
+    await userEvent.click(screen.getByRole('button', { name: /Aprobar/ }))
+    const dialog = screen.getByRole('dialog')
+    await userEvent.type(within(dialog).getByLabelText('Motivo'), 'listo')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Aprobar' }))
+
+    expect(state.apply).toHaveBeenCalledWith({ name: 'approve', reason: 'listo' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  })
+
+  it('offers no transition on an append-only object and says why', () => {
+    state.policy = writePolicy({ appendOnly: true })
+    renderWithProviders(<WorkflowPanel objectName="predio" recordId="r-1" />)
+
+    expect(screen.getByRole('button', { name: /Aprobar/ })).toBeDisabled()
+    expect(screen.getByRole('status')).toHaveTextContent('Los registros de este objeto solo se crean: no se editan ni se eliminan.')
+  })
+
+  it('holds the transitions until the object rules arrive', () => {
+    state.policy = { ...writePolicy({}), loaded: false }
+    renderWithProviders(<WorkflowPanel objectName="predio" recordId="r-1" />)
+    expect(screen.getByRole('button', { name: /Aprobar/ })).toBeDisabled()
+  })
+
+  it('still moves records of an api-only object', async () => {
+    state.policy = writePolicy({ apiOnly: true })
+    renderWithProviders(<WorkflowPanel objectName="predio" recordId="r-1" />)
+
+    await userEvent.click(screen.getByRole('button', { name: /Aprobar/ }))
+    expect(state.apply).toHaveBeenCalledWith({ name: 'approve' })
+    expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('renders nothing when the object has no workflow', () => {

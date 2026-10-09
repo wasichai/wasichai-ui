@@ -273,7 +273,8 @@ line breaks and emoji survive (`changeReasonHeader(reason)`; blank sends no head
 code points, no control characters but tab and line breaks (`reasonProblem(reason)`). `useSaveRecord`,
 `useDeleteRecord` and `useLinkRelated` take it beside their old input: `{ payload, reason }`, `{ id, reason }`,
 `{ otherId, reason }`. `ReasonDialog` asks for it; `useReasonPrompt` asks only when required, sends nothing on cancel,
-keeps the dialog open on a refused reason and never rethrows (read the mutation's `error`):
+keeps the dialog open on a refused reason and never rethrows (read the mutation's `error`; while `prompt.dialog` is
+up, skip an error `reasonRefusal(error)` names, the dialog already says it):
 
 ```tsx
 function DeleteButton({ object, id }: { object: string; id: string }) {
