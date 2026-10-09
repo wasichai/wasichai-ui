@@ -310,6 +310,11 @@ saying why; with `requiresReason` its delete asks for the reason in place of the
 (many-to-many) asks for the reason before a link or an unlink when either end requires one, holds both while the two
 definitions load, and replaces picker and unlink with a notice when either end is append-only or api-only.
 
+Every history and audit entry carries `reason` (`null` when none was given) and `serviceAccount` (the account's name
+when one wrote it, `null` otherwise; an older server sends neither and they read as `null`). `RecordHistory` shows the
+reason under the entry, and the audit page in its own column. `AuditActor` names who wrote an entry: the service
+account with a **Cuenta de servicio** badge (never its backing address), else the user's email, else **Sistema**.
+
 ## Adding a language / overriding strings
 
 Every module ships `es` and `en` (core's own strings too). A module's `i18n` is just

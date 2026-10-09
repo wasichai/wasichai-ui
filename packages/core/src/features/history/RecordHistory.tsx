@@ -3,6 +3,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { useRegistry } from '../../app/context'
 import type { ObjectDefinition } from '../../types/metadata'
 import { useRecordHistory } from './api'
+import { AuditActor } from './AuditActor'
 import { absoluteTime, describeChanges, relativeTime } from './changes'
 import { ChangeList } from './ChangeList'
 import { OperationBadge } from './OperationBadge'
@@ -45,11 +46,17 @@ export function RecordHistory({ objectName, recordId, definition }: RecordHistor
                   <span className="absolute -left-[21px] top-2 h-2 w-2 rounded-full bg-border" />
                   <div className="flex flex-wrap items-center gap-2">
                     <OperationBadge operation={entry.operation} />
-                    <span className="text-sm text-ink">{entry.userEmail ?? t('history.system')}</span>
+                    <AuditActor entry={entry} />
                     <time className="text-xs text-ink-muted" dateTime={entry.occurredAt} title={absoluteTime(entry.occurredAt)}>
                       {relativeTime(entry.occurredAt)}
                     </time>
                   </div>
+                  {/* any operation may carry one; line breaks are the writer's */}
+                  {entry.reason ? (
+                    <p className="whitespace-pre-line text-xs text-ink">
+                      <span className="font-medium">{t('history.reason')}:</span> {entry.reason}
+                    </p>
+                  ) : null}
                   {entry.operation === 'UPDATE' ? (
                     <ChangeList changes={describeChanges(entry, definition, extensions)} />
                   ) : ModuleBody ? (

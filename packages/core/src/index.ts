@@ -71,6 +71,7 @@ export {
 export { absoluteTime, describeChanges, formatAuditValue, NO_AUDIT_EXTENSIONS, relativeTime, type AuditExtensions } from './features/history/changes'
 export { useAuditExtensions } from './features/history/useAuditExtensions'
 export { useAuditLog, useRecordHistory } from './features/history/api'
+export { AuditActor } from './features/history/AuditActor'
 export { ChangeList } from './features/history/ChangeList'
 export { OperationBadge } from './features/history/OperationBadge'
 export { RecordHistory } from './features/history/RecordHistory'

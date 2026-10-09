@@ -24,7 +24,9 @@ const issued: AuditEntry = {
   operation: 'ISSUE',
   occurredAt: '2026-09-17T12:00:00Z',
   changes: [],
-  documentId: 'document-1'
+  documentId: 'document-1',
+  reason: null,
+  serviceAccount: null
 }
 
 let fetch: FetchMock | null = null

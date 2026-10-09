@@ -2,10 +2,16 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../../api/client'
 import type { AuditEntry, AuditEntryPayload, AuditFilters } from '../../types/audit'
 
-// old payloads have no `changes`, and rows from before this operation existed have no `documentId`.
-// fill both so nothing downstream has to check.
+// old payloads have no `changes`, rows from before this operation existed have no `documentId`, and
+// neither `reason` nor `serviceAccount` before the change reason. fill them so nothing downstream has to check.
 function normalize(entries: AuditEntryPayload[]): AuditEntry[] {
-  return entries.map((entry) => ({ ...entry, changes: entry.changes ?? [], documentId: entry.documentId ?? null }))
+  return entries.map((entry) => ({
+    ...entry,
+    changes: entry.changes ?? [],
+    documentId: entry.documentId ?? null,
+    reason: entry.reason ?? null,
+    serviceAccount: entry.serviceAccount ?? null
+  }))
 }
 
 function query(filters: AuditFilters): string {

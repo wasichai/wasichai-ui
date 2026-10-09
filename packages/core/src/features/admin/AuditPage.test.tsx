@@ -38,4 +38,29 @@ describe('AuditPage', () => {
     expect(await screen.findByText('Boceto')).toBeInTheDocument()
     expect(screen.getByText('boceto actualizado')).toBeInTheDocument()
   })
+
+  it('lists the reason and the service account', async () => {
+    const entry = { objectName: 'predio', recordId: 'r1', operation: 'CREATE', occurredAt: '2026-09-17T11:00:00Z', changes: [] }
+    fetch = mockFetch([
+      { path: '/objects', body: [] },
+      {
+        path: /^\/audit\?/,
+        body: [
+          { ...entry, id: 'a1', userEmail: 'x@service-accounts.invalid', serviceAccount: 'rentas', reason: 'carga nocturna del padrón' },
+          // a server from before the reason sends neither key
+          { ...entry, id: 'a2', userEmail: 'ana@wasichai.test' }
+        ]
+      }
+    ])
+    renderWithProviders(<AuditPage />)
+
+    expect(await screen.findByRole('columnheader', { name: 'Motivo' })).toBeInTheDocument()
+    const [, serviceRow, oldRow] = screen.getAllByRole('row')
+    expect(serviceRow).toHaveTextContent('rentas')
+    expect(serviceRow).toHaveTextContent('Cuenta de servicio')
+    expect(serviceRow).not.toHaveTextContent('x@service-accounts.invalid')
+    expect(screen.getByText('carga nocturna del padrón')).toHaveAttribute('title', 'carga nocturna del padrón')
+    expect(oldRow).toHaveTextContent('ana@wasichai.test')
+    expect(oldRow.querySelectorAll('td')[5]).toHaveTextContent('—')
+  })
 })

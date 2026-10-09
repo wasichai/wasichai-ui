@@ -51,7 +51,9 @@ function entry(changes: AuditEntry['changes']): AuditEntry {
     operation: 'UPDATE',
     occurredAt: '2026-09-17T10:00:00Z',
     changes,
-    documentId: null
+    documentId: null,
+    reason: null,
+    serviceAccount: null
   }
 }
 
