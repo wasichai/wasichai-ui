@@ -106,3 +106,39 @@ describe('DATETIME form values', () => {
     expect(toFormValues(cita, { cita: 'mañana temprano' })).toEqual({ cita: 'mañana temprano' })
   })
 })
+
+// an app whose times belong to one zone (deadlines in Lima) reads and writes them there, wherever the browser is
+describe('DATETIME form values in a fixed time zone', () => {
+  const cita = [field({ name: 'cita', type: 'DATETIME' })]
+  const lima = { timeZone: 'America/Lima' }
+  beforeEach(() => vi.stubEnv('TZ', 'Asia/Tokyo'))
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('stores a wall time of the zone, not of the browser', () => {
+    expect(toAttributes(cita, { cita: '2026-10-10T10:00' }, lima).cita).toBe('2026-10-10T15:00:00.000Z')
+  })
+
+  it('shows a stored instant in the zone', () => {
+    expect(toFormValues(cita, { cita: '2026-10-10T15:00:00Z' }, lima)).toEqual({ cita: '2026-10-10T10:00' })
+  })
+
+  it('round-trips seconds and midnight', () => {
+    const values = toFormValues(cita, { cita: '2026-10-11T02:15:45Z' }, lima)
+    expect(values).toEqual({ cita: '2026-10-10T21:15:45' })
+    expect(toAttributes(cita, values, lima).cita).toBe('2026-10-11T02:15:45.000Z')
+  })
+
+  it('follows the zone across a daylight saving change', () => {
+    const york = { timeZone: 'America/New_York' }
+    expect(toAttributes(cita, { cita: '2026-07-01T10:00' }, york).cita).toBe('2026-07-01T14:00:00.000Z')
+    expect(toAttributes(cita, { cita: '2026-12-01T10:00' }, york).cita).toBe('2026-12-01T15:00:00.000Z')
+    // 01:30 happens twice on the fall-back night: the first one (EDT)
+    expect(toAttributes(cita, { cita: '2026-11-01T01:30' }, york).cita).toBe('2026-11-01T05:30:00.000Z')
+    expect(toFormValues(cita, { cita: '2026-11-01T06:30:00Z' }, york)).toEqual({ cita: '2026-11-01T01:30' })
+  })
+
+  it('keeps the browser zone without the option', () => {
+    expect(toAttributes(cita, { cita: '2026-10-10T10:00' }).cita).toBe('2026-10-10T01:00:00.000Z')
+    expect(toFormValues(cita, { cita: '2026-10-10T01:00:00Z' })).toEqual({ cita: '2026-10-10T10:00' })
+  })
+})

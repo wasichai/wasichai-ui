@@ -87,8 +87,13 @@ export function buildRecordSchema(fields: FieldMeta[]) {
   return z.object(shape)
 }
 
+// where DATETIME wall times live. timeZone is an IANA name; unset = the browser's zone
+export interface DateTimeOptions {
+  timeZone?: string
+}
+
 // form values -> api attributes. datetime-local needs an offset before it is ISO.
-export function toAttributes(fields: FieldMeta[], values: Record<string, unknown>): Record<string, unknown> {
+export function toAttributes(fields: FieldMeta[], values: Record<string, unknown>, options: DateTimeOptions = {}): Record<string, unknown> {
   const attributes: Record<string, unknown> = {}
   for (const field of fields) {
     if (!field.editable) continue
@@ -97,17 +102,17 @@ export function toAttributes(fields: FieldMeta[], values: Record<string, unknown
       attributes[field.name] = null
       continue
     }
-    attributes[field.name] = field.type === 'DATETIME' && typeof value === 'string' && !value.endsWith('Z') ? new Date(value).toISOString() : value
+    attributes[field.name] = field.type === 'DATETIME' && typeof value === 'string' && !value.endsWith('Z') ? toInstant(value, options.timeZone) : value
   }
   return attributes
 }
 
-export function toFormValues(fields: FieldMeta[], attributes: Record<string, unknown> = {}): Record<string, unknown> {
+export function toFormValues(fields: FieldMeta[], attributes: Record<string, unknown> = {}, options: DateTimeOptions = {}): Record<string, unknown> {
   const values: Record<string, unknown> = {}
   for (const field of fields) {
     const value = attributes[field.name]
     if (field.type === 'BOOLEAN') values[field.name] = value ?? false
-    else if (field.type === 'DATETIME' && typeof value === 'string') values[field.name] = toLocalInput(value)
+    else if (field.type === 'DATETIME' && typeof value === 'string') values[field.name] = toLocalInput(value, options.timeZone)
     else values[field.name] = value ?? ''
   }
   return values
@@ -115,10 +120,54 @@ export function toFormValues(fields: FieldMeta[], attributes: Record<string, unk
 
 // api instant (utc) -> datetime-local wall time. cutting the Z off instead showed utc as local, and
 // toAttributes then read it back as local: every save moved the value by the browser's offset
-function toLocalInput(value: string): string {
+function toLocalInput(value: string, timeZone?: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value.slice(0, 16)
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString()
+  const offset = timeZone ? zoneOffset(date.getTime(), timeZone) : -date.getTimezoneOffset() * 60_000
+  const local = new Date(date.getTime() + offset).toISOString()
   // seconds written by the api or an automation are kept; the input shows minutes otherwise
   return local.slice(17, 19) === '00' ? local.slice(0, 16) : local.slice(0, 19)
+}
+
+// datetime-local wall time -> api instant. without a zone, Date reads it in the browser's
+function toInstant(value: string, timeZone?: string): string {
+  if (!timeZone) return new Date(value).toISOString()
+  // the wall time read as utc, then moved by the zone's offset. a second pass takes the offset in
+  // force at the result, so a dst change between the two is caught; a repeated wall time takes the earlier instant
+  const wall = new Date(`${value}Z`).getTime()
+  if (Number.isNaN(wall)) return new Date(value).toISOString()
+  let instant = wall - zoneOffset(wall, timeZone)
+  instant = wall - zoneOffset(instant, timeZone)
+  return new Date(instant).toISOString()
+}
+
+// ms to add to an instant to get the zone's wall time at that instant
+function zoneOffset(instant: number, timeZone: string): number {
+  const parts = Object.fromEntries(
+    zoneFormat(timeZone)
+      .formatToParts(instant)
+      .map((part) => [part.type, Number(part.value)])
+  )
+  const wall = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour % 24, parts.minute, parts.second)
+  return wall - Math.floor(instant / 1000) * 1000
+}
+
+// Intl.DateTimeFormat is slow to build; one per zone
+const formats = new Map<string, Intl.DateTimeFormat>()
+function zoneFormat(timeZone: string): Intl.DateTimeFormat {
+  let format = formats.get(timeZone)
+  if (!format) {
+    format = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+    formats.set(timeZone, format)
+  }
+  return format
 }

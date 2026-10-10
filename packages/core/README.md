@@ -46,6 +46,7 @@ createRoot(document.getElementById('root')!).render(
 | `defaultLoginEmail` | `''` | login form prefill (demo apps) |
 | `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there, see [Themes](#themes-and-preferences) |
 | `systemThemes` | `{ light: 'light', dark: 'dark' }` | what `system` and an unknown id resolve to on a light / dark OS, see [Themes](#themes-and-preferences) |
+| `timeZone` | – (browser zone) | IANA zone (`America/Lima`) `DynamicForm` reads and writes `DATETIME` wall times in; an unknown name throws |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -317,6 +318,10 @@ the reason) and keeps a violation naming no drawn field in the banner. `PageRend
 no save on an append-only or api-only object; the detail page says why, and the new-record page draws no form on an
 api-only object. A read-only form still shows the page's module fields (a geometry, …): through the renderer's
 `display` when it has one, otherwise as its input widget made `inert`.
+
+`DynamicForm` fills a `DATETIME` input with the stored UTC instant in the browser's zone and sends the wall time back
+as UTC from that zone. An app whose times belong to one zone sets `config.timeZone` (`'America/Lima'`: `10:00` is
+stored as `15:00Z` wherever the browser is); a form's `timeZone` prop wins over the config.
 
 The record list hides **Nuevo registro** on an api-only object and the row delete on an append-only or api-only one,
 saying why; with `requiresReason` its delete asks for the reason in place of the plain confirmation. `RelatedList`

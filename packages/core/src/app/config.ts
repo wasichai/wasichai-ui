@@ -18,6 +18,8 @@ export interface WasichaiConfig {
   themes?: ThemeDefinition[]
   // which themes "system" (and an unknown id) resolves to. unset = light / dark
   systemThemes?: SystemThemes
+  // IANA zone DynamicForm reads and writes DATETIME wall times in ('America/Lima'). unset = the browser's
+  timeZone?: string
 }
 
 export const DEFAULT_CONFIG: WasichaiConfig = {
@@ -44,6 +46,7 @@ export function resolveConfig(config: Partial<WasichaiConfig> = {}): WasichaiCon
   const merged: WasichaiConfig = { ...DEFAULT_CONFIG, ...given }
   if (merged.languages.length === 0) throw new Error('wasichai: config.languages needs at least one language')
   if (!merged.storagePrefix.trim()) throw new Error('wasichai: config.storagePrefix must not be empty')
+  if (merged.timeZone !== undefined && !isTimeZone(merged.timeZone)) throw new Error(`wasichai: config.timeZone '${merged.timeZone}' is not an IANA time zone`)
   const themes = availableThemes(merged)
   const ids = themes.map((theme) => theme.id)
   const repeated = ids.find((id, index) => ids.indexOf(id) !== index)
@@ -57,4 +60,15 @@ export function resolveConfig(config: Partial<WasichaiConfig> = {}): WasichaiCon
     }
   }
   return { ...merged, apiBaseUrl: merged.apiBaseUrl.replace(/\/+$/, '') }
+}
+
+// a typo would otherwise throw on the first DATETIME field drawn, far from the config
+function isTimeZone(timeZone: string): boolean {
+  if (!timeZone.trim()) return false
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone })
+    return true
+  } catch {
+    return false
+  }
 }

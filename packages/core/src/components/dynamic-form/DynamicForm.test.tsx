@@ -219,6 +219,31 @@ describe('DynamicForm', () => {
     expect(screen.getByLabelText(/Código/)).toHaveValue('P-009')
   })
 
+  describe('DATETIME time zone', () => {
+    const timed: ObjectDefinition = { ...definition, fields: [field({ id: 'f9', name: 'plazo', label: 'Plazo', type: 'DATETIME' })] }
+    const record = { id: 'r1', createdAt: null, updatedAt: null, attributes: { plazo: '2026-10-10T15:00:00Z' }, geometries: {} }
+
+    it('reads and writes wall times in the app zone', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<DynamicForm definition={timed} record={record} onSubmit={onSubmit} />, { config: { timeZone: 'America/Lima' } })
+
+      const input = screen.getByLabelText(/Plazo/)
+      expect(input).toHaveValue('2026-10-10T10:00')
+      await user.clear(input)
+      await user.type(input, '2026-10-12T08:30')
+      await user.click(screen.getByRole('button', { name: /guardar|save/i }))
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ attributes: { plazo: '2026-10-12T13:30:00.000Z' } })))
+    })
+
+    it('lets a form override the app zone', () => {
+      renderWithProviders(<DynamicForm definition={timed} record={record} onSubmit={onSubmit} timeZone="Europe/Madrid" />, {
+        config: { timeZone: 'America/Lima' }
+      })
+
+      expect(screen.getByLabelText(/Plazo/)).toHaveValue('2026-10-10T17:00')
+    })
+  })
+
   // the server keeps the stored value of a field the caller may not write: a live input there
   // took the edit, and the save that followed dropped it without a word
   it('locks a field the caller may not write', async () => {
