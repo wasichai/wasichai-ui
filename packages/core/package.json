@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/core",
-    "version": "0.5.1",
+    "version": "0.6.0",
     "description": "Wasichai app shell, module registry, api client, auth, i18n and the core metadata features",
     "type": "module",
     "files": [

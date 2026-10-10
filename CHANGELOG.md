@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.6.0](https://github.com/wasichai/wasichai-ui/compare/v0.5.1...v0.6.0) (2026-10-10)
+
+
+### Features
+
+* **core:** administer service accounts ([f7fa1c5](https://github.com/wasichai/wasichai-ui/commit/f7fa1c5247692a902a75859be6a630de7bbee7db))
+* **core:** ask for the change reason in record forms and mark refused fields ([f6c009f](https://github.com/wasichai/wasichai-ui/commit/f6c009f0bdd4200843fe4abe9233f9273c759c44))
+* **core:** ask for the change reason on delete, link and unlink ([b150189](https://github.com/wasichai/wasichai-ui/commit/b1501893dc15f80e111d96e189da6ceff8adaebf))
+* **core:** config.systemThemes picks the themes "system" resolves to ([bc1fb25](https://github.com/wasichai/wasichai-ui/commit/bc1fb2512a4244dbfd3e32d764cda7b4bff1becd))
+* **core:** config.systemThemes picks the themes system resolves to ([c385c01](https://github.com/wasichai/wasichai-ui/commit/c385c017d5063f11df95eafc63f50fa8664393a8))
+* **core:** declare and remove object actions in the object editor ([8e56b6b](https://github.com/wasichai/wasichai-ui/commit/8e56b6ba8cf1d29bdf49cae4b6207a12bab9d6aa))
+* **core:** edit write rules, indexes and composite uniques in the object editor ([c35ed23](https://github.com/wasichai/wasichai-ui/commit/c35ed232ee1da6ca4c0be7f351ccf38d479924c8))
+* **core:** export write policy, reason dialog and reason prompt ([374ba58](https://github.com/wasichai/wasichai-ui/commit/374ba58257e9ecccfee2b4c06edfca6bc0a98467))
+* **core:** fixed time zone for DATETIME fields in DynamicForm ([a2722c5](https://github.com/wasichai/wasichai-ui/commit/a2722c5a6dfec4035fdf71242b5709e2934ea5ce)), closes [#46](https://github.com/wasichai/wasichai-ui/issues/46)
+* **core:** per-field time zone for DATETIME fields ([#55](https://github.com/wasichai/wasichai-ui/issues/55)) ([4a54598](https://github.com/wasichai/wasichai-ui/commit/4a545983229fe16fa0ffe658d331c8ac18fa5bde))
+* **core:** send a change reason with record writes ([d569f7a](https://github.com/wasichai/wasichai-ui/commit/d569f7a3bfc5188418d59e1d44f59be4eaf80ae5))
+* **core:** show the change reason and the service account in history ([f803dbc](https://github.com/wasichai/wasichai-ui/commit/f803dbc9367acbe02545f4bd0708e4731950f9e2))
+* **core:** support fixed time zones for DATETIME fields ([8e78f82](https://github.com/wasichai/wasichai-ui/commit/8e78f822a6ba65287b019530cc0508d648066691))
+* **core:** ThemeProvider and the boot script resolve system through config.systemThemes ([2236149](https://github.com/wasichai/wasichai-ui/commit/22361490fadfb87b37cd250a8b39b6050819ce9f))
+* **core:** UI for backend 0.3.0 write rules, change reason, indexes, uniques and service accounts ([a1f2c11](https://github.com/wasichai/wasichai-ui/commit/a1f2c1154de726fc366561beea2a4e3d6c6e96af))
+* **gis:** build the map style from a basemap spec ([ee1a5af](https://github.com/wasichai/wasichai-ui/commit/ee1a5af2abb047dd6ed497fc22ee163c1a03a736))
+* **gis:** pick the base map and initial view of a MapView ([fa8b47e](https://github.com/wasichai/wasichai-ui/commit/fa8b47edda1a45f0c5484e340025827329c9be7f))
+* **gis:** set the base map and initial view of every map from gisModule ([1d0ef59](https://github.com/wasichai/wasichai-ui/commit/1d0ef5957d89e2b04e0dd0bfc0dbb2d0667b72ff))
+* **gis:** swap the base map without rebuilding the map ([2cf5bca](https://github.com/wasichai/wasichai-ui/commit/2cf5bca206af7d5392dfc2707de0d8535d2a9ce1))
+* **workflow:** ask for the change reason on transitions and show refusals ([19b9dbc](https://github.com/wasichai/wasichai-ui/commit/19b9dbc5d963781553b871a9df2e5395e9b9f2a4))
+
+
+### Bug Fixes
+
+* **core:** hold a shown secret, say why a blank label is refused ([ce3859e](https://github.com/wasichai/wasichai-ui/commit/ce3859e3e91553b2631ea39a820c918934754901))
+* **core:** keep a cancelled write off the next reason prompt ([b22ee82](https://github.com/wasichai/wasichai-ui/commit/b22ee827a2a2e3d4b8c0a98b92b8685fc6905f36))
+* **core:** keep module fields on read-only record forms ([c4942a4](https://github.com/wasichai/wasichai-ui/commit/c4942a4ea6f7deed9f7b3693855756f1be2c1155))
+* **core:** keep unsaved object rules and sets across a refetch ([bedb6a8](https://github.com/wasichai/wasichai-ui/commit/bedb6a8de89f4f8088bb9dd6882771cd0fd3062c))
+* **core:** shorten systemThemes README row, cover dark first render, note schemes keys ([7e99a77](https://github.com/wasichai/wasichai-ui/commit/7e99a775b53cb9e6fed23bd58ed2153227447822))
+* **gis:** keep the map alive when its first style url fails to load ([a43c06d](https://github.com/wasichai/wasichai-ui/commit/a43c06d55be14e0796383e8707eef9da59cedcba))
+
 ## [0.5.1](https://github.com/wasichai/wasichai-ui/compare/v0.5.0...v0.5.1) (2026-10-08)
 
 
