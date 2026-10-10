@@ -22,6 +22,7 @@ import {
 } from '../../queries'
 import type { FieldMeta, FieldType } from '../../types/metadata'
 import { describeError } from '../../api/client'
+import { DraftTimeZone, SavedTimeZone } from './FieldTimeZone'
 import {
   addableFieldTypes,
   detailsDraft,
@@ -32,6 +33,7 @@ import {
   objectUpdatePayload,
   rebaseDetails,
   scopeOf,
+  timeZoneProblem,
   type FieldDraft,
   type ObjectDetailsDraft
 } from './objectDraft'
@@ -107,6 +109,7 @@ export function ObjectEditorPage() {
 
   const submitField = () => {
     if (!draft || !draft.name.trim() || nameTaken(draft.name, definition?.fields ?? [], systemFields)) return
+    if (draft.type === 'DATETIME' && timeZoneProblem(draft.timeZone)) return
     void run(async () => {
       await addField.mutateAsync(fieldPayload(draft, fieldRenderers))
       setDraft(null)
@@ -134,6 +137,7 @@ export function ObjectEditorPage() {
   }
 
   const problem = draft ? nameTaken(draft.name, definition.fields, systemFields) : null
+  const zoneProblem = draft?.type === 'DATETIME' && timeZoneProblem(draft.timeZone)
   const edit = (change: Partial<ObjectDetailsDraft>) => setDetails((current) => current && { ...current, ...change })
 
   return (
@@ -283,6 +287,8 @@ export function ObjectEditorPage() {
                   </div>
                 ) : null}
 
+                {draft.type === 'DATETIME' ? <DraftTimeZone value={draft.timeZone} onChange={(timeZone) => setDraft({ ...draft, timeZone })} /> : null}
+
                 <ModuleFieldSettings
                   renderer={fieldRenderers[draft.type]}
                   settings={draft.settings}
@@ -308,7 +314,7 @@ export function ObjectEditorPage() {
                 ) : null}
 
                 <div className="flex gap-2 sm:col-span-4">
-                  <Button type="button" size="sm" onClick={submitField} disabled={addField.isPending || !draft.name.trim() || problem !== null}>
+                  <Button type="button" size="sm" onClick={submitField} disabled={addField.isPending || !draft.name.trim() || problem !== null || zoneProblem}>
                     {t('common.create')}
                   </Button>
                   <Button type="button" size="sm" variant="secondary" onClick={() => setDraft(null)}>
@@ -430,6 +436,12 @@ export function ObjectEditorPage() {
                           </label>
                         ))}
                       </div>
+                      {field.type === 'DATETIME' ? (
+                        <SavedTimeZone
+                          field={field}
+                          onSave={(timeZone) => void run(() => updateField.mutateAsync({ field: field.name, payload: { timeZone } }))}
+                        />
+                      ) : null}
                     </Td>
                     <Td>
                       <Button

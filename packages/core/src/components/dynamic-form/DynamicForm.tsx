@@ -8,6 +8,7 @@ import type { FieldViolation } from '../../api/client'
 import { useRegistry, useWasichaiConfig } from '../../app/context'
 import { CHANGE_REASON_MAX_LENGTH, normalizeReason, reasonProblem, type ReasonProblem } from '../../lib/changeReason'
 import { buildRecordSchema, toAttributes, toFormValues } from '../../lib/metadata-to-zod'
+import { browserTimeZone } from '../../lib/timeZone'
 import type { FieldRenderer } from '../../registry/contract'
 import { CORE_FIELD_TYPES, recordSection, type FieldMeta, type Form, type ObjectDefinition, type RecordItem, type RecordPayload } from '../../types/metadata'
 import { FieldInput } from './fields/FieldInput'
@@ -134,6 +135,7 @@ export function DynamicForm({ definition, form, record, submitting, error, viola
         errors={errors}
         serverError={serverError(field.name)}
         disabled={readOnly || !field.editable}
+        timeZone={field.type === 'DATETIME' ? (field.timeZone ?? zone.timeZone) : undefined}
       />
     )
   }
@@ -218,7 +220,8 @@ function FieldRow({
   register,
   errors,
   serverError,
-  disabled
+  disabled,
+  timeZone
 }: {
   field: FieldMeta
   control: Control<Record<string, unknown>>
@@ -228,7 +231,10 @@ function FieldRow({
   serverError?: string
   // toAttributes never sends a field the caller may not write: an input that took the edit would lie
   disabled: boolean
+  // DATETIME only: the zone its wall time is typed in
+  timeZone?: string
 }) {
+  const { t } = useTranslation()
   const message = errors[field.name] ? String(errors[field.name]?.message ?? '') : serverError
   return (
     <div className="space-y-1.5">
@@ -238,6 +244,8 @@ function FieldRow({
       </Label>
       <FieldInput field={field} control={control} register={register} invalid={Boolean(errors[field.name] || serverError)} disabled={disabled} />
       {field.description ? <p className="text-xs text-ink-muted">{field.description}</p> : null}
+      {/* a clock other than the device's is said, or 10:00 reads as the user's own 10:00 */}
+      {timeZone && timeZone !== browserTimeZone() ? <p className="text-xs text-ink-muted">{t('records.timeZone', { zone: timeZone })}</p> : null}
       {message ? <p className="text-xs text-danger">{message}</p> : null}
     </div>
   )

@@ -1,3 +1,4 @@
+import { isTimeZone } from '../../lib/timeZone'
 import type { FieldRenderer } from '../../registry/contract'
 import {
   CORE_FIELD_TYPES,
@@ -25,6 +26,8 @@ export interface FieldDraft {
   enumOptions: string
   relationTarget: string
   indexed: boolean
+  // DATETIME only; blank = none
+  timeZone: string
   // module settings as typed, keyed by the module's names; the payload converts them
   settings: Record<string, string>
 }
@@ -34,7 +37,7 @@ export interface FieldDraft {
 export function emptyFieldDraft(renderers: Renderers = {}): FieldDraft {
   const settings: Record<string, string> = {}
   for (const renderer of Object.values(renderers)) Object.assign(settings, renderer.settings?.defaults)
-  return { name: '', label: '', type: 'TEXT', required: false, unique: false, enumOptions: '', relationTarget: '', indexed: false, settings }
+  return { name: '', label: '', type: 'TEXT', required: false, unique: false, enumOptions: '', relationTarget: '', indexed: false, timeZone: '', settings }
 }
 
 // the field as the api takes it. a module's settings go out only with the module's own type.
@@ -56,8 +59,15 @@ export function fieldPayload(draft: FieldDraft, renderers: Renderers): Record<st
     relationTarget: draft.type === 'RELATION' ? draft.relationTarget : null,
     // the server omits it unless true. a box ticked before the type changed to one it refuses stays home.
     ...(draft.indexed && indexable(draft.type, renderers) ? { indexed: true } : {}),
+    // the server omits it when unset and refuses it on any other type
+    ...(draft.type === 'DATETIME' && draft.timeZone.trim() ? { timeZone: draft.timeZone.trim() } : {}),
     ...(settings ? settings.toPayload(draft.settings) : {})
   }
+}
+
+// blank is no zone; anything else must be a name the server's ZoneId.of takes
+export function timeZoneProblem(text: string): boolean {
+  return text.trim() !== '' && !isTimeZone(text.trim())
 }
 
 export interface NameProblem {

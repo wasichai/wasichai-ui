@@ -87,7 +87,8 @@ export function buildRecordSchema(fields: FieldMeta[]) {
   return z.object(shape)
 }
 
-// where DATETIME wall times live. timeZone is an IANA name; unset = the browser's zone
+// where DATETIME wall times live. timeZone is an IANA name; unset = the browser's.
+// a field's own timeZone wins over this one zone
 export interface DateTimeOptions {
   timeZone?: string
 }
@@ -102,7 +103,8 @@ export function toAttributes(fields: FieldMeta[], values: Record<string, unknown
       attributes[field.name] = null
       continue
     }
-    attributes[field.name] = field.type === 'DATETIME' && typeof value === 'string' && !value.endsWith('Z') ? toInstant(value, options.timeZone) : value
+    attributes[field.name] =
+      field.type === 'DATETIME' && typeof value === 'string' && !value.endsWith('Z') ? toInstant(value, field.timeZone ?? options.timeZone) : value
   }
   return attributes
 }
@@ -112,7 +114,7 @@ export function toFormValues(fields: FieldMeta[], attributes: Record<string, unk
   for (const field of fields) {
     const value = attributes[field.name]
     if (field.type === 'BOOLEAN') values[field.name] = value ?? false
-    else if (field.type === 'DATETIME' && typeof value === 'string') values[field.name] = toLocalInput(value, options.timeZone)
+    else if (field.type === 'DATETIME' && typeof value === 'string') values[field.name] = toLocalInput(value, field.timeZone ?? options.timeZone)
     else values[field.name] = value ?? ''
   }
   return values

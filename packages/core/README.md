@@ -46,7 +46,7 @@ createRoot(document.getElementById('root')!).render(
 | `defaultLoginEmail` | `''` | login form prefill (demo apps) |
 | `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there, see [Themes](#themes-and-preferences) |
 | `systemThemes` | `{ light: 'light', dark: 'dark' }` | what `system` and an unknown id resolve to on a light / dark OS, see [Themes](#themes-and-preferences) |
-| `timeZone` | – (browser zone) | IANA zone (`America/Lima`) `DynamicForm` reads and writes `DATETIME` wall times in; an unknown name throws |
+| `timeZone` | – (browser zone) | IANA zone (`America/Lima`) `DynamicForm` reads and writes `DATETIME` wall times in; a field's own `timeZone` wins; an unknown name throws |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -321,7 +321,10 @@ api-only object. A read-only form still shows the page's module fields (a geomet
 
 `DynamicForm` fills a `DATETIME` input with the stored UTC instant in the browser's zone and sends the wall time back
 as UTC from that zone. An app whose times belong to one zone sets `config.timeZone` (`'America/Lima'`: `10:00` is
-stored as `15:00Z` wherever the browser is); a form's `timeZone` prop wins over the config.
+stored as `15:00Z` wherever the browser is); a form's `timeZone` prop wins over the config, and a field's own `timeZone`
+(metadata, `DATETIME` only) wins over both. When the zone in use is not the device's, the input says so (`Hora de
+America/Lima`). The object editor takes a field's zone on a new `DATETIME` field and edits it on an existing one
+(saved on blur, a blank clears it), refusing a name that is not an IANA zone before asking the server.
 
 The record list hides **Nuevo registro** on an api-only object and the row delete on an append-only or api-only one,
 saying why; with `requiresReason` its delete asks for the reason in place of the plain confirmation. `RelatedList`

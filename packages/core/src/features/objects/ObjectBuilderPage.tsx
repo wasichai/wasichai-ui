@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { describeError } from '../../api/client'
 import { useCreateObject, useObjects, useSystemFields } from '../../queries'
 import type { FieldType } from '../../types/metadata'
-import { addableFieldTypes, emptyFieldDraft, fieldPayload, nameTaken, type FieldDraft as SharedFieldDraft } from './objectDraft'
+import { DraftTimeZone } from './FieldTimeZone'
+import { addableFieldTypes, emptyFieldDraft, fieldPayload, nameTaken, timeZoneProblem, type FieldDraft as SharedFieldDraft } from './objectDraft'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import type { FieldRenderer } from '../../registry/contract'
 import { ModuleFieldSettings } from './ModuleFieldSettings'
@@ -81,7 +82,12 @@ export function ObjectBuilderPage() {
             <Button type="button" variant="secondary" onClick={() => void navigate(-1)}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={createObject.isPending || fields.some((field) => problemOf(field) !== null)}>
+            <Button
+              type="submit"
+              disabled={
+                createObject.isPending || fields.some((field) => problemOf(field) !== null || (field.type === 'DATETIME' && timeZoneProblem(field.timeZone)))
+              }
+            >
               {t('common.save')}
             </Button>
           </>
@@ -187,6 +193,8 @@ export function ObjectBuilderPage() {
                     />
                   </div>
                 ) : null}
+
+                {field.type === 'DATETIME' ? <DraftTimeZone value={field.timeZone} onChange={(timeZone) => patchField(field.key, { timeZone })} /> : null}
 
                 <ModuleFieldSettings
                   renderer={fieldRenderers[field.type]}

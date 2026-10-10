@@ -1,3 +1,4 @@
+import { isTimeZone } from '../lib/timeZone'
 import { availableThemes, type SystemThemes, type ThemeDefinition } from '../theme/themes'
 
 export interface WasichaiConfig {
@@ -46,6 +47,7 @@ export function resolveConfig(config: Partial<WasichaiConfig> = {}): WasichaiCon
   const merged: WasichaiConfig = { ...DEFAULT_CONFIG, ...given }
   if (merged.languages.length === 0) throw new Error('wasichai: config.languages needs at least one language')
   if (!merged.storagePrefix.trim()) throw new Error('wasichai: config.storagePrefix must not be empty')
+  // a typo would otherwise throw on the first DATETIME field drawn, far from the config
   if (merged.timeZone !== undefined && !isTimeZone(merged.timeZone)) throw new Error(`wasichai: config.timeZone '${merged.timeZone}' is not an IANA time zone`)
   const themes = availableThemes(merged)
   const ids = themes.map((theme) => theme.id)
@@ -60,15 +62,4 @@ export function resolveConfig(config: Partial<WasichaiConfig> = {}): WasichaiCon
     }
   }
   return { ...merged, apiBaseUrl: merged.apiBaseUrl.replace(/\/+$/, '') }
-}
-
-// a typo would otherwise throw on the first DATETIME field drawn, far from the config
-function isTimeZone(timeZone: string): boolean {
-  if (!timeZone.trim()) return false
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone })
-    return true
-  } catch {
-    return false
-  }
 }

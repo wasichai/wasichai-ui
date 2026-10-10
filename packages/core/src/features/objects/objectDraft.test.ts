@@ -9,6 +9,7 @@ import {
   fieldSetProblem,
   indexable,
   nameTaken,
+  timeZoneProblem,
   objectUpdatePayload,
   parseFieldSet,
   rebaseDetails,
@@ -54,6 +55,7 @@ describe('objectDraft', () => {
       enumOptions: '',
       relationTarget: '',
       indexed: false,
+      timeZone: '',
       settings: { strokeWidth: '2' }
     })
     expect(emptyFieldDraft().settings).toEqual({})
@@ -227,4 +229,19 @@ describe('declared action names', () => {
   })
 
   it('refuses a name the object already declares', () => expect(actionNameProblem('anular', [{ name: 'ANULAR', label: 'x' }])).toBe('DUPLICATE'))
+
+  // the server keeps it off the json when unset and refuses it on any other type
+  it('sends a time zone only on a DATETIME field that has one', () => {
+    const draft = { ...emptyFieldDraft(), name: 'plazo', type: 'DATETIME', timeZone: ' America/Lima ' }
+    expect(fieldPayload(draft, {})).toMatchObject({ timeZone: 'America/Lima' })
+    expect(fieldPayload({ ...draft, timeZone: '' }, {})).not.toHaveProperty('timeZone')
+    // typed, then switched to a type the server refuses it on
+    expect(fieldPayload({ ...draft, type: 'DATE' }, {})).not.toHaveProperty('timeZone')
+  })
+
+  it('takes a blank or an IANA name as a time zone, nothing else', () => {
+    expect(timeZoneProblem('')).toBe(false)
+    expect(timeZoneProblem(' America/Lima ')).toBe(false)
+    expect(timeZoneProblem('America/Limaa')).toBe(true)
+  })
 })
