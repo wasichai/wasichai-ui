@@ -133,6 +133,9 @@
         "requiresReason": "Pide motivo",
         "requiresReasonHint": "Cada cambio de sus registros lleva una observación, que queda en el historial.",
         "fieldIndexed": "Indexado",
+        "fieldTimeZone": "Zona horaria",
+        "fieldTimeZoneHint": "Nombre IANA (America/Lima). En blanco: la zona de la app.",
+        "fieldTimeZoneInvalid": "'{{zone}}' no es una zona horaria IANA",
         "indexes": {
             "title": "Índices compuestos",
             "hint": "Campos separados por coma, en el orden del índice. Hasta 32.",
@@ -173,7 +176,8 @@
     "records": {
         "new": "Nuevo registro",
         "detail": "Detalle",
-        "typeUnavailable": "El tipo de este campo no está disponible. Instala el módulo que lo provee."
+        "typeUnavailable": "El tipo de este campo no está disponible. Instala el módulo que lo provee.",
+        "timeZone": "Hora de {{zone}}"
     },
     "map": {
         "selectObject": "Selecciona un objeto"

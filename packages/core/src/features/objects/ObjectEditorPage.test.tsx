@@ -428,6 +428,62 @@ describe('ObjectEditorPage', () => {
       await waitFor(() => expect(updateField).toHaveBeenCalledWith({ field: 'revisado', payload: { indexed: true } }))
     })
 
+    it('saves the time zone of a DATETIME field on blur, and clears it with a blank', async () => {
+      const plazo = { ...definition.fields[0], id: 'f-3', name: 'plazo', label: 'Plazo', type: 'DATETIME', timeZone: 'America/Lima' }
+      current = { ...definition, fields: [...definition.fields, plazo] }
+      const user = userEvent.setup()
+      renderPage()
+      const zone = screen.getByLabelText(/^Zona horaria plazo$|^Time zone plazo$/)
+      expect(zone).toHaveValue('America/Lima')
+      // no zone box on a field of another type
+      expect(screen.queryByLabelText(/^Zona horaria revisado$|^Time zone revisado$/)).toBeNull()
+
+      // the same zone in another case is no change
+      await user.clear(zone)
+      await user.type(zone, 'america/lima')
+      await user.tab()
+      expect(zone).toHaveValue('America/Lima')
+      expect(updateField).not.toHaveBeenCalled()
+
+      await user.clear(zone)
+      await user.type(zone, 'America/Limaa')
+      await user.tab()
+      expect(screen.getByText(/'America\/Limaa'/)).toBeInTheDocument()
+      expect(updateField).not.toHaveBeenCalled()
+
+      await user.clear(zone)
+      await user.type(zone, 'Europe/Madrid')
+      await user.tab()
+      await waitFor(() => expect(updateField).toHaveBeenCalledWith({ field: 'plazo', payload: { timeZone: 'Europe/Madrid' } }))
+
+      await user.clear(zone)
+      await user.tab()
+      // the PUT reads null as "leave it": a blank clears
+      await waitFor(() => expect(updateField).toHaveBeenLastCalledWith({ field: 'plazo', payload: { timeZone: '' } }))
+    })
+
+    it('asks the time zone of a new DATETIME field and refuses a bad one', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByRole('button', { name: /Añadir campo|Add field/ }))
+      await user.type(screen.getByLabelText(/^Nombre$|^Name$/), 'plazo')
+      expect(screen.queryByLabelText(/^Zona horaria$|^Time zone$/)).toBeNull()
+      // radix opens its list through pointer capture and scrolls to the chosen item: jsdom has neither
+      Element.prototype.hasPointerCapture ??= () => false
+      Element.prototype.scrollIntoView ??= () => {}
+      await user.click(screen.getByRole('combobox', { name: /^Tipo$|^Type$/ }))
+      await user.click(await screen.findByRole('option', { name: 'DATETIME' }))
+
+      const zone = screen.getByLabelText(/^Zona horaria$|^Time zone$/)
+      await user.type(zone, 'Lima')
+      expect(screen.getByRole('button', { name: /^Crear$|^Create$/ })).toBeDisabled()
+      await user.clear(zone)
+      await user.type(zone, 'America/Lima')
+      await user.click(screen.getByRole('button', { name: /^Crear$|^Create$/ }))
+
+      await waitFor(() => expect(addField).toHaveBeenCalledWith(expect.objectContaining({ name: 'plazo', type: 'DATETIME', timeZone: 'America/Lima' })))
+    })
+
     it('offers the index toggle on a new field', async () => {
       const user = userEvent.setup()
       renderPage()

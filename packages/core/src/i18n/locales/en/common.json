@@ -130,6 +130,9 @@
         "requiresReason": "Requires a reason",
         "requiresReasonHint": "Every change to its records carries a note, kept in the history.",
         "fieldIndexed": "Indexed",
+        "fieldTimeZone": "Time zone",
+        "fieldTimeZoneHint": "IANA name (America/Lima). Blank: the app's zone.",
+        "fieldTimeZoneInvalid": "'{{zone}}' is not an IANA time zone",
         "indexes": {
             "title": "Composite indexes",
             "hint": "Comma-separated fields, in index order. Up to 32.",
@@ -170,7 +173,8 @@
     "records": {
         "new": "New record",
         "detail": "Detail",
-        "typeUnavailable": "This field's type is not available. Install the module that provides it."
+        "typeUnavailable": "This field's type is not available. Install the module that provides it.",
+        "timeZone": "Time in {{zone}}"
     },
     "map": {
         "selectObject": "Select an object"

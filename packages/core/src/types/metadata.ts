@@ -25,6 +25,8 @@ export interface FieldMeta {
   editable: boolean
   // omitted unless true (ADR-036)
   indexed?: boolean
+  // DATETIME only: IANA zone its wall times belong to. omitted when unset
+  timeZone?: string
   [extension: string]: unknown
 }
 

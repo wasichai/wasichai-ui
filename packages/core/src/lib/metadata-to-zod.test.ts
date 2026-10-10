@@ -137,6 +137,23 @@ describe('DATETIME form values in a fixed time zone', () => {
     expect(toFormValues(cita, { cita: '2026-11-01T06:30:00Z' }, york)).toEqual({ cita: '2026-11-01T01:30' })
   })
 
+  it("takes a field's own zone over the form's", () => {
+    const fields = [field({ name: 'cita', type: 'DATETIME', timeZone: 'Europe/Madrid' }), field({ name: 'plazo', type: 'DATETIME' })]
+    expect(toAttributes(fields, { cita: '2026-10-10T10:00', plazo: '2026-10-10T10:00' }, lima)).toEqual({
+      cita: '2026-10-10T08:00:00.000Z',
+      plazo: '2026-10-10T15:00:00.000Z'
+    })
+    expect(toFormValues(fields, { cita: '2026-10-10T08:00:00Z', plazo: '2026-10-10T15:00:00Z' }, lima)).toEqual({
+      cita: '2026-10-10T10:00',
+      plazo: '2026-10-10T10:00'
+    })
+  })
+
+  it('reads a fixed offset as the zone', () => {
+    expect(toAttributes(cita, { cita: '2026-10-10T10:00' }, { timeZone: '-05:00' }).cita).toBe('2026-10-10T15:00:00.000Z')
+    expect(toFormValues(cita, { cita: '2026-10-10T15:00:00Z' }, { timeZone: '+0530' })).toEqual({ cita: '2026-10-10T20:30' })
+  })
+
   it('keeps the browser zone without the option', () => {
     expect(toAttributes(cita, { cita: '2026-10-10T10:00' }).cita).toBe('2026-10-10T01:00:00.000Z')
     expect(toFormValues(cita, { cita: '2026-10-10T01:00:00Z' })).toEqual({ cita: '2026-10-10T10:00' })

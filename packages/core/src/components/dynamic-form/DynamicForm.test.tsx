@@ -242,6 +242,20 @@ describe('DynamicForm', () => {
 
       expect(screen.getByLabelText(/Plazo/)).toHaveValue('2026-10-10T17:00')
     })
+
+    it('reads a field in its own zone, and says which clock it is', () => {
+      const mixed: ObjectDefinition = {
+        ...definition,
+        fields: [...timed.fields, field({ id: 'f10', name: 'ocurrio', label: 'Ocurrió', type: 'DATETIME', timeZone: 'Europe/Madrid' })]
+      }
+      const both = { ...record, attributes: { plazo: '2026-10-10T15:00:00Z', ocurrio: '2026-10-10T15:00:00Z' } }
+      renderWithProviders(<DynamicForm definition={mixed} record={both} onSubmit={onSubmit} />, { config: { timeZone: 'America/Lima' } })
+
+      expect(screen.getByLabelText(/Plazo/)).toHaveValue('2026-10-10T10:00')
+      expect(screen.getByLabelText(/Ocurrió/)).toHaveValue('2026-10-10T17:00')
+      expect(screen.getByText(/America\/Lima/)).toBeInTheDocument()
+      expect(screen.getByText(/Europe\/Madrid/)).toBeInTheDocument()
+    })
   })
 
   // the server keeps the stored value of a field the caller may not write: a live input there
