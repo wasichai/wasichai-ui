@@ -438,6 +438,13 @@ describe('ObjectEditorPage', () => {
       // no zone box on a field of another type
       expect(screen.queryByLabelText(/^Zona horaria revisado$|^Time zone revisado$/)).toBeNull()
 
+      // the same zone in another case is no change
+      await user.clear(zone)
+      await user.type(zone, 'america/lima')
+      await user.tab()
+      expect(zone).toHaveValue('America/Lima')
+      expect(updateField).not.toHaveBeenCalled()
+
       await user.clear(zone)
       await user.type(zone, 'America/Limaa')
       await user.tab()

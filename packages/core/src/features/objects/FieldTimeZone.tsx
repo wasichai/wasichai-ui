@@ -36,7 +36,9 @@ export function SavedTimeZone({ field, onSave }: { field: FieldMeta; onSave: (ti
         onChange={(event) => setValue(event.target.value)}
         onBlur={() => {
           const next = value.trim()
-          if (next === (field.timeZone ?? '') || timeZoneProblem(next)) return
+          if (timeZoneProblem(next)) return
+          // the server answers one spelling: america/lima over America/Lima is no change
+          if (next.toLowerCase() === (field.timeZone ?? '').toLowerCase()) return setValue(field.timeZone ?? '')
           onSave(next)
         }}
       />
