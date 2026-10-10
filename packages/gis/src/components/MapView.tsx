@@ -1,41 +1,19 @@
 import { useEffect, useRef } from 'react'
-import {
-  GeoJSONSource,
-  Map as MapLibreMap,
-  NavigationControl,
-  Popup,
-  RasterTileSource,
-  ScaleControl,
-  setWorkerUrl,
-  type MapLayerMouseEvent,
-  type StyleSpecification
-} from 'maplibre-gl'
+import { GeoJSONSource, Map as MapLibreMap, NavigationControl, Popup, RasterTileSource, ScaleControl, setWorkerUrl, type MapLayerMouseEvent } from 'maplibre-gl'
 import { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { WMS_TILE_SIZE, wmsTileUrl } from '../lib/wms'
+import { DEFAULT_BASEMAP, DEFAULT_INITIAL_VIEW, basemapStyle, keepOverlays, type BasemapSpec, type MapInitialView } from '../lib/basemap'
 import { boundsOf } from '../lib/geo'
 import { popupHtml } from '../lib/popup'
 import { applyMapWorkerUrl } from '../lib/mapWorker'
 import { cn } from '@wasichai/ui'
+import { useMapDefaults } from './MapDefaults'
 import type { Feature, FeatureCollection, GeoJsonGeometry } from '../types'
 
 const SOURCE = 'wasichai-features'
 // wms layers get their own id namespace so we can find ours again in the style
 const WMS_PREFIX = 'wasichai-wms-'
-
-// raster OSM basemap. swap for WMS/WMTS/vector tiles later without touching callers.
-const BASE_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors'
-    }
-  },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
-}
 
 export interface WmsLayerSpec {
   id: string
@@ -50,10 +28,14 @@ export interface MapViewProps {
   onDrawChange?: (geometry: GeoJsonGeometry | null) => void
   onFeatureClick?: (feature: Feature) => void
   wmsLayers?: WmsLayerSpec[]
+  // what the map draws under everything else. default: the OpenStreetMap raster
+  basemap?: BasemapSpec
+  // camera before features arrive. read once, when the map is built
+  initialView?: MapInitialView
   className?: string
 }
 
-export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, onFeatureClick, wmsLayers, className }: MapViewProps) {
+export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, onFeatureClick, wmsLayers, basemap, initialView, className }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MapLibreMap | null>(null)
   const draw = useRef<TerraDraw | null>(null)
@@ -68,6 +50,17 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
   const wms = useRef<WmsLayerSpec[]>([])
   wms.current = wmsLayers ?? []
   const wmsKey = JSON.stringify(wms.current)
+  // prop, then gisModule's default, then OSM over Lima
+  const defaults = useMapDefaults()
+  // the build effect runs once: it reads the latest spec and view from refs
+  const basemapRef = useRef<BasemapSpec>(DEFAULT_BASEMAP)
+  basemapRef.current = basemap ?? defaults.basemap ?? DEFAULT_BASEMAP
+  // callers write the spec inline: compare by value, like wmsLayers
+  const basemapKey = JSON.stringify(basemapRef.current)
+  // key of the base map the map shows, or is switching to
+  const shown = useRef<string | null>(null)
+  const view = useRef<MapInitialView>(DEFAULT_INITIAL_VIEW)
+  view.current = initialView ?? defaults.initialView ?? DEFAULT_INITIAL_VIEW
 
   const whenReady = (task: () => void) => {
     if (ready.current) task()
@@ -77,13 +70,18 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
   useEffect(() => {
     if (!container.current || map.current) return
     applyMapWorkerUrl(setWorkerUrl)
+    const first = basemapRef.current
+    // 'load' never fires if the first style fails to fetch (csp, host down): start on our own background
+    // so features, wms and drawing never wait on that host, then swap the style url in like any change
     const instance = new MapLibreMap({
       container: container.current,
-      style: BASE_STYLE,
-      center: [-77.04, -12.05],
-      zoom: 11,
+      style: basemapStyle(first.type === 'style' ? { type: 'none' } : first),
+      center: view.current.center,
+      zoom: view.current.zoom,
       attributionControl: { compact: true }
     })
+    shown.current = JSON.stringify(first)
+    if (first.type === 'style') whenReady(() => instance.setStyle(basemapStyle(basemapRef.current), { transformStyle: keepOverlays }))
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-right')
     instance.addControl(new ScaleControl({ unit: 'metric' }), 'bottom-left')
 
@@ -159,6 +157,7 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
       queued.current = []
       instance.remove()
       map.current = null
+      shown.current = null
     }
   }, [])
 
@@ -194,6 +193,15 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
     whenReady(() => syncWmsLayers(instance, wms.current))
   }, [wmsKey])
 
+  // base map swap: same map, our overlays merged into the new style. maplibre diffs it in, or rebuilds
+  // the style when it cannot diff, and transformStyle carries them either way
+  useEffect(() => {
+    const instance = map.current
+    if (!instance || shown.current === basemapKey) return
+    shown.current = basemapKey
+    whenReady(() => instance.setStyle(basemapStyle(basemapRef.current), { transformStyle: keepOverlays }))
+  }, [basemapKey])
+
   // drawing is opt-in: only mounted when the object actually has geometry
   useEffect(() => {
     const instance = map.current
@@ -201,7 +209,8 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
 
     whenReady(() => {
       const terraDraw = new TerraDraw({
-        adapter: new TerraDrawMapLibreGLAdapter({ map: instance }),
+        // our prefix, not terra-draw's 'td': keepOverlays carries the drawing across a base map swap
+        adapter: new TerraDrawMapLibreGLAdapter({ map: instance, prefixId: 'wasichai-draw' }),
         modes: [new TerraDrawPointMode(), new TerraDrawLineStringMode(), new TerraDrawPolygonMode()]
       })
       terraDraw.start()

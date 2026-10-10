@@ -1,6 +1,8 @@
 import { Globe2, Layers, Map as MapIcon } from 'lucide-react'
 import type { WasichaiModule } from '@wasichai/core'
+import { mapDefaultsProvider } from './components/MapDefaults'
 import { gisMessages } from './i18n'
+import type { BasemapSpec, MapInitialView } from './lib/basemap'
 import { setMapWorkerUrl } from './lib/mapWorker'
 import { GEOMETRY_AUDIT_FIELD_LABELS, geometryAuditFormatter } from './slots/audit'
 import { GeometryInput } from './slots/GeometryInput'
@@ -18,6 +20,10 @@ export interface GisModuleOptions {
   basePath?: string
   // maplibre's worker script, as the app's bundler serves it. see the README, "MapLibre worker"
   workerUrl?: string
+  // base map of every map in the app. a MapView's own basemap prop wins. see the README, "Base map"
+  basemap?: BasemapSpec
+  // camera of every map before its features arrive. a MapView's own initialView prop wins
+  initialView?: MapInitialView
 }
 
 export function gisModule(options: GisModuleOptions = {}): WasichaiModule {
@@ -57,6 +63,7 @@ export function gisModule(options: GisModuleOptions = {}): WasichaiModule {
     auditValueFormatters: [geometryAuditFormatter],
     auditFieldLabels: { ...GEOMETRY_AUDIT_FIELD_LABELS },
     recordQueryKeys: (objectName) => [['features', objectName]],
-    i18n: gisMessages
+    i18n: gisMessages,
+    providers: [mapDefaultsProvider({ basemap: options.basemap, initialView: options.initialView })]
   }
 }
