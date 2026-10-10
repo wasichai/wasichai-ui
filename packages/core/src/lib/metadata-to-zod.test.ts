@@ -149,6 +149,11 @@ describe('DATETIME form values in a fixed time zone', () => {
     })
   })
 
+  it('reads a fixed offset as the zone', () => {
+    expect(toAttributes(cita, { cita: '2026-10-10T10:00' }, { timeZone: '-05:00' }).cita).toBe('2026-10-10T15:00:00.000Z')
+    expect(toFormValues(cita, { cita: '2026-10-10T15:00:00Z' }, { timeZone: '+0530' })).toEqual({ cita: '2026-10-10T20:30' })
+  })
+
   it('keeps the browser zone without the option', () => {
     expect(toAttributes(cita, { cita: '2026-10-10T10:00' }).cita).toBe('2026-10-10T01:00:00.000Z')
     expect(toFormValues(cita, { cita: '2026-10-10T01:00:00Z' })).toEqual({ cita: '2026-10-10T10:00' })

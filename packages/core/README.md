@@ -324,7 +324,10 @@ as UTC from that zone. An app whose times belong to one zone sets `config.timeZo
 stored as `15:00Z` wherever the browser is); a form's `timeZone` prop wins over the config, and a field's own `timeZone`
 (metadata, `DATETIME` only) wins over both. When the zone in use is not the device's, the input says so (`Hora de
 America/Lima`). The object editor takes a field's zone on a new `DATETIME` field and edits it on an existing one
-(saved on blur, a blank clears it), refusing a name that is not an IANA zone before asking the server.
+(saved on blur, a blank clears it). A zone is an IANA region name in any case (`America/Lima`, `america/lima`) or a
+fixed offset (`-05:00`, `-0500`, `-05`); anything else is refused before asking the server
+([ADR-063](https://github.com/wasichai/wasichai/blob/main/docs/adr/0063-a-datetime-field-may-name-its-time-zone.md),
+[wasichai/wasichai#99](https://github.com/wasichai/wasichai/issues/99)).
 
 The record list hides **Nuevo registro** on an api-only object and the row delete on an append-only or api-only one,
 saying why; with `requiresReason` its delete asks for the reason in place of the plain confirmation. `RelatedList`

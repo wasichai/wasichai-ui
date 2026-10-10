@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { fixedOffset } from './timeZone'
 import type { FieldMeta } from '../types/metadata'
 
 // empty inputs are "not provided", not "empty string"
@@ -145,6 +146,8 @@ function toInstant(value: string, timeZone?: string): string {
 
 // ms to add to an instant to get the zone's wall time at that instant
 function zoneOffset(instant: number, timeZone: string): number {
+  const fixed = fixedOffset(timeZone)
+  if (fixed !== null) return fixed
   const parts = Object.fromEntries(
     zoneFormat(timeZone)
       .formatToParts(instant)
