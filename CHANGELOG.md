@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/wasichai/wasichai-ui/compare/v0.6.0...v1.0.0) (2026-10-10)
+
+
+### Miscellaneous Chores
+
+* release 1.0.0 ([#56](https://github.com/wasichai/wasichai-ui/issues/56)) ([7268e7b](https://github.com/wasichai/wasichai-ui/commit/7268e7bffe9896c9439f25ad3a8bea098e4d1782))
+
 ## [0.6.0](https://github.com/wasichai/wasichai-ui/compare/v0.5.1...v0.6.0) (2026-10-10)
 
 
