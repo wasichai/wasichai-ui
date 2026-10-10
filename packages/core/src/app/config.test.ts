@@ -24,6 +24,13 @@ describe('resolveConfig', () => {
     expect(() => resolveConfig({ storagePrefix: ' ' })).toThrow(/storagePrefix/)
   })
 
+  it('keeps a valid time zone and refuses one that is not', () => {
+    expect(resolveConfig().timeZone).toBeUndefined()
+    expect(resolveConfig({ timeZone: 'America/Lima' }).timeZone).toBe('America/Lima')
+    expect(() => resolveConfig({ timeZone: 'America/Limaa' })).toThrow(/timeZone 'America\/Limaa'/)
+    expect(() => resolveConfig({ timeZone: ' ' })).toThrow(/timeZone/)
+  })
+
   it('refuses an app theme that reuses a built-in id', () => {
     expect(() => resolveConfig({ themes: [{ id: 'dark', label: 'x', colorScheme: 'dark' }] })).toThrow(/theme 'dark'/)
   })

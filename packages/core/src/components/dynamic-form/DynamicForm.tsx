@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { Button, Input, Label, Textarea } from '@wasichai/ui'
 import type { FieldViolation } from '../../api/client'
-import { useRegistry } from '../../app/context'
+import { useRegistry, useWasichaiConfig } from '../../app/context'
 import { CHANGE_REASON_MAX_LENGTH, normalizeReason, reasonProblem, type ReasonProblem } from '../../lib/changeReason'
 import { buildRecordSchema, toAttributes, toFormValues } from '../../lib/metadata-to-zod'
 import type { FieldRenderer } from '../../registry/contract'
@@ -31,6 +31,8 @@ export interface DynamicFormProps {
   // a page can show the same object twice (a page section plus its own FORM); only one may save.
   // the rest are read-along field groups: fields to look at, no button to press.
   readOnly?: boolean
+  // IANA zone the DATETIME inputs are in; wins over config.timeZone. both unset = the browser's
+  timeZone?: string
 }
 
 type Sections = Record<string, Record<string, unknown>>
@@ -44,9 +46,11 @@ function initialSections(renderers: Readonly<Record<string, FieldRenderer>>, rec
 }
 
 // metadata in, working form out. adding a field to an object changes this form for free.
-export function DynamicForm({ definition, form, record, submitting, error, violations = [], onSubmit, onCancel, readOnly }: DynamicFormProps) {
+export function DynamicForm({ definition, form, record, submitting, error, violations = [], onSubmit, onCancel, readOnly, timeZone }: DynamicFormProps) {
   const { t } = useTranslation()
   const { fieldRenderers } = useRegistry()
+  const config = useWasichaiConfig()
+  const zone = { timeZone: timeZone ?? config.timeZone }
   const sections = form ? resolveSections(form, definition.fields) : null
   const editable = definition.fields.filter((field) => field.visible)
   // a named form is the whole contract: validate and submit only what it shows
@@ -75,7 +79,7 @@ export function DynamicForm({ definition, form, record, submitting, error, viola
     formState: { errors }
   } = useForm<Record<string, unknown>>({
     resolver: zodResolver(buildRecordSchema(modelFields)),
-    defaultValues: toFormValues(modelFields, record?.attributes)
+    defaultValues: toFormValues(modelFields, record?.attributes, zone)
   })
 
   // a violation goes under the field it names when that field has an input here; the rest stay in the banner
@@ -142,7 +146,7 @@ export function DynamicForm({ definition, form, record, submitting, error, viola
       if (problem) return
       // attributes goes last: a section can never clobber it, even though createRegistry already
       // refuses a section named 'attributes'
-      const payload = { ...extra, attributes: toAttributes(modelFields, values) }
+      const payload = { ...extra, attributes: toAttributes(modelFields, values, zone) }
       return asksReason ? onSubmit(payload, normalizeReason(reason) ?? '') : onSubmit(payload)
     })(event)
   }
