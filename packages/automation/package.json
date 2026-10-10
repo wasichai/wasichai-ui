@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/automation",
-    "version": "0.6.0",
+    "version": "1.0.0",
     "description": "Wasichai automation module: rule builder and run log",
     "type": "module",
     "files": [
