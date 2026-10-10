@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, api, createApiClient, describeError, getActiveApiClient, setActiveApiClient } from './client'
+import { ApiError, api, createApiClient, describeError, formError, getActiveApiClient, setActiveApiClient } from './client'
 
 function answer(status: number, body?: unknown) {
   return vi.fn(async () => new Response(body === undefined ? null : JSON.stringify(body), { status }))
@@ -147,5 +147,24 @@ describe('describeError', () => {
 
   it('falls back to the raw cause when it is not an API error', () => {
     expect(describeError('network down')).toBe('network down')
+  })
+})
+
+describe('formError', () => {
+  // a form puts each violation under its field; the message stays for the banner
+  it('splits a refusal into its message and its field violations', () => {
+    const violations = [
+      { field: 'a', message: 'must be unique together with b' },
+      { field: 'b', message: 'must be unique together with a' }
+    ]
+    expect(formError(new ApiError(409, 'Another record already has this a, b', violations))).toEqual({
+      message: 'Another record already has this a, b',
+      violations
+    })
+  })
+
+  it('keeps anything else as a message with no violations', () => {
+    expect(formError('x')).toEqual({ message: 'x', violations: [] })
+    expect(formError(new Error('network down'))).toEqual({ message: 'Error: network down', violations: [] })
   })
 })

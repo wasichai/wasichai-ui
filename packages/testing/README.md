@@ -47,6 +47,9 @@ fetch.restore()
 Paths are matched after the api base url (`/api` unless `mockFetch(routes, { baseUrl })`). Anything
 unmatched answers `404` with a problem body naming the request.
 
+Each recorded call has `method`, `url`, `path`, `body` (parsed json) and `headers` (lower-cased names, e.g.
+`fetch.calls[i].headers['x-change-reason']`).
+
 ## Cleanup between tests
 
 Consumers must run Testing Library's cleanup between tests: `renderWithProviders` mounts a real

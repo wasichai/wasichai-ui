@@ -3,17 +3,22 @@ import { api } from '../../api/client'
 import type {
   AdminUser,
   CreateRolePayload,
+  CreateServiceAccountPayload,
   CreateUserPayload,
   DeclaredAction,
   FieldPermission,
   Permission,
   Role,
+  ServiceAccount,
+  ServiceAccountWithSecret,
   UpdateRolePayload,
+  UpdateServiceAccountPayload,
   UpdateUserPayload
 } from './types'
 
 const USERS_KEY = ['admin', 'users']
 const ROLES_KEY = ['admin', 'roles']
+const SERVICE_ACCOUNTS_KEY = ['admin', 'service-accounts']
 
 export function useAdminUsers() {
   return useQuery({
@@ -130,5 +135,49 @@ export function useDeclaredActions(objectNames: string[], enabled: boolean): Rec
       })
       return byObject
     }
+  })
+}
+
+export function useServiceAccounts() {
+  return useQuery({
+    queryKey: SERVICE_ACCOUNTS_KEY,
+    queryFn: () => api<ServiceAccount[]>('/service-accounts')
+  })
+}
+
+// create and rotate answer the secret. gcTime 0: once the page resets the mutation, react-query
+// drops it at once instead of keeping the secret in its mutation cache for minutes
+export function useCreateServiceAccount() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateServiceAccountPayload) => api<ServiceAccountWithSecret>('/service-accounts', { method: 'POST', body: JSON.stringify(payload) }),
+    gcTime: 0,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SERVICE_ACCOUNTS_KEY })
+  })
+}
+
+export function useUpdateServiceAccount() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...payload }: UpdateServiceAccountPayload & { id: string }) =>
+      api<ServiceAccount>(`/service-accounts/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(payload) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SERVICE_ACCOUNTS_KEY })
+  })
+}
+
+export function useRotateServiceAccountSecret() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api<ServiceAccountWithSecret>(`/service-accounts/${encodeURIComponent(id)}/secret`, { method: 'POST' }),
+    gcTime: 0,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SERVICE_ACCOUNTS_KEY })
+  })
+}
+
+export function useDeleteServiceAccount() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api<void>(`/service-accounts/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SERVICE_ACCOUNTS_KEY })
   })
 }

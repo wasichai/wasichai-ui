@@ -36,6 +36,7 @@ describe('core links', () => {
     expect(links.roles()).toBe('/admin/roles')
     expect(links.permissions()).toBe('/admin/permissions')
     expect(links.audit()).toBe('/admin/audit')
+    expect(links.serviceAccounts()).toBe('/admin/service-accounts')
   })
 })
 

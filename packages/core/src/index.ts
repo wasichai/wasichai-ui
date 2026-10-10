@@ -4,6 +4,7 @@ export {
   api,
   createApiClient,
   describeError,
+  formError,
   getActiveApiClient,
   getToken,
   setToken,
@@ -13,6 +14,11 @@ export {
 } from './api/client'
 export * from './types/metadata'
 export { buildRecordSchema, toAttributes, toFormValues } from './lib/metadata-to-zod'
+export { CHANGE_REASON_HEADER, CHANGE_REASON_MAX_LENGTH, changeReasonHeader, normalizeReason, reasonProblem, type ReasonProblem } from './lib/changeReason'
+export { useWritePolicy, writePolicy, type WritePolicy, type WriteRules } from './lib/writePolicy'
+export { ReasonDialog, type ReasonDialogProps } from './components/reason/ReasonDialog'
+export { reasonRefusal, useReasonPrompt, type ReasonPrompt, type ReasonPromptOptions } from './components/reason/useReasonPrompt'
+export { WritePolicyNotice, type WritePolicyNoticeProps } from './components/reason/WritePolicyNotice'
 export type { AuthUser, CallerPermissions } from './types/auth'
 export type { AuditChange, AuditEntry, AuditEntryPayload, AuditFilters, AuditOperation, ChangeDescription } from './types/audit'
 export type * from './registry/contract'
@@ -65,6 +71,7 @@ export {
 export { absoluteTime, describeChanges, formatAuditValue, NO_AUDIT_EXTENSIONS, relativeTime, type AuditExtensions } from './features/history/changes'
 export { useAuditExtensions } from './features/history/useAuditExtensions'
 export { useAuditLog, useRecordHistory } from './features/history/api'
+export { AuditActor } from './features/history/AuditActor'
 export { ChangeList } from './features/history/ChangeList'
 export { OperationBadge } from './features/history/OperationBadge'
 export { RecordHistory } from './features/history/RecordHistory'

@@ -23,6 +23,8 @@ export interface FieldMeta {
   relationTarget: string | null
   visible: boolean
   editable: boolean
+  // omitted unless true (ADR-036)
+  indexed?: boolean
   [extension: string]: unknown
 }
 
@@ -44,11 +46,24 @@ export interface ObjectSummary {
   pluralLabel: string
   description: string | null
   enabled: boolean
+  // write rules (ADR-040, ADR-041). optional: a server before 0.3.0 sends none, read as false
+  appendOnly?: boolean
+  apiOnly?: boolean
+  requiresReason?: boolean
+  // field-name sets (ADR-036, ADR-037), omitted when empty
+  indexes?: string[][]
+  uniqueConstraints?: string[][]
   [extension: string]: unknown
 }
 
 export interface ObjectDefinition extends ObjectSummary {
   fields: FieldMeta[]
+}
+
+// an object's own verb beyond CRUD (ADR-042), from GET /api/metadata/objects/{object}/actions
+export interface DeclaredAction {
+  name: string
+  label: string
 }
 
 export interface RecordItem {

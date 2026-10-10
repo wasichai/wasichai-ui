@@ -1,9 +1,9 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DynamicForm } from './DynamicForm'
 import { mockFetch, renderWithProviders } from '@wasichai/testing'
-import { sketchModule } from '../../test/fakeModules'
+import { annotationModule, sketchModule } from '../../test/fakeModules'
 import type { FieldMeta, Form, ObjectDefinition } from '../../types/metadata'
 
 function field(overrides: Partial<FieldMeta>): FieldMeta {
@@ -249,6 +249,36 @@ describe('DynamicForm', () => {
     expect(screen.getByLabelText('Uso')).toBeDisabled()
   })
 
+  it('draws a module field of a read-along form inert: shown, never taken', () => {
+    const lote = field({ id: 'f9', name: 'lote', label: 'Lote', type: 'SKETCH' })
+    renderWithProviders(
+      <DynamicForm
+        definition={{ ...definition, fields: [...definition.fields, lote] }}
+        record={{ id: 'r1', createdAt: null, updatedAt: null, attributes: {}, sketches: { lote: 'trazado' } }}
+        onSubmit={onSubmit}
+        readOnly
+      />,
+      { modules: [sketchModule] }
+    )
+    expect(screen.getByTestId('sketch-field')).toHaveTextContent('trazado')
+    expect(screen.getByTestId('sketch-field').closest('[inert]')).not.toBeNull()
+  })
+
+  it('shows a module field through its display on a read-along form', () => {
+    const nota = field({ id: 'f9', name: 'nota', label: 'Nota', type: 'NOTE_FIELD' })
+    renderWithProviders(
+      <DynamicForm
+        definition={{ ...definition, fields: [...definition.fields, nota] }}
+        record={{ id: 'r1', createdAt: null, updatedAt: null, attributes: {}, notes: { nota: 'hola' } }}
+        onSubmit={onSubmit}
+        readOnly
+      />,
+      { modules: [annotationModule] }
+    )
+    expect(screen.getByText('Nota')).toBeInTheDocument()
+    expect(screen.getByTestId('note-display')).toHaveTextContent('nota: hola')
+  })
+
   it('names a relation picker by its label and marks it invalid', async () => {
     const fetch = mockFetch([
       { path: '/metadata/objects/persona', body: { ...definition, name: 'persona', fields: [] } },
@@ -267,5 +297,109 @@ describe('DynamicForm', () => {
     } finally {
       fetch.restore()
     }
+  })
+
+  describe('change reason and server errors', () => {
+    const withReason: ObjectDefinition = { ...definition, requiresReason: true }
+    // the row a field draws in: its label, its input and what is said about it
+    const rowOf = (label: string) => screen.getByText(label).closest('div')!
+
+    it('asks for the change reason when the object requires one', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(
+        <DynamicForm definition={withReason} record={{ id: 'r1', createdAt: null, updatedAt: null, attributes: { codigo: 'P-1' } }} onSubmit={onSubmit} />
+      )
+
+      await user.click(screen.getByRole('button', { name: 'Guardar' }))
+      expect(await screen.findByText('Escribe el motivo del cambio')).toBeInTheDocument()
+      expect(onSubmit).not.toHaveBeenCalled()
+
+      await user.type(screen.getByLabelText(/Motivo/), 'corrección')
+      await user.click(screen.getByRole('button', { name: 'Guardar' }))
+
+      await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ attributes: { codigo: 'P-1', area: null, uso: null } }), 'corrección')
+      expect(screen.getByText('Obligatorio, hasta 500 caracteres.')).toBeInTheDocument()
+    })
+
+    it('shows a field error and the reason error together', async () => {
+      renderWithProviders(<DynamicForm definition={withReason} onSubmit={onSubmit} />)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+      expect(await screen.findByText(/Código: required/)).toBeInTheDocument()
+      expect(screen.getByText('Escribe el motivo del cambio')).toBeInTheDocument()
+      expect(onSubmit).not.toHaveBeenCalled()
+    })
+
+    it('draws no reason field on a read-only form or an object without the rule', () => {
+      const { rerender } = renderWithProviders(<DynamicForm definition={withReason} onSubmit={onSubmit} readOnly />)
+      expect(screen.queryByLabelText(/Motivo/)).toBeNull()
+
+      rerender(<DynamicForm definition={definition} onSubmit={onSubmit} />)
+      expect(screen.queryByLabelText(/Motivo/)).toBeNull()
+    })
+
+    it('puts a 409 unique message under each field it names', () => {
+      const pair: ObjectDefinition = {
+        ...definition,
+        fields: [field({ id: 'f1', name: 'codigo', label: 'Código' }), field({ id: 'f2', name: 'anio', label: 'Año' })]
+      }
+      renderWithProviders(
+        <DynamicForm
+          definition={pair}
+          error="Conflict"
+          violations={[
+            { field: 'codigo', message: 'must be unique together with anio' },
+            { field: 'anio', message: 'must be unique together with codigo' }
+          ]}
+          onSubmit={onSubmit}
+        />
+      )
+
+      expect(within(rowOf('Código')).getByText('must be unique together with anio')).toBeInTheDocument()
+      expect(within(rowOf('Año')).getByText('must be unique together with codigo')).toBeInTheDocument()
+      expect(screen.getByLabelText('Código')).toHaveAttribute('aria-invalid', 'true')
+      const banner = screen.getByRole('alert')
+      expect(banner).toHaveTextContent('Conflict')
+      expect(banner).not.toHaveTextContent('must be unique')
+    })
+
+    it('keeps a violation on a field it does not draw in the banner', () => {
+      renderWithProviders(
+        <DynamicForm definition={definition} error="Conflict" violations={[{ field: 'oculto', message: 'must be unique' }]} onSubmit={onSubmit} />
+      )
+
+      const banner = screen.getByRole('alert')
+      expect(banner).toHaveTextContent('Conflict')
+      expect(banner).toHaveTextContent('oculto: must be unique')
+    })
+
+    it('puts a 400 on reason under the reason field', () => {
+      renderWithProviders(
+        <DynamicForm
+          definition={withReason}
+          error="Bad Request"
+          violations={[{ field: 'reason', message: 'send the X-Change-Reason header' }]}
+          onSubmit={onSubmit}
+        />
+      )
+
+      expect(within(rowOf('Motivo')).getByText('send the X-Change-Reason header')).toBeInTheDocument()
+      expect(screen.getByLabelText(/Motivo/)).toHaveAttribute('aria-invalid', 'true')
+      expect(screen.getByRole('alert')).not.toHaveTextContent('send the X-Change-Reason header')
+    })
+
+    it('empties the reason once the record was saved', async () => {
+      const saved = { id: 'r1', createdAt: null, attributes: { codigo: 'P-1' } }
+      const { rerender } = renderWithProviders(
+        <DynamicForm definition={withReason} record={{ ...saved, updatedAt: '2026-10-01T10:00:00Z' }} onSubmit={onSubmit} />
+      )
+
+      await userEvent.type(screen.getByLabelText(/Motivo/), 'ajuste')
+      rerender(<DynamicForm definition={withReason} record={{ ...saved, updatedAt: '2026-10-01T10:00:05Z' }} onSubmit={onSubmit} />)
+
+      expect(screen.getByLabelText(/Motivo/)).toHaveValue('')
+    })
   })
 })

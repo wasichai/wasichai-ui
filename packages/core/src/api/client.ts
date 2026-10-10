@@ -23,6 +23,12 @@ export function describeError(cause: unknown): string {
   return String(cause)
 }
 
+// a form draws each violation under its field and the message in its banner
+export function formError(cause: unknown): { message: string; violations: FieldViolation[] } {
+  if (cause instanceof ApiError) return { message: cause.message, violations: cause.violations }
+  return { message: String(cause), violations: [] }
+}
+
 // problem+json, or nothing to read: a proxy or gateway in front of the api answers in html or
 // text, and parsing that threw a SyntaxError before the status was even looked at (a 401 kept its token)
 function readProblem(text: string): { detail?: string; title?: string; errors?: FieldViolation[] } | null {

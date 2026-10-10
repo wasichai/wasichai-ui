@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, type FetchMock } from '@wasichai/testing'
-import { useDeleteWorkflow } from './api'
+import { useApplyTransition, useDeleteWorkflow } from './api'
 
 let fetch: FetchMock | null = null
 afterEach(() => fetch?.restore())
@@ -25,5 +25,27 @@ describe('useDeleteWorkflow', () => {
     await result.current.mutateAsync('predio')
 
     await waitFor(() => expect(remove).toHaveBeenCalledWith({ queryKey: ['workflow', 'predio'] }))
+  })
+})
+
+describe('useApplyTransition', () => {
+  it('applies a transition with the change reason', async () => {
+    const path = '/objects/predio/records/r1/transitions/aprobar'
+    fetch = mockFetch([{ method: 'POST', path, body: { id: 'r1', createdAt: null, updatedAt: null, attributes: {}, state: 'approved' } }])
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+
+    function Wrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    }
+
+    const { result } = renderHook(() => useApplyTransition('predio', 'r1'), { wrapper: Wrapper })
+    await result.current.mutateAsync({ name: 'aprobar', reason: 'revisado' })
+    // the old call shape still works, and sends no reason
+    await result.current.mutateAsync('aprobar')
+
+    const posts = fetch.calls.filter((call) => call.method === 'POST')
+    expect(posts.map((call) => call.path)).toEqual([path, path])
+    expect(posts[0].headers['x-change-reason']).toBe("UTF-8''revisado")
+    expect(posts[1].headers['x-change-reason']).toBeUndefined()
   })
 })

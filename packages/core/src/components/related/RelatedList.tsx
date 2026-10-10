@@ -8,7 +8,10 @@ import { Badge, Table, Td, Th } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { describeError } from '../../api/client'
+import { useWritePolicy } from '../../lib/writePolicy'
 import { FieldCell } from '../field-value'
+import { reasonRefusal, useReasonPrompt } from '../reason/useReasonPrompt'
+import { WritePolicyNotice } from '../reason/WritePolicyNotice'
 import { useLinkRelated, useObjectDefinition, useRecords, useRelatedRecords } from '../../queries'
 import type { RelatedSide } from '../../types/metadata'
 
@@ -28,8 +31,14 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
   const { link, unlink } = useLinkRelated(objectName, recordId, side.relationship)
   const columns = (definition.data?.fields ?? []).filter((field) => field.visible).slice(0, 4)
   const manyToMany = side.type === 'MANY_TO_MANY'
-  // the last link or unlink the server refused says why; the next attempt clears it
-  const refused = link.error ?? unlink.error
+  // a link writes both ends: either one's rules hold
+  const policy = useWritePolicy(objectName, side.objectName)
+  const prompt = useReasonPrompt()
+  const linkable = manyToMany && policy.canLink
+  // the last link or unlink the server refused says why; the next attempt clears it.
+  // a refused reason is said in the open dialog, once
+  const lastError = link.error ?? unlink.error
+  const refused = prompt.dialog && reasonRefusal(lastError) !== undefined ? null : lastError
 
   return (
     <Card>
@@ -39,17 +48,26 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
           <Badge>{side.type}</Badge>
           <span className="text-xs text-ink-muted">{related.data?.totalElements ?? 0}</span>
         </div>
-        {manyToMany ? (
+        {linkable ? (
           <LinkPicker
             side={side}
-            pending={link.isPending}
-            onLink={(otherId, done) => {
-              unlink.reset()
-              link.mutate(otherId, { onSuccess: done })
-            }}
+            // until both ends' rules arrive a link could skip the reason
+            pending={link.isPending || !policy.loaded}
+            onLink={(otherId, done) =>
+              // reset inside the write: a cancelled prompt leaves the last refusal on screen
+              prompt.withReason(
+                (reason) => {
+                  unlink.reset()
+                  return link.mutateAsync({ otherId, reason }).then(done)
+                },
+                { required: policy.requiresReason, title: t('relationships.link'), confirmLabel: t('relationships.link') }
+              )
+            }
           />
         ) : null}
       </CardHeader>
+
+      {manyToMany ? <WritePolicyNotice policy={policy} scope="link" className="border-b border-border px-5 py-3" /> : null}
 
       {refused ? (
         <Alert
@@ -91,12 +109,18 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={links.record(side.objectName, record.id)}>{t('common.edit')}</Link>
                     </Button>
-                    {manyToMany ? (
+                    {linkable ? (
                       <UnlinkButton
-                        onUnlink={() => {
-                          link.reset()
-                          unlink.mutate(record.id)
-                        }}
+                        disabled={unlink.isPending || !policy.loaded}
+                        onUnlink={() =>
+                          prompt.withReason(
+                            (reason) => {
+                              link.reset()
+                              return unlink.mutateAsync({ otherId: record.id, reason })
+                            },
+                            { required: policy.requiresReason, title: t('relationships.unlink'), confirmLabel: t('relationships.unlink') }
+                          )
+                        }
                       />
                     ) : null}
                   </div>
@@ -106,6 +130,7 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
           </tbody>
         </Table>
       )}
+      {prompt.dialog}
     </Card>
   )
 }
@@ -141,10 +166,10 @@ function LinkPicker({ side, pending, onLink }: { side: RelatedSide; pending: boo
   )
 }
 
-function UnlinkButton({ onUnlink }: { onUnlink: () => void }) {
+function UnlinkButton({ disabled, onUnlink }: { disabled: boolean; onUnlink: () => void }) {
   const { t } = useTranslation()
   return (
-    <Button variant="ghost" size="icon" aria-label={t('relationships.unlink')} onClick={onUnlink}>
+    <Button variant="ghost" size="icon" aria-label={t('relationships.unlink')} disabled={disabled} onClick={onUnlink}>
       <Unlink className="h-4 w-4" />
     </Button>
   )

@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@wasichai/ui'
-import { ApiError, describeError } from '../../api/client'
+import { ApiError, formError, type FieldViolation } from '../../api/client'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { fallbackPage } from '../../components/page-renderer/fallbackPage'
 import { PageRenderer } from '../../components/page-renderer/PageRenderer'
 import { ErrorState } from '../../components/query-state/QueryState'
+import { WritePolicyNotice } from '../../components/reason/WritePolicyNotice'
+import { writePolicy } from '../../lib/writePolicy'
 import { useObjectDefinition, useObjectRelationships, useRecord, useResolvedPage, useSaveRecord } from '../../queries'
 import { PageHeader } from '../../shell/PageHeader'
 
@@ -24,6 +26,7 @@ export function RecordDetailPage() {
   const sides = useObjectRelationships(object)
   const save = useSaveRecord(object ?? '', id)
   const [error, setError] = useState<string | null>(null)
+  const [violations, setViolations] = useState<FieldViolation[]>([])
 
   // a 404 means no pages module on the server: draw the page the metadata alone gives (R8).
   // any other failure (500, 403, network) is a real outage: show it, do not silently swap the layout.
@@ -75,6 +78,8 @@ export function RecordDetailPage() {
           </Button>
         }
       />
+      {/* append-only or api-only: the forms read along, this says why */}
+      <WritePolicyNotice policy={writePolicy(current)} className="mx-8 mt-4" />
 
       <PageRenderer
         page={resolved}
@@ -82,12 +87,16 @@ export function RecordDetailPage() {
         record={item}
         submitting={save.isPending}
         error={error}
-        onSubmit={async (payload) => {
+        violations={violations}
+        onSubmit={async (payload, reason) => {
           setError(null)
+          setViolations([])
           try {
-            await save.mutateAsync(payload)
+            await save.mutateAsync({ payload, reason })
           } catch (cause) {
-            setError(describeError(cause))
+            const refused = formError(cause)
+            setError(refused.message)
+            setViolations(refused.violations)
           }
         }}
       />

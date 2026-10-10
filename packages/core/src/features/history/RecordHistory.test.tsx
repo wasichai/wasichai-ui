@@ -62,7 +62,9 @@ const created: AuditEntry = {
   operation: 'CREATE',
   occurredAt: '2026-09-17T09:00:00Z',
   changes: [],
-  documentId: null
+  documentId: null,
+  reason: null,
+  serviceAccount: null
 }
 
 const updated: AuditEntry = {
@@ -73,7 +75,9 @@ const updated: AuditEntry = {
   operation: 'UPDATE',
   occurredAt: '2026-09-17T11:00:00Z',
   changes: [{ field: 'codigo', before: 'A-1', after: 'A-2' }],
-  documentId: null
+  documentId: null,
+  reason: null,
+  serviceAccount: null
 }
 
 const issued: AuditEntry = {
@@ -84,7 +88,9 @@ const issued: AuditEntry = {
   operation: 'ISSUE',
   occurredAt: '2026-09-17T12:00:00Z',
   changes: [],
-  documentId: 'document-1'
+  documentId: 'document-1',
+  reason: null,
+  serviceAccount: null
 }
 
 // changes a field no module owns on the object definition, so describeChanges must reach for the
@@ -97,7 +103,9 @@ const sketchUpdated: AuditEntry = {
   operation: 'UPDATE',
   occurredAt: '2026-09-17T13:00:00Z',
   changes: [{ field: 'sketch', before: null, after: { strokes: [[0, 0, 1, 1]] } }],
-  documentId: null
+  documentId: null,
+  reason: null,
+  serviceAccount: null
 }
 
 function renderHistory(modules: WasichaiModule[] = []) {
@@ -177,6 +185,41 @@ describe('RecordHistory', () => {
     renderHistory()
     expect(screen.getByText('Historial no disponible')).toBeInTheDocument()
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+  })
+
+  it('shows the reason the writer gave', () => {
+    state.entries = [{ ...updated, reason: 'corrección del monto' }]
+    renderHistory()
+    expect(screen.getByText('Motivo:')).toBeInTheDocument()
+    expect(screen.getByText('corrección del monto', { exact: false })).toBeInTheDocument()
+  })
+
+  it('keeps a multi-line reason on its lines, for any operation', () => {
+    state.entries = [{ ...created, reason: 'alta\npor oficio' }]
+    renderHistory()
+    const reason = screen.getByText('Motivo:').parentElement!
+    expect(reason).toHaveClass('whitespace-pre-line')
+    expect(reason.textContent).toBe('Motivo: alta\npor oficio')
+  })
+
+  it('names the service account instead of its backing address', () => {
+    state.entries = [{ ...created, userEmail: 'x@service-accounts.invalid', serviceAccount: 'rentas' }]
+    renderHistory()
+    expect(screen.getByText('rentas')).toBeInTheDocument()
+    expect(screen.getByText('Cuenta de servicio')).toBeInTheDocument()
+    expect(screen.queryByText('x@service-accounts.invalid')).not.toBeInTheDocument()
+  })
+
+  it('reads old entries without a reason', () => {
+    // what a server from before the reason sends: neither key
+    const { reason: _reason, serviceAccount: _serviceAccount, ...old }: AuditEntry = created
+    // both keys optional: a consumer's fixture without them still type-checks
+    const entry: AuditEntry = old
+    state.entries = [entry]
+    renderHistory()
+    expect(screen.getByText('ana@wasichai.test')).toBeInTheDocument()
+    expect(screen.queryByText('Motivo:')).not.toBeInTheDocument()
+    expect(screen.queryByText('Cuenta de servicio')).not.toBeInTheDocument()
   })
 
   it('says so when the record has no history', () => {

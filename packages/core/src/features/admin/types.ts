@@ -7,11 +7,7 @@ export type BuiltInAction = 'READ' | 'CREATE' | 'UPDATE' | 'DELETE' | 'MANAGE_ME
 // a closed union here dropped those on save and the replace-all PUT deleted them.
 export type Action = string
 
-// an object's own verb beyond CRUD, from GET /api/metadata/objects/{object}/actions
-export interface DeclaredAction {
-  name: string
-  label: string
-}
+export type { DeclaredAction } from '../../types/metadata'
 
 export interface AdminUser {
   id: string
@@ -73,3 +69,33 @@ export interface UpdateRolePayload {
 // the role that administers the tenant. deleting it locks everybody out, and it bypasses
 // every permission check, so the matrix screen warns about it.
 export const PROTECTED_ROLE = 'ADMIN'
+
+// a server-to-server caller (ADR-043). clientId is its id; the secret is never listed.
+export interface ServiceAccount {
+  id: string
+  clientId: string
+  name: string
+  enabled: boolean
+  roles: string[]
+  createdAt: string | null
+  secretRotatedAt: string | null
+}
+
+// create and rotate only: the server keeps a hash, this is the one time it is seen
+export interface ServiceAccountWithSecret extends ServiceAccount {
+  clientSecret: string
+}
+
+export interface CreateServiceAccountPayload {
+  name: string
+  roles: string[]
+}
+
+// roles replace the whole set; a key left out is kept
+export interface UpdateServiceAccountPayload {
+  enabled?: boolean
+  roles?: string[]
+}
+
+// the server's rule; the name never changes after create
+export const SERVICE_ACCOUNT_NAME = /^[a-z][a-z0-9_-]{1,48}$/

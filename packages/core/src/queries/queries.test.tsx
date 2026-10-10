@@ -3,17 +3,40 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
 import type { WasichaiModule } from '../registry/contract'
-import type { RecordPayload } from '../types/metadata'
-import { useDeleteField, useLinkRelated, useResolvedPage, useSaveRecord } from './index'
+import {
+  useCreateObjectAction,
+  useDeleteField,
+  useDeleteObjectAction,
+  useDeleteRecord,
+  useLinkRelated,
+  useResolvedPage,
+  useSaveRecord,
+  type SaveRecordInput
+} from './index'
 
 let fetch: FetchMock | null = null
 afterEach(() => fetch?.restore())
 
 const sketches: WasichaiModule = { id: 'sketch', recordQueryKeys: (object) => [['sketch-tiles', object]] }
 
-function Save({ payload }: { payload: RecordPayload }) {
+function Save({ payload }: { payload: SaveRecordInput }) {
   const save = useSaveRecord('predio')
   return <button onClick={() => save.mutate(payload)}>{save.isSuccess ? 'saved' : 'save'}</button>
+}
+
+function Delete({ reason }: { reason?: string }) {
+  const remove = useDeleteRecord('predio')
+  return <button onClick={() => remove.mutate(reason ? { id: 'r1', reason } : 'r1')}>{remove.isSuccess ? 'deleted' : 'delete'}</button>
+}
+
+function LinksWithReason() {
+  const { link, unlink } = useLinkRelated('predio', 'r1', 'duenos')
+  return (
+    <>
+      <button onClick={() => link.mutate({ otherId: 'p1', reason: 'vínculo' })}>{link.isSuccess ? 'linked' : 'link'}</button>
+      <button onClick={() => unlink.mutate({ otherId: 'p1', reason: 'baja' })}>{unlink.isSuccess ? 'unlinked' : 'unlink'}</button>
+    </>
+  )
 }
 
 function SaveExisting() {
@@ -34,6 +57,17 @@ function Links() {
 function DropField() {
   const drop = useDeleteField('predio')
   return <button onClick={() => drop.mutate('area')}>{drop.isSuccess ? 'dropped' : 'drop'}</button>
+}
+
+function Actions({ label }: { label: string }) {
+  const create = useCreateObjectAction('predio')
+  const remove = useDeleteObjectAction('predio')
+  return (
+    <>
+      <button onClick={() => create.mutate({ name: 'anular', label })}>{create.isSuccess ? 'declared' : 'declare'}</button>
+      <button onClick={() => remove.mutate('ANULAR')}>{remove.isSuccess ? 'removed' : 'remove'}</button>
+    </>
+  )
 }
 
 function PageName() {
@@ -113,6 +147,73 @@ describe('record queries', () => {
   })
 })
 
+describe('record writes with a change reason', () => {
+  const writeCall = (mock: FetchMock, method: string) => mock.calls.find((call) => call.method === method)
+
+  it('still posts a bare payload, with no reason header', async () => {
+    fetch = mockFetch([{ method: 'POST', path: '/objects/predio/records', status: 201, body: { id: 'r1' } }])
+    renderWithProviders(<Save payload={{ attributes: { codigo: 'A' } }} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await screen.findByText('saved')
+    expect(writeCall(fetch, 'POST')?.body).toEqual({ attributes: { codigo: 'A' } })
+    expect(writeCall(fetch, 'POST')?.headers['x-change-reason']).toBeUndefined()
+  })
+
+  it('sends the reason as X-Change-Reason beside the payload', async () => {
+    fetch = mockFetch([{ method: 'POST', path: '/objects/predio/records', status: 201, body: { id: 'r1' } }])
+    renderWithProviders(<Save payload={{ payload: { attributes: { codigo: 'A' } }, reason: 'alta' }} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'save' }))
+
+    await screen.findByText('saved')
+    // the reason never travels in the body
+    expect(writeCall(fetch, 'POST')?.body).toEqual({ attributes: { codigo: 'A' } })
+    expect(writeCall(fetch, 'POST')?.headers['x-change-reason']).toBe("UTF-8''alta")
+  })
+
+  it('deletes with a reason', async () => {
+    fetch = mockFetch([{ method: 'DELETE', path: '/objects/predio/records/r1', status: 204 }])
+    renderWithProviders(<Delete reason="duplicado" />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'delete' }))
+
+    await screen.findByText('deleted')
+    expect(writeCall(fetch, 'DELETE')?.path).toBe('/objects/predio/records/r1')
+    expect(writeCall(fetch, 'DELETE')?.headers['x-change-reason']).toBe("UTF-8''duplicado")
+  })
+
+  it('still deletes by id alone, with no reason header', async () => {
+    fetch = mockFetch([{ method: 'DELETE', path: '/objects/predio/records/r1', status: 204 }])
+    renderWithProviders(<Delete />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'delete' }))
+
+    await screen.findByText('deleted')
+    expect(writeCall(fetch, 'DELETE')?.path).toBe('/objects/predio/records/r1')
+    expect(writeCall(fetch, 'DELETE')?.headers['x-change-reason']).toBeUndefined()
+  })
+
+  it('links and unlinks with a reason', async () => {
+    fetch = mockFetch([
+      { method: 'POST', path: '/objects/predio/records/r1/related/duenos', status: 204 },
+      { method: 'DELETE', path: '/objects/predio/records/r1/related/duenos/p1', status: 204 }
+    ])
+    renderWithProviders(<LinksWithReason />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'link' }))
+    await screen.findByText('linked')
+    expect(writeCall(fetch, 'POST')?.body).toEqual({ otherId: 'p1' })
+    expect(writeCall(fetch, 'POST')?.headers['x-change-reason']).toBe("UTF-8''v%C3%ADnculo")
+
+    await userEvent.click(screen.getByRole('button', { name: 'unlink' }))
+    await screen.findByText('unlinked')
+    expect(writeCall(fetch, 'DELETE')?.path).toBe('/objects/predio/records/r1/related/duenos/p1')
+    expect(writeCall(fetch, 'DELETE')?.headers['x-change-reason']).toBe("UTF-8''baja")
+  })
+})
+
 describe('field queries', () => {
   it('drops the object, its records and module caches after a field delete', async () => {
     fetch = mockFetch([{ method: 'DELETE', path: '/metadata/objects/predio/fields/area', status: 204 }])
@@ -127,6 +228,45 @@ describe('field queries', () => {
       ['records', 'predio'],
       ['sketch-tiles', 'predio']
     ])
+  })
+})
+
+describe('declared action queries', () => {
+  it('declares an action and refreshes the list', async () => {
+    fetch = mockFetch([{ method: 'POST', path: '/metadata/objects/predio/actions', status: 201, body: { name: 'ANULAR', label: 'Anular' } }])
+    const { queryClient } = renderWithProviders(<Actions label=" Anular " />)
+    const spy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    await userEvent.click(screen.getByRole('button', { name: 'declare' }))
+
+    await screen.findByText('declared')
+    expect(fetch.calls.find((call) => call.method === 'POST')?.body).toEqual({ name: 'ANULAR', label: 'Anular' })
+    expect(invalidatedKeys(spy)).toContainEqual(['objects', 'predio', 'actions'])
+  })
+
+  // the server defaults a missing label to the name; an empty one would be stored empty
+  it('leaves a blank label out', async () => {
+    fetch = mockFetch([{ method: 'POST', path: '/metadata/objects/predio/actions', status: 201, body: { name: 'ANULAR', label: 'ANULAR' } }])
+    renderWithProviders(<Actions label="  " />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'declare' }))
+
+    await screen.findByText('declared')
+    expect(fetch.calls.find((call) => call.method === 'POST')?.body).toEqual({ name: 'ANULAR' })
+  })
+
+  // its grants go with it, so every cached role is stale
+  it('removes an action and the roles that granted it go stale', async () => {
+    fetch = mockFetch([{ method: 'DELETE', path: '/metadata/objects/predio/actions/ANULAR', status: 204 }])
+    const { queryClient } = renderWithProviders(<Actions label="" />)
+    const spy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    await userEvent.click(screen.getByRole('button', { name: 'remove' }))
+
+    await screen.findByText('removed')
+    expect(fetch.calls.find((call) => call.method === 'DELETE')?.path).toBe('/metadata/objects/predio/actions/ANULAR')
+    expect(invalidatedKeys(spy)).toContainEqual(['objects', 'predio', 'actions'])
+    expect(invalidatedKeys(spy)).toContainEqual(['admin', 'roles'])
   })
 })
 

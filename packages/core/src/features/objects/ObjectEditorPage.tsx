@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
@@ -22,7 +22,21 @@ import {
 } from '../../queries'
 import type { FieldMeta, FieldType } from '../../types/metadata'
 import { describeError } from '../../api/client'
-import { addableFieldTypes, emptyFieldDraft, fieldPayload, nameTaken, scopeOf, type FieldDraft } from './objectDraft'
+import {
+  addableFieldTypes,
+  detailsDraft,
+  emptyFieldDraft,
+  fieldPayload,
+  indexable,
+  nameTaken,
+  objectUpdatePayload,
+  rebaseDetails,
+  scopeOf,
+  type FieldDraft,
+  type ObjectDetailsDraft
+} from './objectDraft'
+import { ObjectActions } from './ObjectActions'
+import { ObjectFieldSets } from './ObjectFieldSets'
 import { ObjectRelationships } from './ObjectRelationships'
 import { relationshipOfField } from './relationshipSides'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
@@ -48,23 +62,24 @@ export function ObjectEditorPage() {
   const updateField = useUpdateField(object)
   const deleteField = useDeleteField(object)
 
-  const [label, setLabel] = useState('')
-  const [pluralLabel, setPluralLabel] = useState('')
-  const [description, setDescription] = useState('')
-  const [enabled, setEnabled] = useState(true)
+  // labels, write rules and field sets: everything the object's PUT carries
+  const [details, setDetails] = useState<ObjectDetailsDraft | null>(() => (definition ? detailsDraft(definition) : null))
+  // the server's answer the draft was last based on, to tell the user's edits from stale values.
+  // keyed by object: moving to another object's editor keeps this component, not its edits.
+  const baseline = useRef<{ name: string; draft: ObjectDetailsDraft } | null>(definition ? { name: definition.name, draft: detailsDraft(definition) } : null)
   const [draft, setDraft] = useState<FieldDraft | null>(null)
   const [confirmName, setConfirmName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [systemOpen, setSystemOpen] = useState(false)
 
-  // the server owns the truth; the form only borrows it once it arrives
+  // the server owns the truth; the form only borrows it. a refetch keeps what the user changed and has not saved.
   useEffect(() => {
     if (!definition) return
-    setLabel(definition.label)
-    setPluralLabel(definition.pluralLabel)
-    setDescription(definition.description ?? '')
-    setEnabled(definition.enabled)
+    const next = detailsDraft(definition)
+    const before = baseline.current?.name === definition.name ? baseline.current.draft : null
+    setDetails((current) => (current && before ? rebaseDetails(current, before, next) : next))
+    baseline.current = { name: definition.name, draft: next }
   }, [definition])
 
   const run = async (action: () => Promise<unknown>) => {
@@ -78,16 +93,16 @@ export function ObjectEditorPage() {
     }
   }
 
-  const saveDetails = (event: FormEvent) => {
-    event.preventDefault()
-    void run(() =>
-      updateObject.mutateAsync({
-        label: label.trim(),
-        pluralLabel: pluralLabel.trim() || label.trim(),
-        description: description.trim() || null,
-        enabled
-      })
-    )
+  // only what changed of the rules and lists goes out: the PUT keeps what it is not sent
+  const saveDetails = () => {
+    if (!definition || !details) return
+    // the field-sets Save skips the form's own required check: say it here
+    if (!details.label.trim()) {
+      setSaved(false)
+      setError(t('objects.labelRequired'))
+      return
+    }
+    void run(() => updateObject.mutateAsync(objectUpdatePayload(definition, details)))
   }
 
   const submitField = () => {
@@ -109,7 +124,7 @@ export function ObjectEditorPage() {
       void navigate(links.objects())
     })
 
-  if (isLoading || !definition) {
+  if (isLoading || !definition || !details) {
     return (
       <>
         <PageHeader title={t('objects.edit')} subtitle={object} />
@@ -119,6 +134,7 @@ export function ObjectEditorPage() {
   }
 
   const problem = draft ? nameTaken(draft.name, definition.fields, systemFields) : null
+  const edit = (change: Partial<ObjectDetailsDraft>) => setDetails((current) => current && { ...current, ...change })
 
   return (
     <>
@@ -140,7 +156,12 @@ export function ObjectEditorPage() {
         ) : null}
         {saved && !error ? <p className="rounded-md border border-success/40 bg-success/10 px-4 py-2.5 text-sm text-success">{t('objects.saved')}</p> : null}
 
-        <form onSubmit={saveDetails}>
+        <form
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault()
+            saveDetails()
+          }}
+        >
           <Card>
             <CardHeader className="flex items-center justify-between">
               <CardTitle>{t('objects.details')}</CardTitle>
@@ -156,23 +177,36 @@ export function ObjectEditorPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="label">{t('objects.label')}</Label>
-                <Input id="label" value={label} onChange={(event) => setLabel(event.target.value)} required />
+                <Input id="label" value={details.label} onChange={(event) => edit({ label: event.target.value })} required />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="pluralLabel">{t('objects.pluralLabel')}</Label>
-                <Input id="pluralLabel" value={pluralLabel} onChange={(event) => setPluralLabel(event.target.value)} />
+                <Input id="pluralLabel" value={details.pluralLabel} onChange={(event) => edit({ pluralLabel: event.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="description">{t('objects.description')}</Label>
-                <Textarea id="description" className="min-h-9" value={description} onChange={(event) => setDescription(event.target.value)} />
+                <Textarea id="description" className="min-h-9" value={details.description} onChange={(event) => edit({ description: event.target.value })} />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
+                  <input type="checkbox" checked={details.enabled} onChange={(event) => edit({ enabled: event.target.checked })} />
                   {t('objects.enabled')}
                 </label>
                 <p className="text-xs text-ink-muted">{t('objects.enabledHint')}</p>
               </div>
+              {/* ADR-040, ADR-041: what the generic api and the screens refuse on this object's records */}
+              <fieldset className="space-y-2 sm:col-span-2">
+                <legend className="mb-1 text-sm font-semibold">{t('objects.writeRules')}</legend>
+                {(['appendOnly', 'apiOnly', 'requiresReason'] as const).map((rule) => (
+                  <div key={rule}>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={details[rule]} onChange={(event) => edit({ [rule]: event.target.checked })} />
+                      {t(`objects.${rule}`)}
+                    </label>
+                    <p className="text-xs text-ink-muted">{t(`objects.${rule}Hint`)}</p>
+                  </div>
+                ))}
+              </fieldset>
             </CardBody>
           </Card>
         </form>
@@ -229,6 +263,12 @@ export function ObjectEditorPage() {
                       {t('objects.fieldUnique')}
                     </label>
                   )}
+                  {indexable(draft.type, fieldRenderers) ? (
+                    <label className="flex items-center gap-1.5 text-xs text-ink-muted">
+                      <input type="checkbox" checked={draft.indexed} onChange={(event) => setDraft({ ...draft, indexed: event.target.checked })} />
+                      {t('objects.fieldIndexed')}
+                    </label>
+                  ) : null}
                 </div>
 
                 {draft.type === 'ENUM' ? (
@@ -373,13 +413,16 @@ export function ObjectEditorPage() {
                             // some module types mean nothing as unique, and the server refuses them
                             ...(fieldRenderers[field.type]?.uniqueAllowed === false ? [] : [['unique', t('objects.fieldUnique')] as const]),
                             ['visible', t('objects.fieldVisible')],
-                            ['editable', t('objects.fieldEditable')]
+                            ['editable', t('objects.fieldEditable')],
+                            // the server refuses an index on long text and on what a module keeps out of filters
+                            ...(indexable(field.type, fieldRenderers) ? [['indexed', t('objects.fieldIndexed')] as const] : [])
                           ] as const
                         ).map(([flag, text]) => (
                           <label key={flag} className="flex items-center gap-1.5 text-xs text-ink-muted">
                             <input
                               type="checkbox"
-                              checked={field[flag]}
+                              // indexed is omitted unless true
+                              checked={field[flag] === true}
                               aria-label={`${text} ${field.name}`}
                               onChange={(event) => void run(() => updateField.mutateAsync({ field: field.name, payload: { [flag]: event.target.checked } }))}
                             />
@@ -408,7 +451,19 @@ export function ObjectEditorPage() {
           </Table>
         </Card>
 
+        <ObjectFieldSets
+          fields={definition.fields}
+          indexes={details.indexes}
+          uniqueConstraints={details.uniqueConstraints}
+          renderers={fieldRenderers}
+          onChange={(kind, sets) => edit({ [kind]: sets })}
+          onSave={saveDetails}
+          saving={updateObject.isPending}
+        />
+
         <ObjectRelationships objectName={object} />
+
+        <ObjectActions objectName={object} />
 
         <Card className="border-danger/40">
           <CardHeader>

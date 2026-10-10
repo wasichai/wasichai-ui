@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, Td, Th } from '@wasichai/ui'
 import { useAuditLog } from '../history/api'
 import { absoluteTime, describeChanges, relativeTime } from '../history/changes'
+import { AuditActor } from '../history/AuditActor'
 import { ChangeList } from '../history/ChangeList'
 import { OperationBadge } from '../history/OperationBadge'
 import { useAuditExtensions } from '../history/useAuditExtensions'
@@ -114,6 +115,7 @@ export function AuditPage() {
                   <Th>{t('history.object')}</Th>
                   <Th>{t('history.record')}</Th>
                   <Th>{t('history.user')}</Th>
+                  <Th>{t('history.reason')}</Th>
                   <Th>{t('history.occurredAt')}</Th>
                 </tr>
               </thead>
@@ -151,7 +153,13 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
         </Td>
         <Td>{entry.objectName}</Td>
         <Td className="font-mono text-xs text-ink-muted">{entry.recordId ?? '—'}</Td>
-        <Td>{entry.userEmail ?? t('history.system')}</Td>
+        <Td>
+          <AuditActor entry={entry} />
+        </Td>
+        {/* a long reason stays one line here; the title holds all of it */}
+        <Td className="max-w-xs truncate" title={entry.reason ?? undefined}>
+          {entry.reason ?? '—'}
+        </Td>
         <Td className="text-xs text-ink-muted">
           <time dateTime={entry.occurredAt} title={absoluteTime(entry.occurredAt)}>
             {relativeTime(entry.occurredAt)}
@@ -160,7 +168,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
       </tr>
       {expandable && open ? (
         <tr>
-          <Td colSpan={6} className="bg-surface-muted">
+          <Td colSpan={7} className="bg-surface-muted">
             <AuditRowChanges entry={entry} />
           </Td>
         </tr>

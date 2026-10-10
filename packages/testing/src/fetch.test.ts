@@ -13,7 +13,21 @@ describe('mockFetch', () => {
     await expect(client.request('/objects/predio/records', { method: 'POST', body: JSON.stringify({ attributes: { codigo: 'A' } }) })).resolves.toEqual({
       id: 'r1'
     })
-    expect(mock.calls).toEqual([{ method: 'POST', url: '/api/objects/predio/records', path: '/objects/predio/records', body: { attributes: { codigo: 'A' } } }])
+    expect(mock.calls).toEqual([
+      {
+        method: 'POST',
+        url: '/api/objects/predio/records',
+        path: '/objects/predio/records',
+        body: { attributes: { codigo: 'A' } },
+        headers: { 'content-type': 'application/json' }
+      }
+    ])
+  })
+
+  it('records the request headers, lower-cased', async () => {
+    mock = mockFetch([{ method: 'DELETE', path: '/objects/predio/records/r1', status: 204 }])
+    await client.request('/objects/predio/records/r1', { method: 'DELETE', headers: { 'X-Change-Reason': "UTF-8''x" } })
+    expect(mock.calls[0].headers['x-change-reason']).toBe("UTF-8''x")
   })
 
   it('answers anything unmatched with a 404 problem so the test fails loudly', async () => {

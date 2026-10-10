@@ -64,7 +64,7 @@ function deferredFetchStub(putStatus = 200): { fetch: FetchMock; resolveGet: (bo
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
     const method = (init.method ?? 'GET').toUpperCase()
     const body = typeof init.body === 'string' && init.body ? JSON.parse(init.body) : null
-    calls.push({ method, url, path: url.replace('/api', ''), body })
+    calls.push({ method, url, path: url.replace('/api', ''), body, headers: Object.fromEntries(new Headers(init.headers).entries()) })
     if (method === 'GET') return getPromise
     if (method === 'PUT' && putStatus === 404) return jsonResponse({ title: 'Not Found', detail: 'no endpoint' }, 404)
     if (method === 'PUT') return jsonResponse({ theme: 'dark', locale: null })

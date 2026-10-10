@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '@wasichai/core'
+import { api, changeReasonHeader } from '@wasichai/core'
 import type { AvailableTransition, RecordWithState, Workflow, WorkflowPayload } from './types'
 
 // an object without a workflow answers 404, which is an answer, not a failure: never retry it.
@@ -51,14 +51,20 @@ export function useAvailableTransitions(objectName: string, recordId: string) {
   })
 }
 
+// a bare name is the old call shape: no reason
+export type ApplyTransitionInput = string | { name: string; reason?: string | null }
+
 // moving a record touches its data, its buttons and its audit trail
 export function useApplyTransition(objectName: string, recordId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (name: string) =>
-      api<RecordWithState>(`/objects/${objectName}/records/${recordId}/transitions/${name}`, {
-        method: 'POST'
-      }),
+    mutationFn: (input: ApplyTransitionInput) => {
+      const { name, reason } = typeof input === 'string' ? { name: input, reason: undefined } : input
+      return api<RecordWithState>(`/objects/${objectName}/records/${recordId}/transitions/${name}`, {
+        method: 'POST',
+        headers: changeReasonHeader(reason)
+      })
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['record', objectName, recordId] })
       void queryClient.invalidateQueries({ queryKey: ['records', objectName] })

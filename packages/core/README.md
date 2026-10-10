@@ -251,7 +251,97 @@ Links: `useWasichaiLinks()` gives `records(object)`, `record(object, id)`, … f
 
 Errors: `api()` rejects with an `ApiError` (`status`, `message`, `violations`). `describeError(cause)` gives
 the line every core screen shows for a refusal, `message — field: reason — …`, and `String(cause)` for anything
-else.
+else. `formError(cause)` splits it for a form instead: `{ message, violations }`, each violation drawn under its field.
+
+## Administration
+
+Core mounts the tenant's admin screens under `/admin`, in the sidebar's `administration` group: users
+(`users()`), roles (`roles()`), service accounts (`serviceAccounts()`), permissions (`permissions()`) and audit
+(`audit()`). Each is also exported (`UsersPage`, `RolesPage`, `ServiceAccountsPage`, `PermissionsPage`, `AuditPage`).
+
+`ServiceAccountsPage` administers the server-to-server callers of the tenant (ADR-043): create one with a name and
+roles (never `ADMIN`), change its roles, disable or enable it, rotate its secret, delete it. The secret is shown once,
+right after create or rotate, and only kept in the page's state until "I saved it"; it is never left in the
+react-query cache. Disable, rotate and delete ask first. The sidebar entry shows when `GET /api/auth/me/permissions`
+lists `MANAGE_ORGANIZATION` in `capabilities` (ADR-053) or the caller is the administrator; a server that sends no
+`capabilities` gets the entry anyway and its `403` decides.
+
+## Write rules and change reason
+
+An object definition carries three write rules (backend 0.3.0; an older server sends none, read as `false`):
+
+| flag | the generic UI does not offer | the server answers |
+|---|---|---|
+| `appendOnly` | edit, delete, link/unlink (either end), workflow transitions; create stays | `409` |
+| `apiOnly` | create, edit, delete, link/unlink (either end); transitions stay | `403` |
+| `requiresReason` | any write without a reason: create, edit, delete, link/unlink (either end), transitions | `400`, `errors: [{ field: "reason" }]` |
+
+`writePolicy(...objects)` turns the flags into `canCreate`, `canUpdate`, `canDelete`, `canLink`, `canTransition` and
+`requiresReason` (a link passes both ends). `useWritePolicy(objectName, otherObjectName?)` reads the definitions;
+`loaded` is `false` until they arrive (keep write buttons disabled: a write now would skip the prompt), and a failed
+read counts as loaded with no rules. `WritePolicyNotice` says why a write is missing (`scope="link"` for a link).
+
+The reason travels in `X-Change-Reason`, always in the RFC 8187 form `UTF-8''` + percent-encoded UTF-8, so accents,
+line breaks and emoji survive (`changeReasonHeader(reason)`; blank sends no header). It is trimmed and holds 1–500
+code points, no control characters but tab and line breaks (`reasonProblem(reason)`). `useSaveRecord`,
+`useDeleteRecord` and `useLinkRelated` take it beside their old input: `{ payload, reason }`, `{ id, reason }`,
+`{ otherId, reason }`. `ReasonDialog` asks for it; `useReasonPrompt` asks only when required, sends nothing on cancel,
+keeps the dialog open on a refused reason and never rethrows (read the mutation's `error`; while `prompt.dialog` is
+up, skip an error `reasonRefusal(error)` names, the dialog already says it):
+
+```tsx
+function DeleteButton({ object, id }: { object: string; id: string }) {
+  const { t } = useTranslation()
+  const policy = useWritePolicy(object)
+  const remove = useDeleteRecord(object)
+  const prompt = useReasonPrompt()
+  if (policy.loaded && !policy.canDelete) return <WritePolicyNotice policy={policy} />
+  const onDelete = () => prompt.withReason((reason) => remove.mutateAsync({ id, reason }), { required: policy.requiresReason })
+  return (
+    <>
+      <Button disabled={!policy.loaded || remove.isPending} onClick={onDelete}>
+        {t('common.delete')}
+      </Button>
+      {remove.error && <Alert tone="danger">{describeError(remove.error)}</Alert>}
+      {prompt.dialog}
+    </>
+  )
+}
+```
+
+The core record screens follow these rules on their own. `DynamicForm` draws a required **Motivo** field when the
+object has `requiresReason` (checked with the other fields, emptied once the saved record's `updatedAt` moves) and
+calls `onSubmit(payload, reason)`; without the rule it calls `onSubmit(payload)` as before. Its `violations` prop
+puts each refused field's message under that field (a 409 on a unique pair marks both fields, a 400 on `reason` marks
+the reason) and keeps a violation naming no drawn field in the banner. `PageRenderer` passes both through and offers
+no save on an append-only or api-only object; the detail page says why, and the new-record page draws no form on an
+api-only object. A read-only form still shows the page's module fields (a geometry, …): through the renderer's
+`display` when it has one, otherwise as its input widget made `inert`.
+
+The record list hides **Nuevo registro** on an api-only object and the row delete on an append-only or api-only one,
+saying why; with `requiresReason` its delete asks for the reason in place of the plain confirmation. `RelatedList`
+(many-to-many) asks for the reason before a link or an unlink when either end requires one, holds both while the two
+definitions load, and replaces picker and unlink with a notice when either end is append-only or api-only.
+
+Every history and audit entry may carry `reason` (`null` or absent when none was given) and `serviceAccount` (the
+account's name when one wrote it, `null` or absent otherwise; both optional in `AuditEntry`, since an older server sends
+neither; `useRecordHistory` and `useAuditLog` fill them with `null`). `RecordHistory` shows the
+reason under the entry, and the audit page in its own column. `AuditActor` names who wrote an entry: the service
+account with a **Cuenta de servicio** badge (never its backing address), else the user's email, else **Sistema**.
+
+The object editor sets the three rules, ticks `indexed` on a field (not on `LONG_TEXT`, `FILE` or `IMAGE`, which the
+server will not index, nor on a module type that cannot be unique) and edits the composite `indexes` (1–32 fields, in
+index order) and `uniqueConstraints` (2–32; one field is `unique` on the field itself), checking each set as it is
+typed the way the server will. The object's `PUT` keeps whatever it is not sent, so the editor sends a rule or a list
+only when it changed: saving the labels never rewrites a rule someone else just set, and `[]` drops every set of a
+list. A refetch (every field or relationship change makes one) keeps each rule or list edited and not yet saved, and
+takes the server's value for the rest. A blank label is refused on screen before anything is sent.
+
+It also lists the object's declared actions (ADR-042), declares one (`useCreateObjectAction`: the name is sent upper
+case, a blank label is left out and the server uses the name) and removes one with every grant of it
+(`useDeleteObjectAction`, which also refreshes the cached roles). Before sending, the editor checks a new name the way
+the server refuses it: not `^[A-Z][A-Z0-9_]{1,48}$`, one of the built-in actions (`READ`, `CREATE`, `UPDATE`,
+`DELETE`, `MANAGE_METADATA`, `MANAGE_ORGANIZATION`, `MANAGE_TENANTS`), or already declared.
 
 ## Adding a language / overriding strings
 
