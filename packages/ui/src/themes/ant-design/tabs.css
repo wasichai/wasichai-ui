@@ -1,0 +1,33 @@
+/* antd's line tabs on the library's Tabs: 14px labels 32px apart, a 2px brand ink bar on a #f0f0f0 line. unlayered, so
+   they win over tailwind's utilities; hooked on the data-slot of Tabs. the aria and the behaviour (lazy mount, hidden
+   panel) do not change: this only paints them. scoped to the theme, and never into a subtree pinned to another theme */
+@scope ([data-theme='ant-design']) to ([data-theme]:not([data-theme='ant-design'])) {
+    [data-slot='tabs-list'] {
+        gap: 32px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    /* the ink bar is the trigger's bottom border, pulled over the line */
+    [data-slot='tabs-trigger'] {
+        margin-bottom: -1px;
+        padding: 12px 0;
+        border-bottom: 2px solid transparent;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5714;
+    }
+
+    [data-slot='tabs-trigger']:hover:not(:disabled) {
+        color: var(--brand);
+    }
+
+    /* the active one: brand text over the bar. antd thickens it with a hairline shadow, not a bold weight, so the strip
+       does not shift */
+    [data-slot='tabs-trigger'][aria-selected='true'] {
+        border-bottom-color: var(--brand);
+        color: var(--brand);
+        text-shadow: 0 0 0.25px currentColor;
+    }
+}

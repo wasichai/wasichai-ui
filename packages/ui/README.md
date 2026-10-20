@@ -4,7 +4,8 @@ Module guide: [docs/modules/core.md](https://github.com/wasichai/wasichai/blob/m
 
 Primitives shared by every wasichai package: `Alert`, `Button`, `Card*`, `Dialog*`, `Input`, `Textarea`, `Label`,
 `Select*`, `Table`/`Th`/`Td`/`Badge`, `Tabs`, the `cn()` class merger, the Tailwind 4 theme
-tokens (`theme.css`) and an optional theme sheet ([portal-tributario](#optional-theme-portal-tributario)).
+tokens (`theme.css`) and optional theme sheets ([portal-tributario](#optional-theme-portal-tributario),
+[ant-design](#optional-theme-ant-design)).
 Four more carry the footers and dialogs every list and record screen ends up needing:
 
 - `ConfirmDialog`: a question before something that cannot be undone (danger or primary confirm, a busy state, an error line).
@@ -228,3 +229,50 @@ radii still reach it, since they are Tailwind theme variables, not tokens. Nativ
 link-coloured `ghost` and anything an app draws itself are the app's to style. Why the tokens, hooks and sheet look
 this way:
 [ADR-035](https://github.com/wasichai/wasichai/blob/main/docs/adr/0035-theme-extension-tokens-slots-and-optional-sheets.md).
+
+## Optional theme: ant-design
+
+A light-only theme from the [Ant Design spec](https://ant.design/docs/spec/introduce) and antd 5's default tokens: the
+system font stack, 14px text on 22px, 6px corners (4px small, 8px large), white containers on the `#f5f5f5` layout,
+`#d9d9d9` borders and `#f0f0f0` splits, the `#001529` sider as the shell. Where an antd colour misses WCAG AA as text
+it takes the nearest antd palette step that holds it: brand `#1668dc` (antd's `#1677ff` gives 4.1:1 with white),
+danger red-7 `#cf1322`, success green-8 `#237804`, warning gold-9 `#874d00`; the focus ring is the brand, not antd's
+pale `#91caff` (1.8:1). It is not built in: `@wasichai/ui/themes/ant-design.css` holds its tokens and partials that
+paint the library's components through the hooks above.
+
+To offer it, an app imports the sheet after `theme.css`, lists `ANT_DESIGN_THEME` (`@wasichai/core`) in
+`config.themes` and adds `'ant-design': 'light'` to the boot script's `schemes` map:
+
+```css
+/* src/index.css */
+@import 'tailwindcss';
+@import '@wasichai/ui/theme.css';
+@import '@wasichai/ui/themes/ant-design.css';
+@source '../node_modules/@wasichai';
+```
+
+```tsx
+import { ANT_DESIGN_THEME, WasichaiApp } from '@wasichai/core'
+
+<WasichaiApp config={{ apiBaseUrl: '/api', themes: [ANT_DESIGN_THEME] }} modules={[]} />
+```
+
+What the sheet sets, under the theme only:
+
+- **Buttons**: 32px (`sm` 24px with 4px corners), 14px regular text, 15px sides on `md`, a 1px border on every variant,
+  antd's 2px drop shadow under primary, danger and secondary; secondary turns its border and text brand on hover;
+  disabled is antd's grey well with a not-allowed cursor. The fills, the radii and `ghost` are the classes' own.
+- **Fields** (`input`, `textarea`, `select-trigger`): 32px, 14px text, a `#4096ff` hover border, the focus border with
+  antd's 2px glow, the danger border when invalid, the grey well when disabled. Their sides stay the library's.
+- **Cards and badges**: cards take the `line` split and no shadow; a badge is antd's tag (4px corners, 12px on 20px, a
+  border in its own colour), its colours still the caller's classes.
+- **Tables**: 16px cells, a semibold sentence-case header over `table-head` with short splits between header cells,
+  `line` under every row; the row hover and the total row are defaults in `@layer base`.
+- **Tabs**: antd's line tabs, 32px apart, a 2px brand ink bar on a `line` strip.
+- **Alerts**: antd's boxes, `8px 12px` with 8px corners, `ink` text on the tone's soft background and antd's border
+  (`#b7eb8f`, `#ffe58f`, `#ffccc7`, `#91caff`); `notice` is antd's info.
+- **Tree menu** (`NavTree`): antd's inline menu, a white panel, 14px items with 8px corners, a `#f0f0f0` hover and the
+  current leaf in brand on `brand-soft`.
+
+The same limits as portal-tributario's apply: the partials stop at a subtree pinned to another theme, and native
+radios and checkboxes, the shell's links and anything an app draws itself are the app's to style.

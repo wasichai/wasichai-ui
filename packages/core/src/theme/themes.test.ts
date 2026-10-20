@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest'
 import { resolveConfig } from '../app/config'
 import en from '../i18n/locales/en/common.json'
 import es from '../i18n/locales/es/common.json'
-import { availableThemes, BUILT_IN_THEMES, PORTAL_TRIBUTARIO_THEME, resolveTheme, type ThemeDefinition } from './themes'
+import { ANT_DESIGN_THEME, availableThemes, BUILT_IN_THEMES, PORTAL_TRIBUTARIO_THEME, resolveTheme, type ThemeDefinition } from './themes'
 
 // same trick as boundaries.test.ts: vite rewrites `new URL(_, import.meta.url)`, not import.meta.dirname
-const SHEET = join(import.meta.dirname, '..', '..', '..', 'ui', 'src', 'themes', 'portal-tributario', 'tokens.css')
+const sheet = (theme: string) => join(import.meta.dirname, '..', '..', '..', 'ui', 'src', 'themes', theme, 'tokens.css')
 
 describe('PORTAL_TRIBUTARIO_THEME', () => {
   it('is opt-in, not built in', () => {
@@ -36,7 +36,34 @@ describe('PORTAL_TRIBUTARIO_THEME', () => {
   })
 
   it('pairs with the @wasichai/ui sheet that styles its id', () => {
-    expect(readFileSync(SHEET, 'utf8')).toContain(`[data-theme='${PORTAL_TRIBUTARIO_THEME.id}']`)
+    expect(readFileSync(sheet('portal-tributario'), 'utf8')).toContain(`[data-theme='${PORTAL_TRIBUTARIO_THEME.id}']`)
+  })
+})
+
+describe('ANT_DESIGN_THEME', () => {
+  it('registers through config.themes next to light, dark and the other optional theme', () => {
+    const config = resolveConfig({ themes: [PORTAL_TRIBUTARIO_THEME, ANT_DESIGN_THEME] })
+    expect(availableThemes(config).map((theme) => theme.id)).toEqual(['light', 'dark', 'portal-tributario', 'ant-design'])
+  })
+
+  it('is picked when stored, whatever the os says', () => {
+    const themes = availableThemes({ themes: [ANT_DESIGN_THEME] })
+    expect(resolveTheme('ant-design', themes, true)).toBe(ANT_DESIGN_THEME)
+    expect(ANT_DESIGN_THEME.colorScheme).toBe('light')
+  })
+
+  it('has an id the server stores (ADR-034)', () => {
+    expect(ANT_DESIGN_THEME.id).toMatch(/^[a-z0-9-]{1,40}$/)
+  })
+
+  it('has its label in both core locales', () => {
+    const [group, key] = ANT_DESIGN_THEME.label.split('.')
+    expect(en).toHaveProperty([group, key], 'Ant Design')
+    expect(es).toHaveProperty([group, key], 'Ant Design')
+  })
+
+  it('pairs with the @wasichai/ui sheet that styles its id', () => {
+    expect(readFileSync(sheet('ant-design'), 'utf8')).toContain(`[data-theme='${ANT_DESIGN_THEME.id}']`)
   })
 })
 

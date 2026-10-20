@@ -1,0 +1,44 @@
+/* the tree menu (NavTree of @wasichai/core) as antd's inline Menu: a white panel, 14px items 40px high with 8px corners
+   4px in from the sides, the hover in antd's #f0f0f0 (6% black on white), the current leaf in brand on the brand tint and
+   no side bar. the component draws it with tokens and marks its parts with data-slot; this pins antd's values. unlayered,
+   so it beats the utilities. scoped to the theme, and never into a subtree pinned to another theme */
+@scope ([data-theme='ant-design']) to ([data-theme]:not([data-theme='ant-design'])) {
+    [data-slot='nav-tree'] {
+        background-color: var(--surface);
+    }
+
+    [data-slot='nav-tree'] [data-slot='nav-tree-group'] {
+        width: calc(100% - 8px);
+        margin-inline: 4px;
+        border-radius: var(--radius-lg);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5714;
+    }
+
+    [data-slot='nav-tree'] [data-slot='nav-tree-group']:hover {
+        color: var(--ink);
+        background-color: #f0f0f0;
+    }
+
+    [data-slot='nav-tree'] [data-slot='nav-tree-leaf'] {
+        margin-inline: 4px;
+        border-left-color: transparent;
+        border-radius: var(--radius-lg);
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.5714;
+    }
+
+    [data-slot='nav-tree'] [data-slot='nav-tree-leaf']:hover {
+        background-color: #f0f0f0;
+    }
+
+    /* after the hover: the current leaf keeps its tint under the pointer */
+    [data-slot='nav-tree'] [data-slot='nav-tree-leaf'][aria-current='page'] {
+        border-left-color: transparent;
+        color: var(--brand);
+        background-color: var(--brand-soft);
+        font-weight: 400;
+    }
+}

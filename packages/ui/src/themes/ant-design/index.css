@@ -1,0 +1,10 @@
+/* @wasichai/ui/themes/ant-design.css: the ant-design theme's tokens, then partials that give the library's components
+   antd's shape. each partial is @scope'd to [data-theme='ant-design'] (light and dark never change, nor a subtree pinned
+   to another theme) and hooked on the components' data-slot (ui's and core's) */
+@import './tokens.css';
+@import './controls.css';
+@import './display.css';
+@import './tables.css';
+@import './tabs.css';
+@import './alerts.css';
+@import './nav.css';

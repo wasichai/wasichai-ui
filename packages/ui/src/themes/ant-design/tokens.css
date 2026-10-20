@@ -1,0 +1,65 @@
+/* ant-design: an optional theme, light only. an app imports it after @wasichai/ui/theme.css and lists ANT_DESIGN_THEME
+   (@wasichai/core) in config.themes. from the ant design spec (ant.design/docs/spec) and antd 5's default seed and map
+   tokens: the system font stack, 14px text at 22px, 6px corners (4px small, 8px large), the #f5f5f5 layout under white
+   containers, #d9d9d9 borders and #f0f0f0 splits, the #001529 sider. it sets every base and extension token (ADR-034,
+   ADR-035), with antd's values but the ones text sits on, moved to an antd palette step that holds AA: brand #1668dc
+   (antd's #1677ff gives 4.1:1 with white; #1668dc is its dark-algorithm primary, 5.2:1), danger red-7 #cf1322 (#ff4d4f
+   gives 3.3:1), success green-8 #237804 and warning gold-9 #874d00 (#52c41a and #faad14 are fills, 2.2:1 and 1.9:1 as
+   text). text is antd's alpha black flattened on white: 88% #1f1f1f, 65% #595959 */
+[data-theme='ant-design'] {
+    --surface: #ffffff;
+    --surface-muted: #f5f5f5;
+    --border: #d9d9d9;
+    --ink: #1f1f1f;
+    --ink-muted: #595959;
+    --brand: #1668dc;
+    --brand-strong: #0958d9;
+    --brand-soft: #e6f4ff;
+    --on-brand: #ffffff;
+    --shell: #001529;
+    --shell-muted: #a6adb4;
+    --shell-ink: #ffffff;
+    --danger: #cf1322;
+    --on-danger: #ffffff;
+    --success: #237804;
+    --warning: #874d00;
+    --warning-soft: #fffbe6;
+    --overlay: rgb(0 0 0 / 45%);
+
+    /* soft tints: antd's colorSuccessBg, colorErrorBg, colorInfoBg. notice is antd's info, the primary blue */
+    --success-soft: #f6ffed;
+    --danger-soft: #fff2f0;
+    --notice: #0958d9;
+    --notice-soft: #e6f4ff;
+    --link: var(--brand);
+    --focus: var(--brand);
+    --table-head: #fafafa;
+    /* antd tables are not striped */
+    --table-stripe: #ffffff;
+    --line: #f0f0f0;
+    --map-selected: #fa541c;
+
+    --font-sans:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --radius: 6px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 8px;
+    --radius-card: 8px;
+}
+
+/* in the base layer, like the defaults of @wasichai/ui they replace: a component's own utilities still win */
+@layer base {
+    [data-theme='ant-design'] body {
+        font-size: 14px;
+        line-height: 1.5714;
+    }
+
+    /* antd draws a 3px #91caff ring (1.8:1 on white); the brand ring keeps 3:1 (WCAG 1.4.11) */
+    [data-theme='ant-design'] *:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 1px;
+    }
+}
