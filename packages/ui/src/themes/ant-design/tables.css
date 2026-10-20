@@ -1,9 +1,10 @@
 /* antd's Table on the library's Table (data-slot="table" on the <table>). th and td are descendants, not Th and Td's
-   slots: an app's own cells inside a Table get them too. the header and the cells are unlayered, so they win over the Th
-   and Td classes; the row hover and the total are defaults in the base layer, so a row's own class (a selected row)
-   still wins. scoped to the theme, and never into a subtree pinned to another theme (the printed document sheet) */
-@scope ([data-theme='ant-design']) to ([data-theme]:not([data-theme='ant-design'])) {
-    /* header: semibold sentence case in ink over the #fafafa head, 16px cells */
+   slots: an app's own cells inside a Table get them too. the header and the cells are unlayered, so they win over the
+   Th and Td classes; the row hover and the total are defaults in the base layer, so a row's own class (a selected row)
+   still wins. scoped to both halves of the theme, and never into a subtree pinned to another theme (the printed
+   document sheet) */
+@scope (:is([data-theme='ant-design'], [data-theme='ant-design-dark'])) to ([data-theme]:not(:is([data-theme='ant-design'], [data-theme='ant-design-dark']))) {
+    /* header: semibold sentence case in ink over the table-head grey, 16px cells */
     [data-slot='table'] th {
         position: relative;
         padding: 16px;
@@ -37,7 +38,8 @@
 }
 
 @layer base {
-    @scope ([data-theme='ant-design']) to ([data-theme]:not([data-theme='ant-design'])) {
+    @scope (:is([data-theme='ant-design'], [data-theme='ant-design-dark']))
+        to ([data-theme]:not(:is([data-theme='ant-design'], [data-theme='ant-design-dark']))) {
         /* antd's rowHoverBg: the head's grey */
         [data-slot='table'] > tbody > tr:hover {
             background-color: var(--table-head);

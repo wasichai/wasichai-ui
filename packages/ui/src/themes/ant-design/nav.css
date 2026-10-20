@@ -1,8 +1,9 @@
-/* the tree menu (NavTree of @wasichai/core) as antd's inline Menu: a white panel, 14px items 40px high with 8px corners
-   4px in from the sides, the hover in antd's #f0f0f0 (6% black on white), the current leaf in brand on the brand tint and
-   no side bar. the component draws it with tokens and marks its parts with data-slot; this pins antd's values. unlayered,
-   so it beats the utilities. scoped to the theme, and never into a subtree pinned to another theme */
-@scope ([data-theme='ant-design']) to ([data-theme]:not([data-theme='ant-design'])) {
+/* the tree menu (NavTree of @wasichai/core) as antd's inline Menu: a surface panel, 14px items 40px high with 8px
+   corners 4px in from the sides, the hover in antd's --ant-fill-hover (6% black on white, 12% white in dark), the
+   current leaf in brand on the brand tint and no side bar. the component draws it with tokens and marks its parts with
+   data-slot; this pins antd's values. unlayered, so it beats the utilities. scoped to both halves of the theme, and
+   never into a subtree pinned to another theme */
+@scope (:is([data-theme='ant-design'], [data-theme='ant-design-dark'])) to ([data-theme]:not(:is([data-theme='ant-design'], [data-theme='ant-design-dark']))) {
     [data-slot='nav-tree'] {
         background-color: var(--surface);
     }
@@ -18,7 +19,7 @@
 
     [data-slot='nav-tree'] [data-slot='nav-tree-group']:hover {
         color: var(--ink);
-        background-color: #f0f0f0;
+        background-color: var(--ant-fill-hover);
     }
 
     [data-slot='nav-tree'] [data-slot='nav-tree-leaf'] {
@@ -31,7 +32,7 @@
     }
 
     [data-slot='nav-tree'] [data-slot='nav-tree-leaf']:hover {
-        background-color: #f0f0f0;
+        background-color: var(--ant-fill-hover);
     }
 
     /* after the hover: the current leaf keeps its tint under the pointer */

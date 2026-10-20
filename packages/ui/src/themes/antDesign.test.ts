@@ -5,17 +5,41 @@ import { describe, expect, it } from 'vitest'
 import { blocks, contrast, resolveVar, rule, rules } from '../test/css'
 import { customProperties, EXTENSION } from '../test/tokens'
 
-// the optional ant-design sheet (ADR-035): the theme's tokens, then partials that paint the library's own components
-// as antd's. its folder is copied to dist as is, so this test lives next to it, not in it
+// the optional ant-design sheet (ADR-035): the tokens of its two halves (ant-design, ant-design-dark), then partials
+// that paint the library's own components as antd's under either. its folder is copied to dist as is, so this test
+// lives next to it, not in it
 
 const dir = join(__dirname, 'ant-design')
 const read = (file: string) => readFileSync(join(dir, file), 'utf8')
 
-const ANT = "[data-theme='ant-design']"
+// one sheet, two halves: each id with the built-in theme whose side it is on
+const THEMES = [
+  { id: 'ant-design', side: 'light' },
+  { id: 'ant-design-dark', side: 'dark' }
+] as const
+type ThemeId = (typeof THEMES)[number]['id']
+const IDS = THEMES.map((theme) => theme.id)
+const selector = (id: string) => `[data-theme='${id}']`
 const PARTIALS = ['controls.css', 'display.css', 'tables.css', 'tabs.css', 'alerts.css', 'nav.css']
 
-// a partial paints the theme's subtree, but not one pinned to another theme inside it (the printed document sheet)
-const SCOPE = `@scope (${ANT}) to ([data-theme]:not(${ANT}))`
+// a partial paints either half's subtree, but not one pinned to another theme inside it (the printed document sheet)
+const ANY = `:is(${IDS.map(selector).join(', ')})`
+const SCOPE = `@scope (${ANY}) to ([data-theme]:not(${ANY}))`
+
+// the partials' own colours (antd's with no token), set in both blocks so the partials hold none
+const ANT_PROPERTIES = [
+  'control-hover',
+  'fill-hover',
+  'success-border',
+  'warning-border',
+  'danger-border',
+  'notice-border',
+  'disabled-bg',
+  'disabled-ink',
+  'control-outline',
+  'danger-outline',
+  'default-shadow'
+]
 
 // the hooks the library's components put (a sheet only styles those, rule 6): ui's and core's
 const SLOTS = [
@@ -43,7 +67,10 @@ const SIZES = ['sm', 'md', 'icon']
 const TONES = ['success', 'warning', 'danger', 'notice']
 
 const base = readFileSync(join(__dirname, '..', 'theme.css'), 'utf8')
-const tokens = rule(read('tokens.css'), ANT)
+const TOKENS: Record<ThemeId, Map<string, string>> = {
+  'ant-design': rule(read('tokens.css'), selector('ant-design')),
+  'ant-design-dark': rule(read('tokens.css'), selector('ant-design-dark'))
+}
 
 // a partial's rules: the unlayered ones, and the ones in @layer base (a default any class still overrides)
 function layers(css: string): { unlayered: string; base: string } {
@@ -57,22 +84,96 @@ function layers(css: string): { unlayered: string; base: string } {
 }
 
 // a declared colour: a var() of a token followed to the theme's value, a plain colour as is
-function paint(value: string | undefined): string {
+function paint(id: ThemeId, value: string | undefined): string {
   if (value === undefined) throw new Error('no colour')
   const alias = /^var\(--([a-z-]+)\)$/.exec(value)
-  return alias ? resolveVar(tokens, alias[1]) : value
+  return alias ? resolveVar(TOKENS[id], alias[1]) : value
 }
 
-// every pair that falls short of `min`, with its ratio
-const failing = (pairs: [string, string, string][], min = 4.5) =>
+// every pair that falls short of `min` under the theme, with its ratio
+const failing = (id: ThemeId, pairs: [string, string, string][], min = 4.5) =>
   pairs.flatMap(([name, text, background]) => {
-    const ratio = contrast(paint(text), paint(background))
+    const ratio = contrast(paint(id, text), paint(id, background))
     return ratio >= min ? [] : [`${name}: ${ratio.toFixed(2)}`]
   })
 
-describe('tokens.css', () => {
-  it('sets every token of the light theme', () => {
-    const required = customProperties(rule(base, "[data-theme='light']"))
+// antd's own values each half keeps: the layout grey, the borders, the sider, the tints (light: the default tokens;
+// dark: theme.darkAlgorithm's, the alpha ones flattened on the container), and where the dark half moved for AA
+const VALUES: Record<ThemeId, Record<string, string>> = {
+  'ant-design': {
+    surface: '#ffffff',
+    'surface-muted': '#f5f5f5',
+    border: '#d9d9d9',
+    line: '#f0f0f0',
+    'table-head': '#fafafa',
+    shell: '#001529',
+    'brand-soft': '#e6f4ff',
+    'success-soft': '#f6ffed',
+    'danger-soft': '#fff2f0',
+    'warning-soft': '#fffbe6',
+    'notice-soft': '#e6f4ff',
+    'on-brand': '#ffffff',
+    'on-danger': '#ffffff'
+  },
+  'ant-design-dark': {
+    surface: '#141414',
+    'surface-muted': '#000000',
+    border: '#424242',
+    line: '#303030',
+    'table-head': '#1d1d1d',
+    shell: '#001529',
+    'brand-soft': '#111a2c',
+    'success-soft': '#162312',
+    'danger-soft': '#2c1618',
+    'warning-soft': '#2b2111',
+    'notice-soft': '#111a2c',
+    ink: '#dcdcdc',
+    'ink-muted': '#adadad',
+    // blue-7 and red-7 of the dark palette: antd's #1668dc and #dc4446 miss 4.5:1 on #141414, so the text on them is dark
+    brand: '#3c89e8',
+    danger: '#e86e6b',
+    'on-brand': '#141414',
+    'on-danger': '#141414',
+    focus: '#1668dc'
+  }
+}
+
+// main's literals, which the light half's --ant-* keep (light renders as before); the dark half's from darkAlgorithm
+const ANT_VALUES: Record<ThemeId, Record<string, string>> = {
+  'ant-design': {
+    'control-hover': '#4096ff',
+    'fill-hover': '#f0f0f0',
+    'success-border': '#b7eb8f',
+    'warning-border': '#ffe58f',
+    'danger-border': '#ffccc7',
+    'notice-border': '#91caff',
+    'disabled-bg': 'rgb(0 0 0 / 4%)',
+    'disabled-ink': 'rgb(0 0 0 / 25%)',
+    'control-outline': 'rgb(5 145 255 / 10%)',
+    'danger-outline': 'rgb(255 38 5 / 6%)',
+    'default-shadow': 'rgb(0 0 0 / 2%)'
+  },
+  'ant-design-dark': {
+    'control-hover': '#3c89e8',
+    'fill-hover': '#303030',
+    'success-border': '#274916',
+    'warning-border': '#594214',
+    'danger-border': '#5b2526',
+    'notice-border': '#15325b',
+    'disabled-bg': 'rgb(255 255 255 / 8%)',
+    'disabled-ink': 'rgb(255 255 255 / 25%)',
+    'control-outline': 'rgb(0 60 180 / 15%)',
+    'danger-outline': 'rgb(238 38 56 / 11%)',
+    'default-shadow': 'rgb(255 255 255 / 4%)'
+  }
+}
+
+describe.each(THEMES)('tokens.css: $id', ({ id, side }) => {
+  const tokens = TOKENS[id]
+  const ANT = selector(id)
+
+  it(`sets every token of the built-in ${side} theme`, () => {
+    const required = customProperties(rule(base, selector(side)))
     expect(required.length).toBeGreaterThan(10)
     expect(customProperties(tokens)).toEqual(expect.arrayContaining(required))
   })
@@ -81,15 +182,13 @@ describe('tokens.css', () => {
     expect(customProperties(tokens)).toEqual(expect.arrayContaining(EXTENSION.map((name) => `--${name}`)))
   })
 
-  // antd 5's seed and map tokens: the layout grey, the borders, the sider, the primary tint
-  it("keeps antd's own neutrals and tints", () => {
-    expect(tokens.get('--surface')).toBe('#ffffff')
-    expect(tokens.get('--surface-muted')).toBe('#f5f5f5')
-    expect(tokens.get('--border')).toBe('#d9d9d9')
-    expect(tokens.get('--line')).toBe('#f0f0f0')
-    expect(tokens.get('--table-head')).toBe('#fafafa')
-    expect(tokens.get('--shell')).toBe('#001529')
-    expect(tokens.get('--brand-soft')).toBe('#e6f4ff')
+  it("keeps antd's own neutrals and tints, and its AA moves", () => {
+    expect(Object.fromEntries(Object.keys(VALUES[id]).map((name) => [name, tokens.get(`--${name}`)]))).toEqual(VALUES[id])
+  })
+
+  it("sets the partials' own colours, --ant-*", () => {
+    expect(customProperties(tokens).filter((name) => name.startsWith('--ant-'))).toEqual(ANT_PROPERTIES.map((name) => `--ant-${name}`).sort())
+    expect(Object.fromEntries(ANT_PROPERTIES.map((name) => [name, tokens.get(`--ant-${name}`)]))).toEqual(ANT_VALUES[id])
   })
 
   it("uses antd's font stack, 6px corners (4px small, 8px large), 14px text at 22px and its own focus ring", () => {
@@ -124,13 +223,19 @@ describe('tokens.css', () => {
       ['danger', 'danger-soft'],
       ['notice', 'notice-soft']
     ]
-    expect(failing(pairs.map(([text, background]) => [`${text} on ${background}`, `var(--${text})`, `var(--${background})`]))).toEqual([])
+    expect(
+      failing(
+        id,
+        pairs.map(([text, background]) => [`${text} on ${background}`, `var(--${text})`, `var(--${background})`])
+      )
+    ).toEqual([])
   })
 
   // WCAG 1.4.11 (non-text contrast): the focus ring and the focused field's border, over the page and the layout
   it('draws its focus at 3:1 or more over the surfaces', () => {
     expect(
       failing(
+        id,
         [
           ['focus on surface', 'var(--focus)', 'var(--surface)'],
           ['focus on surface-muted', 'var(--focus)', 'var(--surface-muted)']
@@ -173,6 +278,19 @@ describe('partials', () => {
     it('hooks every rule on a data-slot', () => {
       const selectors = rules(css).flatMap((r) => r.selectors)
       expect(selectors.filter((selector) => !selector.includes('[data-slot='))).toEqual([])
+    })
+
+    // the colours are the blocks' (a token or an --ant-*), so one partial paints both halves
+    it('holds no literal colour, and reads only properties both blocks set', () => {
+      const code = css.replace(/\/\*[\s\S]*?\*\//g, '')
+      expect(code.match(/#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/gi)).toBeNull()
+      const used = [...new Set([...code.matchAll(/var\((--[a-z-]+)\)/g)].map(([, name]) => name))]
+      expect(used.length).toBeGreaterThan(0)
+      for (const id of IDS)
+        expect(
+          used.filter((name) => !TOKENS[id].has(name)),
+          id
+        ).toEqual([])
     })
   })
 
@@ -217,11 +335,24 @@ describe('controls.css', () => {
     for (const variant of ['primary', 'danger']) expect(rule(css, `${BUTTON}[data-variant='${variant}']`).has('background'), variant).toBe(false)
   })
 
-  it('draws the default button with a grey border, brand on hover', () => {
+  it.each(IDS)('draws the default button with a grey border, brand on hover (%s)', (id) => {
     expect(rule(css, `${BUTTON}[data-variant='secondary']`).get('border-color')).toBe('var(--border)')
     const hover = rule(css, `${BUTTON}[data-variant='secondary']:hover:not(:disabled)`)
     expect(hover.get('border-color')).toBe('var(--brand)')
-    expect(failing([['secondary hovered', hover.get('color')!, hover.get('background')!]])).toEqual([])
+    expect(failing(id, [['secondary hovered', hover.get('color')!, hover.get('background')!]])).toEqual([])
+  })
+
+  // antd's shadows, glows, hover and disabled well, through the blocks' --ant-*
+  it('takes its colours from the --ant-* of the blocks', () => {
+    expect(rule(css, `${BUTTON}[data-variant='primary']`).get('box-shadow')).toBe('0 2px 0 var(--ant-control-outline)')
+    expect(rule(css, `${BUTTON}[data-variant='danger']`).get('box-shadow')).toBe('0 2px 0 var(--ant-danger-outline)')
+    expect(rule(css, `${BUTTON}[data-variant='secondary']`).get('box-shadow')).toBe('0 2px 0 var(--ant-default-shadow)')
+    const disabled = rule(css, `${BUTTON}:disabled:not([data-variant='ghost'])`)
+    expect(disabled.get('background')).toBe('var(--ant-disabled-bg)')
+    expect(disabled.get('color')).toBe('var(--ant-disabled-ink)')
+    expect(rule(css, `${FIELDS}:hover:not(:disabled)`).get('border-color')).toBe('var(--ant-control-hover)')
+    expect(rule(css, `${FIELDS}[aria-invalid='true']:focus`).get('box-shadow')).toBe('0 0 0 2px var(--ant-danger-outline)')
+    expect(rule(css, `${FIELDS}:disabled`).get('background')).toBe('var(--ant-disabled-bg)')
   })
 
   it('marks a disabled button without losing the not-allowed cursor, and leaves the ghost faded', () => {
@@ -238,7 +369,7 @@ describe('controls.css', () => {
     expect(rule(css, ":is([data-slot='input'], [data-slot='select-trigger'])").get('height')).toBe('32px')
     const focus = rule(css, `${FIELDS}:focus`)
     expect(focus.get('border-color')).toBe('var(--focus)')
-    expect(focus.get('box-shadow')).toBe('0 0 0 2px rgb(5 145 255 / 10%)')
+    expect(focus.get('box-shadow')).toBe('0 0 0 2px var(--ant-control-outline)')
   })
 
   it('keeps the danger border of an invalid field, after the hover and the focus', () => {
@@ -296,7 +427,7 @@ describe('tables.css', () => {
     expect(unlayered).not.toMatch(/:hover|tfoot/)
   })
 
-  it('keeps AA over the backgrounds it paints', () => {
+  it.each(IDS)('keeps AA over the backgrounds it paints (%s)', (id) => {
     const th = rule(unlayered, `${TABLE} th`)
     const pairs: [string, string, string][] = [
       ['th', th.get('color')!, th.get('background-color')!],
@@ -306,7 +437,7 @@ describe('tables.css', () => {
         'var(--table-head)'
       ])
     ]
-    expect(failing(pairs)).toEqual([])
+    expect(failing(id, pairs)).toEqual([])
   })
 })
 
@@ -327,13 +458,13 @@ describe('tabs.css', () => {
     expect(rule(css, TRIGGER).get('padding')).toBe('12px 0')
   })
 
-  it('keeps AA for the tabs on the page', () => {
+  it.each(IDS)('keeps AA for the tabs on the page (%s)', (id) => {
     const pairs: [string, string, string][] = [
       ['inactive', rule(css, TRIGGER).get('color')!, 'var(--surface)'],
       ['hovered', rule(css, `${TRIGGER}:hover:not(:disabled)`).get('color')!, 'var(--surface)'],
       ['active', rule(css, `${TRIGGER}[aria-selected='true']`).get('color')!, 'var(--surface)']
     ]
-    expect(failing(pairs)).toEqual([])
+    expect(failing(id, pairs)).toEqual([])
   })
 })
 
@@ -341,16 +472,11 @@ describe('alerts.css', () => {
   const { unlayered: css } = layers(read('alerts.css'))
   const ALERT = "[data-slot='alert']"
 
-  // antd's colorXBorder (no token); the background is the tone's soft token
-  it.each([
-    ['success', '#b7eb8f'],
-    ['warning', '#ffe58f'],
-    ['danger', '#ffccc7'],
-    ['notice', '#91caff']
-  ])('paints %s with its soft background and its border', (tone, border) => {
+  // antd's colorXBorder (no token, an --ant-* of the blocks); the background is the tone's soft token
+  it.each(TONES)('paints %s with its soft background and its border', (tone) => {
     const box = rule(css, `${ALERT}[data-tone='${tone}']`)
     expect(box.get('background')).toBe(`var(--${tone}-soft)`)
-    expect(box.get('border-color')).toBe(border)
+    expect(box.get('border-color')).toBe(`var(--ant-${tone}-border)`)
   })
 
   it("draws the box as antd's", () => {
@@ -367,14 +493,14 @@ describe('alerts.css', () => {
     expect(rule(css, "[data-slot='alert-dismiss']").get('margin-left')).toBe('0')
   })
 
-  it('keeps AA for the text and the check on every box', () => {
+  it.each(IDS)('keeps AA for the text and the check on every box (%s)', (id) => {
     const color = rule(css, ALERT).get('color')!
     const check = rule(css, "[data-slot='alert-dismiss']").get('color')!
     const pairs = TONES.flatMap((tone): [string, string, string][] => [
       [tone, color, `var(--${tone}-soft)`],
       [`${tone} check`, check, `var(--${tone}-soft)`]
     ])
-    expect(failing(pairs)).toEqual([])
+    expect(failing(id, pairs)).toEqual([])
   })
 })
 
@@ -404,13 +530,13 @@ describe('nav.css', () => {
     expect(selectors.indexOf(`${TREE} ${CURRENT}`)).toBeGreaterThan(selectors.indexOf(`${TREE} ${HOVER}`))
   })
 
-  it('keeps AA over the backgrounds it paints', () => {
+  it.each(IDS)('keeps AA over the backgrounds it paints (%s)', (id) => {
     const leaf = part("[data-slot='nav-tree-leaf']")
     const hover = part(HOVER)
     const current = part(CURRENT)
     const group = part("[data-slot='nav-tree-group']:hover")
     expect(
-      failing([
+      failing(id, [
         ['leaf on the panel', leaf.get('color')!, rule(css, TREE).get('background-color')!],
         ['hovered leaf', leaf.get('color')!, hover.get('background-color')!],
         ['current leaf', current.get('color')!, current.get('background-color')!],

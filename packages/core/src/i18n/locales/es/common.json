@@ -31,7 +31,8 @@
         "light": "Claro",
         "dark": "Oscuro",
         "portalTributario": "Portal tributario",
-        "antDesign": "Ant Design"
+        "antDesign": "Ant Design",
+        "antDesignDark": "Ant Design oscuro"
     },
     "common": {
         "save": "Guardar",

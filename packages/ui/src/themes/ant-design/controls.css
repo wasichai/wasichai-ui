@@ -2,8 +2,9 @@
    border on every variant. unlayered, so they win over tailwind's utilities, and so over a caller's classes too: they
    set only what antd changes and the tokens do not. the fills and the radii are the classes' own (under this theme's
    tokens they already look right), and ghost stays the library's, so the shell's ghost buttons keep their colours.
-   scoped to the theme, and never into a subtree pinned to another theme (the printed document sheet) */
-@scope ([data-theme='ant-design']) to ([data-theme]:not([data-theme='ant-design'])) {
+   scoped to both halves of the theme, and never into a subtree pinned to another theme (the printed document sheet).
+   no colour of its own: antd's untokened ones are the --ant-* of tokens.css */
+@scope (:is([data-theme='ant-design'], [data-theme='ant-design-dark'])) to ([data-theme]:not(:is([data-theme='ant-design'], [data-theme='ant-design-dark']))) {
     [data-slot='button'] {
         border: 1px solid transparent;
         font-size: 14px;
@@ -25,17 +26,17 @@
 
     /* the 2px drop shadow under antd's solid buttons */
     [data-slot='button'][data-variant='primary'] {
-        box-shadow: 0 2px 0 rgb(5 145 255 / 10%);
+        box-shadow: 0 2px 0 var(--ant-control-outline);
     }
 
     [data-slot='button'][data-variant='danger'] {
-        box-shadow: 0 2px 0 rgb(255 38 5 / 6%);
+        box-shadow: 0 2px 0 var(--ant-danger-outline);
     }
 
-    /* default button: grey border, brand border and text on hover. antd's hover blue #4096ff gives 3:1 as text */
+    /* default button: grey border, brand border and text on hover. antd's hover blue (light #4096ff) gives 3:1 as text */
     [data-slot='button'][data-variant='secondary'] {
         border-color: var(--border);
-        box-shadow: 0 2px 0 rgb(0 0 0 / 2%);
+        box-shadow: 0 2px 0 var(--ant-default-shadow);
     }
 
     [data-slot='button'][data-variant='secondary']:hover:not(:disabled) {
@@ -53,8 +54,8 @@
 
     [data-slot='button']:disabled:not([data-variant='ghost']) {
         border-color: var(--border);
-        background: rgb(0 0 0 / 4%);
-        color: rgb(0 0 0 / 25%);
+        background: var(--ant-disabled-bg);
+        color: var(--ant-disabled-ink);
         box-shadow: none;
         opacity: 1;
     }
@@ -75,14 +76,14 @@
     }
 
     :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):hover:not(:disabled) {
-        border-color: #4096ff;
+        border-color: var(--ant-control-hover);
     }
 
     /* focused: the brand border and antd's 2px outline glow in place of the outline */
     :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):focus {
         outline: none;
         border-color: var(--focus);
-        box-shadow: 0 0 0 2px rgb(5 145 255 / 10%);
+        box-shadow: 0 0 0 2px var(--ant-control-outline);
     }
 
     /* after the hover and the focus: an invalid field keeps its danger border, with antd's red glow when focused */
@@ -91,11 +92,11 @@
     }
 
     :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger'])[aria-invalid='true']:focus {
-        box-shadow: 0 0 0 2px rgb(255 38 5 / 6%);
+        box-shadow: 0 0 0 2px var(--ant-danger-outline);
     }
 
     :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):disabled {
-        background: rgb(0 0 0 / 4%);
-        color: rgb(0 0 0 / 25%);
+        background: var(--ant-disabled-bg);
+        color: var(--ant-disabled-ink);
     }
 }

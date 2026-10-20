@@ -1,7 +1,8 @@
-/* antd's line tabs on the library's Tabs: 14px labels 32px apart, a 2px brand ink bar on a #f0f0f0 line. unlayered, so
+/* antd's line tabs on the library's Tabs: 14px labels 32px apart, a 2px brand ink bar on the line split. unlayered, so
    they win over tailwind's utilities; hooked on the data-slot of Tabs. the aria and the behaviour (lazy mount, hidden
-   panel) do not change: this only paints them. scoped to the theme, and never into a subtree pinned to another theme */
-@scope ([data-theme='ant-design']) to ([data-theme]:not([data-theme='ant-design'])) {
+   panel) do not change: this only paints them. scoped to both halves of the theme, and never into a subtree pinned to
+   another theme */
+@scope (:is([data-theme='ant-design'], [data-theme='ant-design-dark'])) to ([data-theme]:not(:is([data-theme='ant-design'], [data-theme='ant-design-dark']))) {
     [data-slot='tabs-list'] {
         gap: 32px;
         margin-bottom: 16px;
