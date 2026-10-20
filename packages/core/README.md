@@ -117,9 +117,11 @@ Against a backend without that endpoint (404) both stay in the browser.
 | `useUpdatePreferences()` | the mutation behind both: a partial `PUT`, optimistic, rolled back on failure |
 | `useSetLocale()` | `(language) => Promise<void>`: switches the language now and stores it for the user |
 
-The library ships two optional themes, `portal-tributario` and `ant-design` (`ANT_DESIGN_THEME`), both light only. They
-are not built in: an app that wants one imports its sheet and lists its definition, and the selector offers it. The tokens and the sheet
-are described in `@wasichai/ui`'s README; the why is
+The library ships optional themes: `portal-tributario` (`PORTAL_TRIBUTARIO_THEME`), light only, and `ant-design`, one
+sheet with two definitions, `ANT_DESIGN_THEME` (light) and `ANT_DESIGN_DARK_THEME` (`ant-design-dark`, dark), that an
+app pairs with `systemThemes: { light: 'ant-design', dark: 'ant-design-dark' }`. They are not built in: an app that
+wants one imports its sheet and lists its definitions, and the selector offers them. The tokens and the sheet are
+described in `@wasichai/ui`'s README; the why is
 [ADR-035](https://github.com/wasichai/wasichai/blob/main/docs/adr/0035-theme-extension-tokens-slots-and-optional-sheets.md).
 
 ```css
@@ -153,7 +155,8 @@ To avoid a flash of the light theme before React mounts, put this boot script in
 bundle. It lists every theme the app offers with its color scheme, so a stored app theme gets its
 `colorScheme` before the bundle loads and an unknown id falls to the OS, as `resolveTheme` does. `system` lists
 the app's `config.systemThemes` (light/dark when unset). This one is for an app with `portal-tributario`; put your
-own `config.themes` ids in `schemes`.
+own `config.themes` ids in `schemes` (with both ant-design halves: `'ant-design': 'light', 'ant-design-dark': 'dark'`,
+and `system` = `{ light: 'ant-design', dark: 'ant-design-dark' }` when it pairs them).
 
 ```html
 <script>

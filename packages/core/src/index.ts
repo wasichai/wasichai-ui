@@ -40,6 +40,7 @@ export { AuthProvider, useAuth, type AuthContextValue, type AuthProviderProps } 
 export { WasichaiProviders, type WasichaiProvidersProps } from './app/WasichaiProviders'
 export { ThemeProvider, useTheme, type ThemeContextValue } from './theme/ThemeProvider'
 export {
+  ANT_DESIGN_DARK_THEME,
   ANT_DESIGN_THEME,
   availableThemes,
   resolveTheme,
