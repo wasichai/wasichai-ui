@@ -30,7 +30,8 @@
         "system": "System",
         "light": "Light",
         "dark": "Dark",
-        "portalTributario": "Tax portal"
+        "portalTributario": "Tax portal",
+        "antDesign": "Ant Design"
     },
     "common": {
         "save": "Save",

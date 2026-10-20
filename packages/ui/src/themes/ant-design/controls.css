@@ -1,0 +1,101 @@
+/* the library's controls as antd's Button, Input and Select: 32px controls (24px small), 14px regular text, a 1px
+   border on every variant. unlayered, so they win over tailwind's utilities, and so over a caller's classes too: they
+   set only what antd changes and the tokens do not. the fills and the radii are the classes' own (under this theme's
+   tokens they already look right), and ghost stays the library's, so the shell's ghost buttons keep their colours.
+   scoped to the theme, and never into a subtree pinned to another theme (the printed document sheet) */
+@scope ([data-theme='ant-design']) to ([data-theme]:not([data-theme='ant-design'])) {
+    [data-slot='button'] {
+        border: 1px solid transparent;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5714;
+    }
+
+    /* antd's 15px sides: 16px padding less the border */
+    [data-slot='button'][data-size='md'] {
+        height: 32px;
+        padding-inline: 15px;
+    }
+
+    /* the sides stay the library's, so a caller's px-0 still holds; the small radius is antd's borderRadiusSM */
+    [data-slot='button'][data-size='sm'] {
+        height: 24px;
+        border-radius: var(--radius-sm);
+    }
+
+    /* the 2px drop shadow under antd's solid buttons */
+    [data-slot='button'][data-variant='primary'] {
+        box-shadow: 0 2px 0 rgb(5 145 255 / 10%);
+    }
+
+    [data-slot='button'][data-variant='danger'] {
+        box-shadow: 0 2px 0 rgb(255 38 5 / 6%);
+    }
+
+    /* default button: grey border, brand border and text on hover. antd's hover blue #4096ff gives 3:1 as text */
+    [data-slot='button'][data-variant='secondary'] {
+        border-color: var(--border);
+        box-shadow: 0 2px 0 rgb(0 0 0 / 2%);
+    }
+
+    [data-slot='button'][data-variant='secondary']:hover:not(:disabled) {
+        border-color: var(--brand);
+        background: var(--surface);
+        color: var(--brand);
+    }
+
+    /* disabled: antd's grey well instead of a faded fill, and the not-allowed cursor shows (the library turns pointer
+       events off, which hides it). ghost keeps the library's fade: on the dark shell a grey well would vanish */
+    [data-slot='button']:disabled {
+        cursor: not-allowed;
+        pointer-events: auto;
+    }
+
+    [data-slot='button']:disabled:not([data-variant='ghost']) {
+        border-color: var(--border);
+        background: rgb(0 0 0 / 4%);
+        color: rgb(0 0 0 / 25%);
+        box-shadow: none;
+        opacity: 1;
+    }
+
+    /* inputs, text areas and select triggers: 14px text at 22px. no padding: the library's sides stay, so a field's own
+       (the search box's room for its icon) still holds */
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']) {
+        font-size: 14px;
+        line-height: 1.5714;
+        transition:
+            border-color 0.2s,
+            box-shadow 0.2s;
+    }
+
+    /* one height for inputs and select triggers, antd's controlHeight */
+    :is([data-slot='input'], [data-slot='select-trigger']) {
+        height: 32px;
+    }
+
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):hover:not(:disabled) {
+        border-color: #4096ff;
+    }
+
+    /* focused: the brand border and antd's 2px outline glow in place of the outline */
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):focus {
+        outline: none;
+        border-color: var(--focus);
+        box-shadow: 0 0 0 2px rgb(5 145 255 / 10%);
+    }
+
+    /* after the hover and the focus: an invalid field keeps its danger border, with antd's red glow when focused */
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger'])[aria-invalid='true'] {
+        border-color: var(--danger);
+    }
+
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger'])[aria-invalid='true']:focus {
+        box-shadow: 0 0 0 2px rgb(255 38 5 / 6%);
+    }
+
+    :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):disabled {
+        background: rgb(0 0 0 / 4%);
+        color: rgb(0 0 0 / 25%);
+    }
+}

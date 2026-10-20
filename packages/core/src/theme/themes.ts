@@ -27,6 +27,9 @@ export const BUILT_IN_THEMES: ThemeDefinition[] = [
 // an app that imports the sheet lists this in config.themes. light only
 export const PORTAL_TRIBUTARIO_THEME: ThemeDefinition = { id: 'portal-tributario', label: 'theme.portalTributario', colorScheme: 'light' }
 
+// optional, not built in: pairs with @wasichai/ui/themes/ant-design.css, the same way. light only
+export const ANT_DESIGN_THEME: ThemeDefinition = { id: 'ant-design', label: 'theme.antDesign', colorScheme: 'light' }
+
 export function availableThemes(config: Pick<WasichaiConfig, 'themes'>): ThemeDefinition[] {
   return [...BUILT_IN_THEMES, ...(config.themes ?? [])]
 }

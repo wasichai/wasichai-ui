@@ -117,8 +117,8 @@ Against a backend without that endpoint (404) both stay in the browser.
 | `useUpdatePreferences()` | the mutation behind both: a partial `PUT`, optimistic, rolled back on failure |
 | `useSetLocale()` | `(language) => Promise<void>`: switches the language now and stores it for the user |
 
-The library ships one optional theme, `portal-tributario` (light only). It is not built in: an app that
-wants it imports its sheet and lists its definition, and the selector offers it. The tokens and the sheet
+The library ships two optional themes, `portal-tributario` and `ant-design` (`ANT_DESIGN_THEME`), both light only. They
+are not built in: an app that wants one imports its sheet and lists its definition, and the selector offers it. The tokens and the sheet
 are described in `@wasichai/ui`'s README; the why is
 [ADR-035](https://github.com/wasichai/wasichai/blob/main/docs/adr/0035-theme-extension-tokens-slots-and-optional-sheets.md).
 
