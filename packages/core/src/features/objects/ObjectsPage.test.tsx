@@ -29,4 +29,14 @@ describe('ObjectsPage', () => {
     expect(screen.getByRole('columnheader', { name: 'Referencia' })).toBeInTheDocument()
     expect(screen.getByText('ref predio')).toBeInTheDocument()
   })
+
+  it('warns that the model lives in the app repository when the config says so', () => {
+    renderWithProviders(<ObjectsPage />, { config: { modelInRepository: true } })
+    expect(screen.getByRole('status')).toHaveTextContent('El modelo vive en el repositorio.')
+  })
+
+  it('shows no repository notice by default', () => {
+    renderWithProviders(<ObjectsPage />)
+    expect(screen.queryByText('El modelo vive en el repositorio.')).not.toBeInTheDocument()
+  })
 })
