@@ -119,27 +119,31 @@ same text as `_other`); an override of a plural string in Spanish sets all three
 | `warning-soft`  | a warning's background                                      |
 | `overlay`       | the veil behind a dialog                                    |
 
-| Extension token | For                                                      |
-| --------------- | -------------------------------------------------------- |
-| `success-soft`  | a success message's background                           |
-| `danger-soft`   | an error message's background                            |
-| `notice`        | a notice's text (neither success, warning nor error)     |
-| `notice-soft`   | a notice's background                                    |
-| `link`          | text links                                               |
-| `focus`         | the focus ring and a focused field's border              |
-| `table-head`    | a table's header row                                     |
-| `table-stripe`  | zebra rows                                               |
-| `line`          | thin lines between rows                                  |
-| `map-selected`  | the selected feature on a map (`#e8590c` in every theme) |
+| Extension token  | For                                                              |
+| ---------------- | ---------------------------------------------------------------- |
+| `success-soft`   | a success message's background                                   |
+| `danger-soft`    | an error message's background                                    |
+| `notice`         | a notice's text (neither success, warning nor error)             |
+| `notice-soft`    | a notice's background                                            |
+| `link`           | text links                                                       |
+| `focus`          | the focus ring and a focused field's border                      |
+| `table-head`     | a table's header row                                             |
+| `table-stripe`   | zebra rows                                                       |
+| `line`           | thin lines between rows                                          |
+| `map-selected`   | the selected feature on a map (`#e8590c` in every theme)         |
+| `surface-raised` | menus, popovers, drawers and dialogs (`Dialog`, `SelectContent`) |
 
 In `light` and `dark` the extension tokens alias a base token (`link` and `focus` are `brand`, `table-head` is
-`surface-muted`, `line` is `border`) or tint one, so nothing drawn before changes. The exception is `bg-danger-soft`:
+`surface-muted`, `line` is `border`, `surface-raised` is `surface`) or tint one, so nothing drawn before changes. The exception is `bg-danger-soft`:
 `@wasichai/documents` already used it for its error messages, where it generated nothing, and now it paints a soft
 red. Light `success` is `oklch(52% 0.13 155)`, darker than before, so success text passes AA on `surface` (5.0:1) and
 on `bg-success-soft` (4.6:1).
 
 A theme may also set `--font-sans` and `--radius`, `--radius-sm`..`--radius-xl`, `--radius-card`: the document font
 and the `rounded*` utilities read them (the bare `rounded` too).
+
+`surface-raised` is the one to set for a dark theme whose floating layers should stand off the page: an app assigns it
+in its own `[data-theme]` block, e.g. `--surface-raised: oklch(26% 0.015 265)`, instead of styling each layer by selector.
 
 ## Styling hooks (`data-slot`)
 
