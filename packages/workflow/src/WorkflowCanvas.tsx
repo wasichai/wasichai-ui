@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Background, Controls, Handle, Position, ReactFlow } from '@xyflow/react'
 import type { Connection, NodeChange, NodeProps } from '@xyflow/react'
 import { cn } from '@wasichai/ui'
-import { stateTone, toFlow } from './workflowGraph'
+import { localized, stateTone, toFlow } from './workflowGraph'
 import type { XY } from './workflowGraph'
 import type { WorkflowDefinition, WorkflowState } from './types'
 import '@xyflow/react/dist/style.css'
@@ -64,7 +64,7 @@ export function WorkflowCanvas({ definition, positions, selected, onSelectState,
 
 // a state box: label, type, and a handle on each side so an edge can be dragged out
 function StateNode({ data, selected }: NodeProps) {
-  const { t } = useTranslation(['workflow', 'common'])
+  const { t, i18n } = useTranslation(['workflow', 'common'])
   const state = (data as { state: WorkflowState }).state
   return (
     <div
@@ -75,7 +75,7 @@ function StateNode({ data, selected }: NodeProps) {
       )}
     >
       <Handle type="target" position={Position.Left} className="!h-2.5 !w-2.5 !border-none !bg-ink-muted" />
-      <p className="text-sm font-medium">{state.label || state.name}</p>
+      <p className="text-sm font-medium">{localized(state.label, state.labels, i18n.language) || state.name}</p>
       <p className="text-xs opacity-70">{t(`workflows.types.${state.type}`)}</p>
       <Handle type="source" position={Position.Right} className="!h-2.5 !w-2.5 !border-none !bg-ink-muted" />
     </div>

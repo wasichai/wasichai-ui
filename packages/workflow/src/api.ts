@@ -1,6 +1,9 @@
+import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, changeReasonHeader } from '@wasichai/core'
 import type { AvailableTransition, RecordWithState, Workflow, WorkflowPayload } from './types'
+import { localized } from './workflowGraph'
 
 // an object without a workflow answers 404, which is an answer, not a failure: never retry it.
 export function useWorkflow(objectName: string | undefined) {
@@ -42,10 +45,24 @@ export function useDeleteWorkflow() {
 }
 
 // every transition leaving the record's state, allowed or not. 404 means no workflow.
+// label and toLabel come back in the active language; the cache keeps what the server sent, so a
+// language switch needs no refetch
 export function useAvailableTransitions(objectName: string, recordId: string) {
+  const { i18n } = useTranslation()
+  const language = i18n.language
+  const select = useCallback(
+    (transitions: AvailableTransition[]) =>
+      transitions.map((transition) => ({
+        ...transition,
+        label: localized(transition.label, transition.labels, language),
+        toLabel: localized(transition.toLabel, transition.toLabels, language)
+      })),
+    [language]
+  )
   return useQuery({
     queryKey: ['transitions', objectName, recordId],
     queryFn: () => api<AvailableTransition[]>(`/objects/${objectName}/records/${recordId}/transitions`),
+    select,
     enabled: Boolean(objectName && recordId),
     retry: false
   })

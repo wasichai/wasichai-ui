@@ -32,6 +32,8 @@ const es = {
     addState: 'Añadir estado',
     stateName: 'Nombre',
     stateLabel: 'Etiqueta',
+    labelIn: 'Etiqueta ({{language}})',
+    labelsHint: 'Una por idioma. Vacía, ese idioma muestra la etiqueta de arriba.',
     stateType: 'Tipo',
     types: {
       INITIAL: 'Inicial',
@@ -112,6 +114,8 @@ const en: typeof es = {
     addState: 'Add state',
     stateName: 'Name',
     stateLabel: 'Label',
+    labelIn: 'Label ({{language}})',
+    labelsHint: 'One per language. Left empty, that language shows the label above.',
     stateType: 'Type',
     types: {
       INITIAL: 'Initial',

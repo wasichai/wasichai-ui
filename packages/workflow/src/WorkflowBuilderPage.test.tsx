@@ -141,6 +141,18 @@ describe('WorkflowBuilderPage', () => {
     expect(screen.getByLabelText('Etiqueta')).toHaveValue('En revisión')
   })
 
+  it('edits a label per app language and sends only the filled ones', async () => {
+    state.save = vi.fn().mockResolvedValue(undefined)
+    await open()
+    act(() => canvas().onSelectState('review'))
+
+    await userEvent.type(screen.getByLabelText('Etiqueta (en)'), 'In review')
+    await userEvent.type(screen.getByLabelText('Etiqueta (es)'), ' ')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar flujo' }))
+
+    expect(saved().definition.states.find((item) => item.name === 'review')?.labels).toEqual({ en: 'In review' })
+  })
+
   it('adds a transition when two states are connected, and opens it', async () => {
     await open()
     act(() => canvas().onConnect('review', 'approved'))
