@@ -50,6 +50,16 @@ function cachedSecret(queryClient: ReturnType<typeof renderWithProviders>['query
 }
 
 describe('ServiceAccountsPage', () => {
+  it('shows a role the role list does not know by its code', async () => {
+    fetch = mockFetch([
+      { path: '/service-accounts', body: [{ ...accounts[0], roles: ['RETIRADO'] }] },
+      { path: '/roles', body: roles }
+    ])
+    renderWithProviders(<ServiceAccountsPage />)
+
+    expect(await screen.findByTitle('RETIRADO')).toHaveTextContent('RETIRADO')
+  })
+
   it('lists the accounts without any secret', async () => {
     serve()
     renderWithProviders(<ServiceAccountsPage />)
@@ -57,7 +67,7 @@ describe('ServiceAccountsPage', () => {
     expect(await screen.findByText('rentas')).toBeInTheDocument()
     expect(screen.getByText('catastro-sync')).toBeInTheDocument()
     expect(screen.getByText('sa1')).toBeInTheDocument()
-    expect(screen.getByText('SISTEMA_ORIGEN')).toBeInTheDocument()
+    expect(screen.getByTitle('SISTEMA_ORIGEN')).toHaveTextContent('Sistema de origen')
     expect(screen.getByText('Inactiva')).toBeInTheDocument()
     expect(screen.queryByText('Copia el secreto ahora: no se volverá a mostrar.')).not.toBeInTheDocument()
   })

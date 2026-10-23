@@ -17,6 +17,15 @@ const roles: Role[] = [
 ]
 
 describe('RolesPage', () => {
+  it('titles the editor with the role label', async () => {
+    fetch = mockFetch([{ path: '/roles', body: roles }])
+    renderWithProviders(<RolesPage />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar INSPECTOR' }))
+
+    expect(screen.getByRole('heading', { name: 'Editar rol — Inspector' })).toBeInTheDocument()
+  })
+
   it('says why a delete was refused', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     fetch = mockFetch([

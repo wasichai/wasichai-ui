@@ -7,9 +7,10 @@ import { Alert, Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
-import { Badge, Table, Td, Th } from '@wasichai/ui'
+import { Table, Td, Th } from '@wasichai/ui'
 import { describeError } from '../../api/client'
 import { useAdminUsers, useCreateUser, useDeleteUser, useRoles, useUpdateUser, useUpdateUserRoles } from './api'
+import { RoleBadges } from './RoleBadges'
 import type { AdminUser } from './types'
 
 const CHECKBOX = 'h-4 w-4 accent-brand'
@@ -250,15 +251,7 @@ export function UsersPage() {
                     </Td>
                     <Td className="font-mono text-xs">{item.email}</Td>
                     <Td>
-                      {item.roles.length === 0 ? (
-                        <span className="text-xs text-ink-muted">{t('admin.users.noRoles')}</span>
-                      ) : (
-                        <span className="flex flex-wrap gap-1">
-                          {item.roles.map((role) => (
-                            <Badge key={role}>{role}</Badge>
-                          ))}
-                        </span>
-                      )}
+                      <RoleBadges names={item.roles} roles={roles} empty={t('admin.users.noRoles')} />
                     </Td>
                     <Td>
                       <span className={item.enabled ? 'text-success' : 'text-ink-muted'}>
