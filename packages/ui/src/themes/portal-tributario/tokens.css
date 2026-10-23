@@ -33,6 +33,8 @@
     --table-stripe: #fafafa;
     --line: #e4e4e4;
     --map-selected: #c9302c;
+    --border-control: var(--border);
+    --placeholder: var(--ink-muted);
 
     --font-sans: Arial, Helvetica, sans-serif;
     --radius: 3px;

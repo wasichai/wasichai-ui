@@ -119,27 +119,32 @@ same text as `_other`); an override of a plural string in Spanish sets all three
 | `warning-soft`  | a warning's background                                      |
 | `overlay`       | the veil behind a dialog                                    |
 
-| Extension token | For                                                      |
-| --------------- | -------------------------------------------------------- |
-| `success-soft`  | a success message's background                           |
-| `danger-soft`   | an error message's background                            |
-| `notice`        | a notice's text (neither success, warning nor error)     |
-| `notice-soft`   | a notice's background                                    |
-| `link`          | text links                                               |
-| `focus`         | the focus ring and a focused field's border              |
-| `table-head`    | a table's header row                                     |
-| `table-stripe`  | zebra rows                                               |
-| `line`          | thin lines between rows                                  |
-| `map-selected`  | the selected feature on a map (`#e8590c` in every theme) |
+| Extension token  | For                                                                             |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `success-soft`   | a success message's background                                                  |
+| `danger-soft`    | an error message's background                                                   |
+| `notice`         | a notice's text (neither success, warning nor error)                            |
+| `notice-soft`    | a notice's background                                                           |
+| `link`           | text links                                                                      |
+| `focus`          | the focus ring and a focused field's border                                     |
+| `table-head`     | a table's header row                                                            |
+| `table-stripe`   | zebra rows                                                                      |
+| `line`           | thin lines between rows                                                         |
+| `map-selected`   | the selected feature on a map (`#e8590c` in every theme)                        |
+| `border-control` | the border of `Input`, `Textarea`, `SelectTrigger` and the rows-per-page select |
+| `placeholder`    | a field's example text (AA on `surface`)                                        |
 
 In `light` and `dark` the extension tokens alias a base token (`link` and `focus` are `brand`, `table-head` is
-`surface-muted`, `line` is `border`) or tint one, so nothing drawn before changes. The exception is `bg-danger-soft`:
+`surface-muted`, `line` and `border-control` are `border`, `placeholder` is `ink-muted`) or tint one, so nothing drawn before changes. The exception is `bg-danger-soft`:
 `@wasichai/documents` already used it for its error messages, where it generated nothing, and now it paints a soft
 red. Light `success` is `oklch(52% 0.13 155)`, darker than before, so success text passes AA on `surface` (5.0:1) and
 on `bg-success-soft` (4.6:1).
 
 A theme may also set `--font-sans` and `--radius`, `--radius-sm`..`--radius-xl`, `--radius-card`: the document font
 and the `rounded*` utilities read them (the bare `rounded` too).
+
+The fields' example text was `ink-muted` at 60%, under AA; it is now the `placeholder` token, full `ink-muted` by default,
+so it reads a little darker. A theme that wants a lighter example text sets `placeholder` and keeps it at 4.5:1 on `surface`.
 
 ## Styling hooks (`data-slot`)
 

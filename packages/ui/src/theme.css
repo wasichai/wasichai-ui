@@ -37,6 +37,9 @@
     --line: var(--border);
     /* the orange the lotes map has always used for the selection, same in every theme */
     --map-selected: #e8590c;
+    /* a field's border (Input, Textarea, Select) and its example text. the placeholder is full ink-muted: at 60% it missed AA */
+    --border-control: var(--border);
+    --placeholder: var(--ink-muted);
 }
 
 [data-theme='dark'] {
@@ -70,6 +73,9 @@
     --table-stripe: oklch(20% 0.014 265);
     --line: var(--border);
     --map-selected: #e8590c;
+    /* a field's border (Input, Textarea, Select) and its example text. the placeholder is full ink-muted: at 60% it missed AA */
+    --border-control: var(--border);
+    --placeholder: var(--ink-muted);
 }
 
 @theme inline {
@@ -101,6 +107,8 @@
     --color-table-stripe: var(--table-stripe);
     --color-line: var(--line);
     --color-map-selected: var(--map-selected);
+    --color-border-control: var(--border-control);
+    --color-placeholder: var(--placeholder);
 }
 
 @theme {

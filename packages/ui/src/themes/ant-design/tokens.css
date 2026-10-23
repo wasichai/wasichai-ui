@@ -42,6 +42,8 @@
     --table-stripe: #ffffff;
     --line: #f0f0f0;
     --map-selected: #fa541c;
+    --border-control: var(--border);
+    --placeholder: var(--ink-muted);
 
     /* the partials' own: field hover (colorPrimaryHover), menu hover (6% black on white), colorXBorder of the alerts,
        the disabled well and text, the outline glows and the default button's shadow */
@@ -109,6 +111,8 @@
     --line: #303030;
     /* volcano-6 of the dark palette */
     --map-selected: #d84a1b;
+    --border-control: var(--border);
+    --placeholder: var(--ink-muted);
 
     /* the partials' own, dark: colorPrimaryHover, 12% white flattened on #141414, the dark colorXBorder, the disabled
        well and text in white, antd's dark outline glows */

@@ -22,7 +22,7 @@ describe('theme.css', () => {
 })
 
 // light and dark alias these, so adding them changed nothing already drawn
-const ALIASES = { link: 'brand', focus: 'brand', 'table-head': 'surface-muted', line: 'border' }
+const ALIASES = { link: 'brand', focus: 'brand', 'table-head': 'surface-muted', line: 'border', 'border-control': 'border', placeholder: 'ink-muted' }
 
 // text on the background it sits on: AA, 4.5:1
 const TEXT_ON = [
@@ -31,7 +31,9 @@ const TEXT_ON = [
   ['danger', 'danger-soft'],
   ['warning', 'warning-soft'],
   ['notice', 'notice-soft'],
-  ['link', 'surface']
+  ['link', 'surface'],
+  // a field's example text: WCAG 1.4.3 counts it as text
+  ['placeholder', 'surface']
 ]
 
 // known misses, as `<theme>: <text> on <background>`. a listed pair must stay below AA: once fixed, drop it
@@ -44,7 +46,7 @@ describe.each(['light', 'dark'])('%s theme', (theme) => {
     expect(tokens(`[data-theme='${theme}']`)).toEqual([...BASE, ...EXTENSION].sort())
   })
 
-  it('aliases link, focus, table-head and line to base tokens, so it looks as before', () => {
+  it('aliases link, focus, table-head, line, border-control and placeholder to base tokens', () => {
     for (const [token, base] of Object.entries(ALIASES)) expect(block.get(`--${token}`), token).toBe(`var(--${base})`)
   })
 
