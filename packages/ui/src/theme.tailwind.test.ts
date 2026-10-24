@@ -31,6 +31,10 @@ describe('theme.css under tailwind', () => {
     expect(await build(['bg-danger-soft'])).toMatch(/\.bg-danger-soft\s*\{\s*background-color:\s*var\(--danger-soft\);/)
   })
 
+  it('generates the raised surface floating layers sit on', async () => {
+    expect(await build(['bg-surface-raised'])).toMatch(/\.bg-surface-raised\s*\{\s*background-color:\s*var\(--surface-raised\);/)
+  })
+
   it('lets a theme change the font', async () => {
     expect(await build(['font-sans'])).toMatch(/\.font-sans\s*\{\s*font-family:\s*var\(--font-sans\);/)
   })

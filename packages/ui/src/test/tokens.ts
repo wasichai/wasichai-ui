@@ -20,7 +20,19 @@ export const BASE = [
   'overlay'
 ]
 
-export const EXTENSION = ['success-soft', 'danger-soft', 'notice', 'notice-soft', 'link', 'focus', 'table-head', 'table-stripe', 'line', 'map-selected']
+export const EXTENSION = [
+  'success-soft',
+  'danger-soft',
+  'notice',
+  'notice-soft',
+  'link',
+  'focus',
+  'table-head',
+  'table-stripe',
+  'line',
+  'map-selected',
+  'surface-raised'
+]
 
 // the custom properties a declaration block sets, sorted
 export const customProperties = (declarations: Map<string, string>) => [...declarations.keys()].filter((name) => name.startsWith('--')).sort()

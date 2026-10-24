@@ -33,6 +33,7 @@
     --table-stripe: #fafafa;
     --line: #e4e4e4;
     --map-selected: #c9302c;
+    --surface-raised: var(--surface);
 
     --font-sans: Arial, Helvetica, sans-serif;
     --radius: 3px;
