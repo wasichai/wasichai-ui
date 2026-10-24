@@ -31,6 +31,15 @@ describe('theme.css under tailwind', () => {
     expect(await build(['bg-danger-soft'])).toMatch(/\.bg-danger-soft\s*\{\s*background-color:\s*var\(--danger-soft\);/)
   })
 
+  it('generates the raised surface floating layers sit on', async () => {
+    expect(await build(['bg-surface-raised'])).toMatch(/\.bg-surface-raised\s*\{\s*background-color:\s*var\(--surface-raised\);/)
+  })
+
+  it('generates the control border and the placeholder colors', async () => {
+    expect(await build(['border-border-control'])).toMatch(/\.border-border-control\s*\{\s*border-color:\s*var\(--border-control\);/)
+    expect(await build(['placeholder:text-placeholder'])).toMatch(/color:\s*var\(--placeholder\);/)
+  })
+
   it('lets a theme change the font', async () => {
     expect(await build(['font-sans'])).toMatch(/\.font-sans\s*\{\s*font-family:\s*var\(--font-sans\);/)
   })
@@ -45,7 +54,8 @@ function sources(dir: string): string[] {
   }
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name)
-    if (name === 'node_modules' || name === 'dist') return []
+    // test/ holds test helpers, not shipped: its token names ('border-control') are not classes
+    if (name === 'node_modules' || name === 'dist' || name === 'test') return []
     if (statSync(path).isDirectory()) return sources(path)
     return /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) ? [path] : []
   })

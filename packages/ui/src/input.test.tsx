@@ -7,7 +7,7 @@ describe('Input', () => {
     render(<Input aria-label="Nombre" />)
     const input = screen.getByRole('textbox', { name: 'Nombre' })
     expect(input).toHaveAttribute('data-slot', 'input')
-    expect(input).toHaveClass('h-9', 'rounded-md', 'border-border')
+    expect(input).toHaveClass('h-9', 'rounded-md', 'border-border-control', 'placeholder:text-placeholder')
   })
 })
 
@@ -16,7 +16,7 @@ describe('Textarea', () => {
     render(<Textarea aria-label="Nota" />)
     const textarea = screen.getByRole('textbox', { name: 'Nota' })
     expect(textarea).toHaveAttribute('data-slot', 'textarea')
-    expect(textarea).toHaveClass('min-h-20', 'rounded-md', 'border-border')
+    expect(textarea).toHaveClass('min-h-20', 'rounded-md', 'border-border-control', 'placeholder:text-placeholder')
   })
 })
 

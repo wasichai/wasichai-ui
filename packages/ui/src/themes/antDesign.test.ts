@@ -209,7 +209,10 @@ describe.each(THEMES)('tokens.css: $id', ({ id, side }) => {
 
   it('reaches WCAG AA (4.5:1) on every text pair', () => {
     const pairs: [string, string][] = [
-      ...['ink', 'ink-muted', 'brand', 'brand-strong', 'danger', 'success', 'warning', 'link'].map((text): [string, string] => [text, 'surface']),
+      ...['ink', 'ink-muted', 'placeholder', 'brand', 'brand-strong', 'danger', 'success', 'warning', 'link'].map((text): [string, string] => [
+        text,
+        'surface'
+      ]),
       ...['ink', 'ink-muted', 'link'].map((text): [string, string] => [text, 'surface-muted']),
       ['on-brand', 'brand'],
       ['on-brand', 'brand-strong'],

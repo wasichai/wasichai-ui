@@ -71,7 +71,7 @@ export function PageSizePagination({ page, size, total, onPage, onSize, sizes = 
           data-slot="native-select"
           value={size}
           onChange={(e) => onSize(Number(e.target.value))}
-          className="h-8 w-20 rounded-md border border-border bg-surface px-3 text-sm text-ink"
+          className="h-8 w-20 rounded-md border border-border-control bg-surface px-3 text-sm text-ink"
         >
           {options.map((n) => (
             <option key={n} value={n}>

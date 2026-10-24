@@ -12,8 +12,8 @@ export function SelectTrigger({ className, children, ...props }: ComponentProps<
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        'flex h-9 w-full items-center justify-between rounded-md border border-border bg-surface px-3 text-sm text-ink',
-        'data-[placeholder]:text-ink-muted/60 aria-[invalid=true]:border-danger',
+        'flex h-9 w-full items-center justify-between rounded-md border border-border-control bg-surface px-3 text-sm text-ink',
+        'data-[placeholder]:text-placeholder aria-[invalid=true]:border-danger',
         'disabled:cursor-not-allowed disabled:bg-surface-muted',
         className
       )}
@@ -33,7 +33,10 @@ export function SelectContent({ className, children, ...props }: ComponentProps<
       <SelectPrimitive.Content
         position="popper"
         sideOffset={4}
-        className={cn('z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-auto rounded-md border border-border bg-surface p-1 shadow-lg', className)}
+        className={cn(
+          'z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-auto rounded-md border border-border bg-surface-raised p-1 shadow-lg',
+          className
+        )}
         {...props}
       >
         <SelectPrimitive.Viewport>{children}</SelectPrimitive.Viewport>

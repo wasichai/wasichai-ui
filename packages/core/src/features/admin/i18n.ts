@@ -88,7 +88,16 @@ const es = {
       write: 'Escritura',
       noFields: 'Este objeto no tiene campos',
       saveFields: 'Guardar permisos de campo',
-      unrestricted: 'Sin restricciones: este rol ve todos los campos de este objeto.'
+      unrestricted: 'Sin restricciones: este rol ve todos los campos de este objeto.',
+      // built-in verbs; an object's own actions show their label instead
+      actions: {
+        READ: 'Leer',
+        CREATE: 'Crear',
+        UPDATE: 'Editar',
+        DELETE: 'Eliminar',
+        MANAGE_METADATA: 'Administrar el modelo',
+        MANAGE_ORGANIZATION: 'Administrar la organización'
+      }
     }
   }
 }
@@ -182,7 +191,15 @@ const en = {
       write: 'Write',
       noFields: 'This object has no fields',
       saveFields: 'Save field permissions',
-      unrestricted: 'Unrestricted: this role sees every field of this object.'
+      unrestricted: 'Unrestricted: this role sees every field of this object.',
+      actions: {
+        READ: 'Read',
+        CREATE: 'Create',
+        UPDATE: 'Update',
+        DELETE: 'Delete',
+        MANAGE_METADATA: 'Manage the model',
+        MANAGE_ORGANIZATION: 'Manage the organization'
+      }
     }
   }
 }

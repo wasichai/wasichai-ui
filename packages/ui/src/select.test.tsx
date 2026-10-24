@@ -13,7 +13,7 @@ describe('SelectTrigger', () => {
     )
     const trigger = screen.getByRole('combobox', { name: 'Estado' })
     expect(trigger).toHaveAttribute('data-slot', 'select-trigger')
-    expect(trigger).toHaveClass('h-9', 'rounded-md')
+    expect(trigger).toHaveClass('h-9', 'rounded-md', 'border-border-control', 'data-[placeholder]:text-placeholder')
   })
 })
 
