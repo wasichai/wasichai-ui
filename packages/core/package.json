@@ -31,7 +31,7 @@
         "@hookform/resolvers": "5.9.1",
         "lucide-react": "^1.57.0",
         "react-hook-form": "^7.89.0",
-        "zod": "^4.6.5"
+        "zod": "^4.6.6"
     },
     "peerDependencies": {
         "@tanstack/react-query": "^5.103.1",
