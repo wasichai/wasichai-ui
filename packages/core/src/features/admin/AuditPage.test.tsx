@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
@@ -62,5 +62,50 @@ describe('AuditPage', () => {
     expect(screen.getByText('carga nocturna del padrón')).toHaveAttribute('title', 'carga nocturna del padrón')
     expect(oldRow).toHaveTextContent('ana@wasichai.test')
     expect(oldRow.querySelectorAll('td')[5]).toHaveTextContent('—')
+  })
+
+  describe('when and which record', () => {
+    const ID = '0b6c1f9e-4d1a-4c55-9f1e-6a0f2f2b7c11'
+    // 16:30 UTC is 11:30 in Lima
+    const entry = {
+      id: 'a1',
+      objectName: 'predio',
+      recordId: ID,
+      operation: 'CREATE',
+      occurredAt: '2026-09-17T16:30:00Z',
+      changes: [],
+      userEmail: 'ana@wasichai.test'
+    }
+    const serve = () =>
+      (fetch = mockFetch([
+        { path: '/objects', body: [] },
+        { path: /^\/audit\?/, body: [entry] }
+      ]))
+
+    it('shows the exact time in config.timeZone, the relative one in the title', async () => {
+      serve()
+      renderWithProviders(<AuditPage />, { config: { timeZone: 'America/Lima' } })
+
+      const time = (await screen.findByText(ID)).closest('tr')!.querySelector('time')!
+      expect(time).toHaveTextContent('11:30')
+      expect(time).toHaveAttribute('title', expect.stringContaining('hace'))
+    })
+
+    it('keeps the relative time without a zone', async () => {
+      serve()
+      renderWithProviders(<AuditPage />)
+
+      const time = (await screen.findByText(ID)).closest('tr')!.querySelector('time')!
+      expect(time).toHaveTextContent('hace')
+    })
+
+    it('keeps the record id on one line, with a copy button', async () => {
+      serve()
+      renderWithProviders(<AuditPage />)
+
+      const cell = (await screen.findByText(ID)).closest('td')!
+      expect(cell).toHaveClass('whitespace-nowrap')
+      expect(within(cell).getByRole('button', { name: 'Copiar id' })).toBeInTheDocument()
+    })
   })
 })

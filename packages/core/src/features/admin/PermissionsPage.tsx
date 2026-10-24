@@ -140,8 +140,8 @@ export function PermissionsPage() {
                   <tr>
                     <Th>{t('admin.permissions.object')}</Th>
                     {BUILT_IN_ACTIONS.map((action) => (
-                      <Th key={action} className="text-center">
-                        {action}
+                      <Th key={action} className="text-center" title={action}>
+                        {t(`admin.permissions.actions.${action}`)}
                       </Th>
                     ))}
                     <Th>{t('admin.permissions.declaredActions')}</Th>
@@ -172,7 +172,7 @@ export function PermissionsPage() {
                               <input
                                 type="checkbox"
                                 className={CHECKBOX}
-                                aria-label={`${rowKey} ${action}`}
+                                aria-label={`${rowKey} ${t(`admin.permissions.actions.${action}`)}`}
                                 checked={isGranted(matrix, rowKey, action)}
                                 onChange={() => setMatrix((current) => toggleCell(current, rowKey, action))}
                               />

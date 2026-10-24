@@ -1,6 +1,6 @@
 import { Children, isValidElement } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import { act, screen } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, coreModule } from '@wasichai/core'
@@ -10,7 +10,8 @@ import type { Workflow, WorkflowPayload } from './types'
 
 // the panel's strings live in the workflow namespace. core declares the 'automation' nav group
 // workflowModule's nav item points at, and createRegistry validates that eagerly
-const renderWithProviders = (ui: ReactElement) => renderBase(ui, { modules: [coreModule, workflowModule()] })
+const renderWithProviders = (ui: ReactElement, config: { modelInRepository?: boolean } = {}) =>
+  renderBase(ui, { modules: [coreModule, workflowModule()], config })
 
 // xyflow measures its container with a ResizeObserver and draws nothing when the container
 // measures zero, which is all jsdom ever reports. so the canvas is a double: it records the
@@ -97,8 +98,8 @@ const workflow: Workflow = {
 }
 
 // the page only builds a draft once an object is picked
-async function open() {
-  renderWithProviders(<WorkflowBuilderPage />)
+async function open(config: { modelInRepository?: boolean } = {}) {
+  renderWithProviders(<WorkflowBuilderPage />, config)
   await userEvent.selectOptions(screen.getByLabelText('Objeto'), 'predio')
 }
 
@@ -206,11 +207,53 @@ describe('WorkflowBuilderPage', () => {
     expect(screen.getByRole('button', { name: 'Guardar flujo' })).toBeDisabled()
   })
 
-  it('asks before deleting the workflow, and drops nothing when told no', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
+  async function askToDelete() {
+    await userEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Eliminar flujo' }))
+    return screen.getByRole('dialog')
+  }
+
+  it('keeps delete under more actions, asks first, and drops nothing when told no', async () => {
     await open()
-    await userEvent.click(screen.getByRole('button', { name: 'Eliminar flujo' }))
+    expect(screen.queryByRole('button', { name: 'Eliminar flujo' })).not.toBeInTheDocument()
+
+    const dialog = await askToDelete()
+    expect(dialog).toHaveTextContent('¿Eliminar el flujo de predio?')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(state.remove).not.toHaveBeenCalled()
+  })
+
+  it('deletes the workflow once confirmed', async () => {
+    state.remove = vi.fn().mockResolvedValue(undefined)
+    await open()
+
+    const dialog = await askToDelete()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Eliminar flujo' }))
+
+    expect(state.remove).toHaveBeenCalledWith('predio')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('says in the dialog why a delete was refused', async () => {
+    state.remove = vi.fn().mockRejectedValue(new ApiError(409, 'El flujo tiene registros en curso'))
+    await open()
+
+    const dialog = await askToDelete()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Eliminar flujo' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('El flujo tiene registros en curso')
+  })
+
+  it('warns when the model lives in the app repository, and only then', async () => {
+    await open({ modelInRepository: true })
+    expect(screen.getByText('El modelo vive en el repositorio.')).toBeInTheDocument()
+  })
+
+  it('shows no repository notice by default', async () => {
+    await open()
+    expect(screen.queryByText('El modelo vive en el repositorio.')).not.toBeInTheDocument()
   })
 
   it('offers a starting point when the object has no workflow yet', async () => {
@@ -218,7 +261,7 @@ describe('WorkflowBuilderPage', () => {
     state.loadError = new ApiError(404, 'Not Found')
     await open()
     expect(canvas().definition.states.map((item) => item.name)).toEqual(['draft', 'review', 'approved', 'rejected'])
-    expect(screen.queryByRole('button', { name: 'Eliminar flujo' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Más acciones' })).not.toBeInTheDocument()
   })
 
   // a starter there would let Save put it over the workflow the server failed to send
