@@ -135,7 +135,7 @@ same text as `_other`); an override of a plural string in Spanish sets all three
 | `table-stripe`   | zebra rows                                                                      |
 | `line`           | thin lines between rows                                                         |
 | `map-selected`   | the selected feature on a map (`#e8590c` in every theme)                        |
-| `surface-raised` | menus, popovers, drawers and dialogs (`Dialog`, `SelectContent`)                |
+| `surface-raised` | floating layers (`Dialog`, `SelectContent`, `DropdownMenuContent`)              |
 | `border-control` | the border of `Input`, `Textarea`, `SelectTrigger` and the rows-per-page select |
 | `placeholder`    | a field's example text (AA on `surface`)                                        |
 
