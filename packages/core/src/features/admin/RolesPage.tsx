@@ -133,7 +133,7 @@ export function RolesPage() {
           <Card>
             <CardHeader className="flex items-center justify-between">
               <CardTitle>
-                {t('admin.roles.edit')} — {editing.name}
+                {t('admin.roles.edit')} — {editing.label || editing.name}
               </CardTitle>
               <Button variant="ghost" size="icon" aria-label={t('common.cancel')} onClick={() => setEditing(null)}>
                 <X className="h-4 w-4" />

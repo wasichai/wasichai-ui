@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Plus } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
+import { ModelInRepositoryNotice } from '../../components/model-source/ModelInRepositoryNotice'
 import { Button } from '@wasichai/ui'
 import { Card } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
@@ -29,7 +30,8 @@ export function ObjectsPage() {
         }
       />
 
-      <div className="p-8">
+      <div className="space-y-5 p-8">
+        <ModelInRepositoryNotice />
         <Card>
           {isLoading ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('common.loading')}</p>

@@ -60,6 +60,25 @@ afterEach(() => {
 })
 
 describe('PermissionsPage', () => {
+  it('heads the matrix with translated verbs, the code as the title', async () => {
+    stubApi(cajero([]))
+    renderWithProviders(<PermissionsPage />)
+    await pickRole()
+
+    const header = await screen.findByRole('columnheader', { name: 'Administrar el modelo' })
+    expect(header).toHaveAttribute('title', 'MANAGE_METADATA')
+    expect(screen.getByRole('columnheader', { name: 'Leer' })).toHaveAttribute('title', 'READ')
+  })
+
+  it('heads the matrix in english too', async () => {
+    stubApi(cajero([]))
+    renderWithProviders(<PermissionsPage />, { language: 'en' })
+    await pickRole()
+
+    expect(await screen.findByRole('columnheader', { name: 'Manage the model' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'predio Read' })).toBeInTheDocument()
+  })
+
   it('sends a declared grant back untouched when the built-in matrix is saved', async () => {
     const sent = stubApi(
       cajero([
@@ -72,7 +91,7 @@ describe('PermissionsPage', () => {
     renderWithProviders(<PermissionsPage />)
     await pickRole()
 
-    await userEvent.click(await screen.findByRole('checkbox', { name: 'predio READ' }))
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'predio Leer' }))
     await userEvent.click(screen.getByRole('button', { name: 'Guardar permisos' }))
 
     await waitFor(() => expect(sent).toHaveLength(1))

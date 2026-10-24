@@ -6,13 +6,17 @@ Primitives shared by every wasichai package: `Alert`, `Button`, `Card*`, `Dialog
 `Select*`, `Table`/`Th`/`Td`/`Badge`, `Tabs`, the `cn()` class merger, the Tailwind 4 theme
 tokens (`theme.css`) and optional theme sheets ([portal-tributario](#optional-theme-portal-tributario),
 [ant-design](#optional-theme-ant-design)).
-Four more carry the footers and dialogs every list and record screen ends up needing:
+Six more carry the footers, dialogs, menus and small actions every list and record screen ends up needing:
 
 - `ConfirmDialog`: a question before something that cannot be undone (danger or primary confirm, a busy state, an error line).
 - `Pagination`: the footer of a backend page, the record count plus "Page 2 of 5" and previous/next arrows when there is more
   than one page.
 - `PageSizePagination`: a range footer, a rows-per-page picker, the "1–10 of 47 records" range and the arrows, for any paging
   where the caller knows the total (rows it slices itself, or a server page).
+- `DropdownMenu` (`DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` with `variant="danger"`): a "more actions"
+  menu. Not modal by default: a modal menu leaves the page locked when one of its items opens a dialog.
+- `CopyButton`: an icon button that copies a value (an id, a URL) and shows a check for a moment; the caller passes the
+  translated `label` and `copiedLabel`.
 - `PdfDialog`: a generated PDF embedded in a dialog, to see, print or download; it loads the blob itself and revokes its URL on close.
 
 `Alert` is a message in one of four tones (`success`, `warning`, `danger`, `notice`), with an optional bold `title` and,
@@ -149,29 +153,32 @@ in its own `[data-theme]` block, e.g. `--surface-raised: oklch(26% 0.015 265)`, 
 
 The components carry `data-slot` attributes that a theme sheet can style:
 
-| Component            | `data-slot`      | Also                                                                                         |
-| -------------------- | ---------------- | -------------------------------------------------------------------------------------------- |
-| `Button`             | `button`         | `data-variant` (`primary`, `secondary`, `ghost`, `danger`), `data-size` (`sm`, `md`, `icon`) |
-| `Card`               | `card`           |                                                                                              |
-| `Input`              | `input`          |                                                                                              |
-| `Textarea`           | `textarea`       |                                                                                              |
-| `SelectTrigger`      | `select-trigger` |                                                                                              |
-| `Pagination`         | `pagination`     | `data-mode="pages"`: the record count and "Page 2 of 5"                                      |
-| `PageSizePagination` | `pagination`     | `data-mode="range"`: the rows picker and the "1–10 of 47 records" range                      |
-|                      | `native-select`  | its rows-per-page `<select>`                                                                 |
-| `ConfirmDialog`      | `confirm-dialog` | the dialog's content box (the overlay and the X are `Dialog`'s)                              |
-| `PdfDialog`          | `pdf-dialog`     | the dialog's content box                                                                     |
-| `Alert`              | `alert`          | `data-tone` (`success`, `warning`, `danger`, `notice`)                                       |
-|                      | `alert-text`     | the title and the text                                                                       |
-|                      | `alert-dismiss`  | the dismiss button                                                                           |
-| `Table`              | `table`          | on the `<table>`, not its scroll box                                                         |
-| `Th`                 | `table-head`     |                                                                                              |
-| `Td`                 | `table-cell`     |                                                                                              |
-| `Badge`              | `badge`          |                                                                                              |
-| `Tabs`               | `tabs`           | the root                                                                                     |
-|                      | `tabs-list`      | the `role="tablist"` strip                                                                   |
-|                      | `tabs-trigger`   | each `role="tab"`, with `aria-selected`                                                      |
-|                      | `tabs-content`   | each `role="tabpanel"`                                                                       |
+| Component             | `data-slot`          | Also                                                                                         |
+| --------------------- | -------------------- | -------------------------------------------------------------------------------------------- |
+| `Button`              | `button`             | `data-variant` (`primary`, `secondary`, `ghost`, `danger`), `data-size` (`sm`, `md`, `icon`) |
+| `Card`                | `card`               |                                                                                              |
+| `Input`               | `input`              |                                                                                              |
+| `Textarea`            | `textarea`           |                                                                                              |
+| `SelectTrigger`       | `select-trigger`     |                                                                                              |
+| `Pagination`          | `pagination`         | `data-mode="pages"`: the record count and "Page 2 of 5"                                      |
+| `PageSizePagination`  | `pagination`         | `data-mode="range"`: the rows picker and the "1–10 of 47 records" range                      |
+|                       | `native-select`      | its rows-per-page `<select>`                                                                 |
+| `ConfirmDialog`       | `confirm-dialog`     | the dialog's content box (the overlay and the X are `Dialog`'s)                              |
+| `PdfDialog`           | `pdf-dialog`         | the dialog's content box                                                                     |
+| `CopyButton`          | `copy-button`        | in place of `button`; keeps `data-variant="ghost"` and `data-size="icon"`                    |
+| `DropdownMenuContent` | `dropdown-menu`      | the menu box                                                                                 |
+| `DropdownMenuItem`    | `dropdown-menu-item` | `data-variant="danger"` on a destructive item                                                |
+| `Alert`               | `alert`              | `data-tone` (`success`, `warning`, `danger`, `notice`)                                       |
+|                       | `alert-text`         | the title and the text                                                                       |
+|                       | `alert-dismiss`      | the dismiss button                                                                           |
+| `Table`               | `table`              | on the `<table>`, not its scroll box                                                         |
+| `Th`                  | `table-head`         |                                                                                              |
+| `Td`                  | `table-cell`         |                                                                                              |
+| `Badge`               | `badge`              |                                                                                              |
+| `Tabs`                | `tabs`               | the root                                                                                     |
+|                       | `tabs-list`          | the `role="tablist"` strip                                                                   |
+|                       | `tabs-trigger`       | each `role="tab"`, with `aria-selected`                                                      |
+|                       | `tabs-content`       | each `role="tabpanel"`                                                                       |
 
 Core's `NavTree` carries `nav-tree`, `nav-tree-group`, `nav-tree-leaf` and `nav-tree-caret` (see `@wasichai/core`'s README).
 
