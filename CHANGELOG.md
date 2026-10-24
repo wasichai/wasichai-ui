@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0](https://github.com/wasichai/wasichai-ui/compare/v1.0.0...v1.1.0) (2026-10-24)
+
+
+### Features
+
+* **core,workflow:** warn when the model lives in the app repository ([#73](https://github.com/wasichai/wasichai-ui/issues/73)) ([9213a2e](https://github.com/wasichai/wasichai-ui/commit/9213a2e713d0f9afdfe21c49add862fd4061cea5))
+* **core:** audit dates in config.timeZone, copyable record ids ([#72](https://github.com/wasichai/wasichai-ui/issues/72)) ([978e340](https://github.com/wasichai/wasichai-ui/commit/978e34013a47621016a49ae0d25da0603981a6cb))
+* **core:** show role labels in admin ([#70](https://github.com/wasichai/wasichai-ui/issues/70)) ([f0c7544](https://github.com/wasichai/wasichai-ui/commit/f0c75448e6c33f13d1cc76276670c86c5da0d0e0))
+* **core:** translate permission verbs in admin ([#71](https://github.com/wasichai/wasichai-ui/issues/71)) ([9054053](https://github.com/wasichai/wasichai-ui/commit/9054053e64267a5731584d09385fc17668ee6478))
+* **ui:** add a raised surface token for floating layers ([#74](https://github.com/wasichai/wasichai-ui/issues/74)) ([8e1f192](https://github.com/wasichai/wasichai-ui/commit/8e1f1926d7494e0f5bb1bbdc2cea3ecaeb52c4aa))
+* **ui:** ant-design-dark, the dark half of the ant-design theme ([#66](https://github.com/wasichai/wasichai-ui/issues/66)) ([35400c2](https://github.com/wasichai/wasichai-ui/commit/35400c29e780b773ab569e43569971b68cdc8bd7))
+* **ui:** control border token and an AA placeholder ([#75](https://github.com/wasichai/wasichai-ui/issues/75)) ([be95bd3](https://github.com/wasichai/wasichai-ui/commit/be95bd36a53b7b49b8456ce7b1ac69ccbb050a44))
+* **ui:** optional ant-design theme from the Ant Design spec ([#64](https://github.com/wasichai/wasichai-ui/issues/64)) ([dc9f67f](https://github.com/wasichai/wasichai-ui/commit/dc9f67f6989a78f55078b91d162c8dac4a9d1d7f))
+* **workflow:** per-language state and transition labels ([#76](https://github.com/wasichai/wasichai-ui/issues/76)) ([342ff6d](https://github.com/wasichai/wasichai-ui/commit/342ff6d06a7d9eae90a0837605f946d3b332f941))
+
+
+### Bug Fixes
+
+* **ui:** dropdown menu floats on the raised surface ([#77](https://github.com/wasichai/wasichai-ui/issues/77)) ([3977f2c](https://github.com/wasichai/wasichai-ui/commit/3977f2cd62cf7ab00c9fca1ff92d7277b53fdbb4))
+* **ui:** modal dialogs lock scroll without an inline style ([#78](https://github.com/wasichai/wasichai-ui/issues/78)) ([efba8bf](https://github.com/wasichai/wasichai-ui/commit/efba8bf0bd0e6762d51802b1f4c986b35958a3e2))
+
 ## [1.0.0](https://github.com/wasichai/wasichai-ui/compare/v0.6.0...v1.0.0) (2026-10-10)
 
 
