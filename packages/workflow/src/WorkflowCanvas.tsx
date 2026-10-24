@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+// ts 7 checks side-effect imports; vite/client declares *.css
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Background, Controls, Handle, Position, ReactFlow } from '@xyflow/react'
