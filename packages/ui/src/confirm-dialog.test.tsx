@@ -93,8 +93,8 @@ describe('ConfirmDialog', () => {
     const onConfirm = vi.fn()
     const onCancel = vi.fn()
     render(<ConfirmDialog title="Sure?" description="Really." onConfirm={onConfirm} onCancel={onCancel} />)
-    // the overlay is Dialog's: no role, no slot. it is the one element painted bg-overlay
-    const overlay = document.querySelector('.bg-overlay')!
+    // the overlay is Dialog's: no role, the dialog-overlay slot
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]')!
     expect(overlay).toBeInTheDocument()
     await user.click(overlay)
     expect(onCancel).toHaveBeenCalledTimes(1)
