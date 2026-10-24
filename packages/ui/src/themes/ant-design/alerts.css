@@ -1,0 +1,50 @@
+/* alerts: antd's Alert boxes in four tones (notice is antd's info). unlayered, so they win over tailwind's utilities
+   (Alert's classic look and the classes each place gives it); hooked on Alert's data-slot and data-tone. the text is
+   ink, as antd's message; the background is the tone's soft token (their contrast is antDesign.test.ts's) and the
+   border antd's colorXBorder (--ant-*-border of tokens.css). scoped to both halves of the theme, and never into a
+   subtree pinned to another theme */
+@scope (:is([data-theme='ant-design'], [data-theme='ant-design-dark'])) to ([data-theme]:not(:is([data-theme='ant-design'], [data-theme='ant-design-dark']))) {
+    [data-slot='alert'] {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid;
+        border-radius: var(--radius-lg);
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.5714;
+    }
+
+    [data-slot='alert'][data-tone='success'] {
+        border-color: var(--ant-success-border);
+        background: var(--success-soft);
+    }
+
+    [data-slot='alert'][data-tone='warning'] {
+        border-color: var(--ant-warning-border);
+        background: var(--warning-soft);
+    }
+
+    [data-slot='alert'][data-tone='danger'] {
+        border-color: var(--ant-danger-border);
+        background: var(--danger-soft);
+    }
+
+    [data-slot='alert'][data-tone='notice'] {
+        border-color: var(--ant-notice-border);
+        background: var(--notice-soft);
+    }
+
+    /* the text takes the width; the dismiss check stays at the top right, in antd's icon grey */
+    [data-slot='alert-text'] {
+        flex: 1;
+        min-width: 0;
+    }
+
+    [data-slot='alert-dismiss'] {
+        margin-left: 0;
+        padding: 3px;
+        color: var(--ink-muted);
+    }
+}

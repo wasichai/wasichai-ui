@@ -20,6 +20,7 @@
         },
         "./theme.css": "./dist/theme.css",
         "./themes/portal-tributario.css": "./dist/themes/portal-tributario/index.css",
+        "./themes/ant-design.css": "./dist/themes/ant-design/index.css",
         "./package.json": "./package.json"
     },
     "publishConfig": {
@@ -29,7 +30,7 @@
         "lint": "prettier --check src package.json tsconfig.json tsconfig.build.json vite.config.ts && tsc --noEmit -p tsconfig.json",
         "test": "vitest run",
         "build": "vite build && tsc -p tsconfig.build.json && yarn build:css",
-        "build:css": "cp src/theme.css dist/theme.css && mkdir -p dist/themes && cp -r src/themes/portal-tributario dist/themes/"
+        "build:css": "cp src/theme.css dist/theme.css && mkdir -p dist/themes && cp -r src/themes/portal-tributario src/themes/ant-design dist/themes/"
     },
     "dependencies": {
         "@radix-ui/react-dialog": "1.2.0",
@@ -63,7 +64,7 @@
         "react-i18next": "17.0.16",
         "tailwindcss": "4.3.3",
         "typescript": "5.9.3",
-        "vite": "8.3.0",
+        "vite": "8.3.3",
         "vitest": "5.0.4"
     }
 }

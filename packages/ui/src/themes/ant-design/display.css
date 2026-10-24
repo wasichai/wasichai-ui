@@ -1,0 +1,19 @@
+/* data display: Card as antd's card (the line split for a border, no shadow) and Badge as antd's Tag (4px corners,
+   12px text at 20px, a thin border in its own colour). unlayered, so they win over tailwind's utilities. the badge's
+   colours stay the classes' own (a tone's soft background and text), so the border follows them. scoped to both halves
+   of the theme, and never into a subtree pinned to another theme */
+@scope (:is([data-theme='ant-design'], [data-theme='ant-design-dark'])) to ([data-theme]:not(:is([data-theme='ant-design'], [data-theme='ant-design-dark']))) {
+    [data-slot='card'] {
+        border-color: var(--line);
+        box-shadow: none;
+    }
+
+    [data-slot='badge'] {
+        padding: 0 7px;
+        border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 20px;
+    }
+}

@@ -1,0 +1,153 @@
+/* ant-design: an optional theme in two halves, ant-design (light) and ant-design-dark. an app imports this sheet after
+   @wasichai/ui/theme.css and lists ANT_DESIGN_THEME and ANT_DESIGN_DARK_THEME (@wasichai/core) in config.themes, and
+   systemThemes to pair them. each block sets every base and extension token (ADR-034, ADR-035), the font, the radii and
+   the --ant-* values the partials read (antd's colours with no token: hover, borders, disabled, shadows), so the
+   partials hold no colour of their own */
+
+/* light: from the ant design spec (ant.design/docs/spec) and antd 5's default seed and map tokens: the system font
+   stack, 14px text at 22px, 6px corners (4px small, 8px large), the #f5f5f5 layout under white containers, #d9d9d9
+   borders and #f0f0f0 splits, the #001529 sider. antd's values but the ones text sits on, moved to an antd palette step
+   that holds AA: brand #1668dc (antd's #1677ff gives 4.1:1 with white; #1668dc is its dark-algorithm primary, 5.2:1),
+   danger red-7 #cf1322 (#ff4d4f gives 3.3:1), success green-8 #237804 and warning gold-9 #874d00 (#52c41a and #faad14
+   are fills, 2.2:1 and 1.9:1 as text). text is antd's alpha black flattened on white: 88% #1f1f1f, 65% #595959 */
+[data-theme='ant-design'] {
+    --surface: #ffffff;
+    --surface-muted: #f5f5f5;
+    --border: #d9d9d9;
+    --ink: #1f1f1f;
+    --ink-muted: #595959;
+    --brand: #1668dc;
+    --brand-strong: #0958d9;
+    --brand-soft: #e6f4ff;
+    --on-brand: #ffffff;
+    --shell: #001529;
+    --shell-muted: #a6adb4;
+    --shell-ink: #ffffff;
+    --danger: #cf1322;
+    --on-danger: #ffffff;
+    --success: #237804;
+    --warning: #874d00;
+    --warning-soft: #fffbe6;
+    --overlay: rgb(0 0 0 / 45%);
+
+    /* soft tints: antd's colorSuccessBg, colorErrorBg, colorInfoBg. notice is antd's info, the primary blue */
+    --success-soft: #f6ffed;
+    --danger-soft: #fff2f0;
+    --notice: #0958d9;
+    --notice-soft: #e6f4ff;
+    --link: var(--brand);
+    --focus: var(--brand);
+    --table-head: #fafafa;
+    /* antd tables are not striped */
+    --table-stripe: #ffffff;
+    --line: #f0f0f0;
+    --map-selected: #fa541c;
+
+    /* the partials' own: field hover (colorPrimaryHover), menu hover (6% black on white), colorXBorder of the alerts,
+       the disabled well and text, the outline glows and the default button's shadow */
+    --ant-control-hover: #4096ff;
+    --ant-fill-hover: #f0f0f0;
+    --ant-success-border: #b7eb8f;
+    --ant-warning-border: #ffe58f;
+    --ant-danger-border: #ffccc7;
+    --ant-notice-border: #91caff;
+    --ant-disabled-bg: rgb(0 0 0 / 4%);
+    --ant-disabled-ink: rgb(0 0 0 / 25%);
+    --ant-control-outline: rgb(5 145 255 / 10%);
+    --ant-danger-outline: rgb(255 38 5 / 6%);
+    --ant-default-shadow: rgb(0 0 0 / 2%);
+
+    --font-sans:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --radius: 6px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 8px;
+    --radius-card: 8px;
+}
+
+/* dark: antd 5.24's theme.darkAlgorithm map tokens: #141414 containers on the #000000 layout, #424242 borders and
+   #303030 splits, the #001529 sider (antd's Layout keeps it in dark), the colorXBg tints. text is antd's alpha white
+   flattened on #141414: 85% #dcdcdc, 65% #adadad. moved for AA, to the next step of antd's dark palette: brand blue-7
+   #3c89e8 (antd's primary #1668dc gives 3.6:1 on #141414), so on-brand is the dark #141414 (white on #3c89e8 is 3.5:1,
+   #141414 5.2:1), brand-strong blue-8 #65a9f3; danger red-7 #e86e6b (#dc4446 gives 4.4:1 on #141414, 4.0:1 on its
+   tint), so on-danger is #141414 too (white on #e86e6b is 3.1:1; no red holds 4.5:1 both ways); notice the brand
+   #3c89e8 (info #1668dc gives 3.3:1 on its tint). success #49aa19 and warning #d89614 are antd's (6.2:1 and 7.3:1).
+   the focus stays antd's #1668dc, a border, not text (3.6:1 on #141414, 4.1:1 on #000000) */
+[data-theme='ant-design-dark'] {
+    --surface: #141414;
+    --surface-muted: #000000;
+    --border: #424242;
+    --ink: #dcdcdc;
+    --ink-muted: #adadad;
+    --brand: #3c89e8;
+    --brand-strong: #65a9f3;
+    --brand-soft: #111a2c;
+    --on-brand: #141414;
+    --shell: #001529;
+    --shell-muted: #a6adb4;
+    --shell-ink: #ffffff;
+    --danger: #e86e6b;
+    --on-danger: #141414;
+    --success: #49aa19;
+    --warning: #d89614;
+    --warning-soft: #2b2111;
+    --overlay: rgb(0 0 0 / 45%);
+
+    /* soft tints: antd's dark colorSuccessBg, colorErrorBg, colorInfoBg */
+    --success-soft: #162312;
+    --danger-soft: #2c1618;
+    --notice: #3c89e8;
+    --notice-soft: #111a2c;
+    --link: var(--brand);
+    --focus: #1668dc;
+    /* colorFillAlter, 4% white flattened on #141414 */
+    --table-head: #1d1d1d;
+    --table-stripe: #141414;
+    --line: #303030;
+    /* volcano-6 of the dark palette */
+    --map-selected: #d84a1b;
+
+    /* the partials' own, dark: colorPrimaryHover, 12% white flattened on #141414, the dark colorXBorder, the disabled
+       well and text in white, antd's dark outline glows */
+    --ant-control-hover: #3c89e8;
+    --ant-fill-hover: #303030;
+    --ant-success-border: #274916;
+    --ant-warning-border: #594214;
+    --ant-danger-border: #5b2526;
+    --ant-notice-border: #15325b;
+    --ant-disabled-bg: rgb(255 255 255 / 8%);
+    --ant-disabled-ink: rgb(255 255 255 / 25%);
+    --ant-control-outline: rgb(0 60 180 / 15%);
+    --ant-danger-outline: rgb(238 38 56 / 11%);
+    --ant-default-shadow: rgb(255 255 255 / 4%);
+
+    --font-sans:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --radius: 6px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 8px;
+    --radius-card: 8px;
+}
+
+/* in the base layer, like the defaults of @wasichai/ui they replace: a component's own utilities still win */
+@layer base {
+    [data-theme='ant-design'] body,
+    [data-theme='ant-design-dark'] body {
+        font-size: 14px;
+        line-height: 1.5714;
+    }
+
+    /* antd draws a 3px colorPrimaryBorder ring (#91caff, 1.8:1 on white; #15325b in dark); the focus ring keeps 3:1
+       (WCAG 1.4.11) */
+    [data-theme='ant-design'] *:focus-visible,
+    [data-theme='ant-design-dark'] *:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 1px;
+    }
+}
