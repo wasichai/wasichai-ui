@@ -6,7 +6,7 @@ Primitives shared by every wasichai package: `Alert`, `Button`, `Card*`, `Dialog
 `Select*`, `Table`/`Th`/`Td`/`Badge`, `Tabs`, the `cn()` class merger, the Tailwind 4 theme
 tokens (`theme.css`) and optional theme sheets ([portal-tributario](#optional-theme-portal-tributario),
 [ant-design](#optional-theme-ant-design)).
-Five more carry the footers, dialogs and menus every list and record screen ends up needing:
+Six more carry the footers, dialogs, menus and small actions every list and record screen ends up needing:
 
 - `ConfirmDialog`: a question before something that cannot be undone (danger or primary confirm, a busy state, an error line).
 - `Pagination`: the footer of a backend page, the record count plus "Page 2 of 5" and previous/next arrows when there is more
@@ -15,6 +15,8 @@ Five more carry the footers, dialogs and menus every list and record screen ends
   where the caller knows the total (rows it slices itself, or a server page).
 - `DropdownMenu` (`DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` with `variant="danger"`): a "more actions"
   menu. Not modal by default: a modal menu leaves the page locked when one of its items opens a dialog.
+- `CopyButton`: an icon button that copies a value (an id, a URL) and shows a check for a moment; the caller passes the
+  translated `label` and `copiedLabel`.
 - `PdfDialog`: a generated PDF embedded in a dialog, to see, print or download; it loads the blob itself and revokes its URL on close.
 
 `Alert` is a message in one of four tones (`success`, `warning`, `danger`, `notice`), with an optional bold `title` and,
@@ -159,6 +161,7 @@ The components carry `data-slot` attributes that a theme sheet can style:
 |                       | `native-select`      | its rows-per-page `<select>`                                                                 |
 | `ConfirmDialog`       | `confirm-dialog`     | the dialog's content box (the overlay and the X are `Dialog`'s)                              |
 | `PdfDialog`           | `pdf-dialog`         | the dialog's content box                                                                     |
+| `CopyButton`          | `copy-button`        | in place of `button`; keeps `data-variant="ghost"` and `data-size="icon"`                    |
 | `DropdownMenuContent` | `dropdown-menu`      | the menu box                                                                                 |
 | `DropdownMenuItem`    | `dropdown-menu-item` | `data-variant="danger"` on a destructive item                                                |
 | `Alert`               | `alert`              | `data-tone` (`success`, `warning`, `danger`, `notice`)                                       |

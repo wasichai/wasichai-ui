@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Copy, Pencil, Plus, Power, PowerOff, RotateCw, Trash2, X } from 'lucide-react'
-import { Alert, Badge, Button, Card, CardBody, CardHeader, CardTitle, Input, Label, Table, Td, Th } from '@wasichai/ui'
+import { Alert, Button, Card, CardBody, CardHeader, CardTitle, Input, Label, Table, Td, Th } from '@wasichai/ui'
 import { describeError } from '../../api/client'
 import { EmptyState, ErrorState, LoadingState } from '../../components/query-state/QueryState'
 import { PageHeader } from '../../shell/PageHeader'
 import { useCreateServiceAccount, useDeleteServiceAccount, useRoles, useRotateServiceAccountSecret, useServiceAccounts, useUpdateServiceAccount } from './api'
+import { RoleBadges } from './RoleBadges'
 import { PROTECTED_ROLE, SERVICE_ACCOUNT_NAME, type ServiceAccount, type ServiceAccountWithSecret } from './types'
 
 const CHECKBOX = 'h-4 w-4 accent-brand'
@@ -280,15 +281,7 @@ export function ServiceAccountsPage() {
                     <Td className="font-medium">{account.name}</Td>
                     <Td className="font-mono text-xs">{account.clientId}</Td>
                     <Td>
-                      {account.roles.length === 0 ? (
-                        <span className="text-xs text-ink-muted">{t('admin.serviceAccounts.noRoles')}</span>
-                      ) : (
-                        <span className="flex flex-wrap gap-1">
-                          {account.roles.map((role) => (
-                            <Badge key={role}>{role}</Badge>
-                          ))}
-                        </span>
-                      )}
+                      <RoleBadges names={account.roles} roles={roles} empty={t('admin.serviceAccounts.noRoles')} />
                     </Td>
                     <Td>
                       <span className={account.enabled ? 'text-success' : 'text-ink-muted'}>

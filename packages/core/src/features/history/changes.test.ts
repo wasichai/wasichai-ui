@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { describeChanges, formatAuditValue, relativeTime } from './changes'
+import { absoluteTime, describeChanges, formatAuditValue, relativeTime } from './changes'
 import { createWasichaiI18n } from '../../i18n/createI18n'
 import { issueModule } from '../../test/fakeModules'
 import type { AuditEntry } from '../../types/audit'
@@ -172,5 +172,27 @@ describe('relativeTime', () => {
 
   it('gives back the raw value when the date is unreadable', () => {
     expect(relativeTime('not-a-date', now)).toBe('not-a-date')
+  })
+})
+
+describe('absoluteTime', () => {
+  // 16:30 UTC is 11:30 in Lima
+  const iso = '2026-09-17T16:30:00Z'
+
+  it('reads the wall time of an IANA zone', () => {
+    expect(absoluteTime(iso, 'America/Lima')).toContain('11:30')
+  })
+
+  it('reads the wall time of a fixed offset', () => {
+    expect(absoluteTime(iso, '-05:00')).toBe(absoluteTime(iso, 'America/Lima'))
+    expect(absoluteTime(iso, 'Z')).toContain('16:30')
+  })
+
+  it('keeps the browser zone without one', () => {
+    expect(absoluteTime(iso)).toBe(new Date(iso).toLocaleString('es'))
+  })
+
+  it('gives back what it cannot read', () => {
+    expect(absoluteTime('ayer', 'America/Lima')).toBe('ayer')
   })
 })
