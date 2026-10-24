@@ -140,10 +140,11 @@ same text as `_other`); an override of a plural string in Spanish sets all three
 | `placeholder`    | a field's example text (AA on `surface`)                                        |
 
 In `light` and `dark` the extension tokens alias a base token (`link` and `focus` are `brand`, `table-head` is
-`surface-muted`, `line` and `border-control` are `border`, `surface-raised` is `surface`, `placeholder` is `ink-muted`) or tint one, so nothing drawn before changes. The exception is `bg-danger-soft`:
-`@wasichai/documents` already used it for its error messages, where it generated nothing, and now it paints a soft
-red. Light `success` is `oklch(52% 0.13 155)`, darker than before, so success text passes AA on `surface` (5.0:1) and
-on `bg-success-soft` (4.6:1).
+`surface-muted`, `line` and `border-control` are `border`, `surface-raised` is `surface`, `placeholder` is
+`ink-muted`) or tint one, so nothing drawn before changes. The exception is `bg-danger-soft`: `@wasichai/documents`
+already used it for its error messages, where it generated nothing, and now it paints a soft red. Light `success` is
+`oklch(52% 0.13 155)`, darker than before, so success text passes AA on `surface` (5.0:1) and on `bg-success-soft`
+(4.6:1).
 
 A theme may also set `--font-sans` and `--radius`, `--radius-sm`..`--radius-xl`, `--radius-card`: the document font
 and the `rounded*` utilities read them (the bare `rounded` too).
@@ -168,6 +169,7 @@ The components carry `data-slot` attributes that a theme sheet can style:
 | `Pagination`          | `pagination`         | `data-mode="pages"`: the record count and "Page 2 of 5"                                      |
 | `PageSizePagination`  | `pagination`         | `data-mode="range"`: the rows picker and the "1–10 of 47 records" range                      |
 |                       | `native-select`      | its rows-per-page `<select>`                                                                 |
+| `Dialog`              | `dialog-overlay`     | the veil behind every modal dialog                                                           |
 | `ConfirmDialog`       | `confirm-dialog`     | the dialog's content box (the overlay and the X are `Dialog`'s)                              |
 | `PdfDialog`           | `pdf-dialog`         | the dialog's content box                                                                     |
 | `CopyButton`          | `copy-button`        | in place of `button`; keeps `data-variant="ghost"` and `data-size="icon"`                    |
@@ -193,6 +195,16 @@ restyles the component, but it also wins over a caller's classes for the same pr
 own default classes from a caller's. A sheet therefore sets only what its tokens cannot, and puts in `@layer base` the
 defaults a class may override. An app component may carry the same hooks
 (`data-slot="button" data-variant="primary"`) to be painted like the library's under such a theme.
+
+## Content Security Policy
+
+`Dialog`, and with it `ConfirmDialog` and `PdfDialog`, work under a strict CSP (`style-src 'self'`, no
+`'unsafe-inline'`, no nonce): the dialog locks the page scroll through `element.style`, which a CSP does not block,
+instead of the `<style>` element Radix's overlay injects through react-remove-scroll
+([#58](https://github.com/wasichai/wasichai-ui/issues/58)). `Select` still injects that `<style>` while its list is
+open, Radix offers no way around it: under a strict CSP the page does not lock and the browser logs a `style-src-elem`
+violation, the list works. To silence it, allow the style with a nonce in `__webpack_nonce__`, which
+react-style-singleton reads, or with `'unsafe-inline'` in `style-src`.
 
 ## Optional theme: portal-tributario
 
