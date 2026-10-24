@@ -30,7 +30,7 @@
         "build": "vite build && tsc -p tsconfig.build.json && cp src/print.css dist/print.css"
     },
     "dependencies": {
-        "lucide-react": "^1.57.0",
+        "lucide-react": "^1.61.0",
         "@tiptap/core": "3.32.0",
         "@tiptap/react": "3.32.0",
         "@tiptap/starter-kit": "3.32.0"
