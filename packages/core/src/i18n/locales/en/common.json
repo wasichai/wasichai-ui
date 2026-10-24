@@ -252,5 +252,9 @@
             "appendOnly": "One of the two objects is append-only: links cannot change.",
             "apiOnly": "One of the two objects is written only by the application: links are read-only."
         }
+    },
+    "modelSource": {
+        "title": "The model lives in the repository.",
+        "inRepository": "This app's repository is the source of truth for its objects and workflows: what you change here is not saved there, and the next deployment may undo it."
     }
 }

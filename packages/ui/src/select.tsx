@@ -33,7 +33,10 @@ export function SelectContent({ className, children, ...props }: ComponentProps<
       <SelectPrimitive.Content
         position="popper"
         sideOffset={4}
-        className={cn('z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-auto rounded-md border border-border bg-surface p-1 shadow-lg', className)}
+        className={cn(
+          'z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-auto rounded-md border border-border bg-surface-raised p-1 shadow-lg',
+          className
+        )}
         {...props}
       >
         <SelectPrimitive.Viewport>{children}</SelectPrimitive.Viewport>

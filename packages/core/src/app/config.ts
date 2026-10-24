@@ -21,6 +21,9 @@ export interface WasichaiConfig {
   systemThemes?: SystemThemes
   // IANA zone DynamicForm reads and writes DATETIME wall times in ('America/Lima'). unset = the browser's
   timeZone?: string
+  // the app's repository is the source of truth of its model: the object and workflow editors warn that
+  // what is changed there may be undone by the next deployment. unset = no notice
+  modelInRepository?: boolean
 }
 
 export const DEFAULT_CONFIG: WasichaiConfig = {

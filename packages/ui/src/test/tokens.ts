@@ -31,6 +31,7 @@ export const EXTENSION = [
   'table-stripe',
   'line',
   'map-selected',
+  'surface-raised',
   'border-control',
   'placeholder'
 ]

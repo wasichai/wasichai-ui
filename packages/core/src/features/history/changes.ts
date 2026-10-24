@@ -1,4 +1,5 @@
 import { getI18n } from 'react-i18next'
+import { fixedOffset } from '../../lib/timeZone'
 import type { AuditValueFormatter } from '../../registry/contract'
 import type { AuditEntry, ChangeDescription } from '../../types/audit'
 import type { ObjectDefinition } from '../../types/metadata'
@@ -89,8 +90,14 @@ export function relativeTime(iso: string, now: Date | number = Date.now()): stri
   return format.format(amount, unit)
 }
 
-// the exact moment, for the title attribute the relative time hides.
-export function absoluteTime(iso: string): string {
+// the exact moment, for the title attribute the relative time hides. with a zone (config.timeZone),
+// the wall time there; without one, the browser's.
+export function absoluteTime(iso: string, timeZone?: string): string {
   const date = new Date(iso)
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString(language())
+  if (Number.isNaN(date.getTime())) return iso
+  if (!timeZone) return date.toLocaleString(language())
+  // an offset zone is shifted by hand and read as UTC: an engine before 2024 throws on it (ADR-064)
+  const offset = fixedOffset(timeZone)
+  if (offset !== null) return new Date(date.getTime() + offset).toLocaleString(language(), { timeZone: 'UTC' })
+  return date.toLocaleString(language(), { timeZone })
 }

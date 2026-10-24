@@ -18,6 +18,11 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('button', { name: CANCEL })).toBeInTheDocument()
   })
 
+  it('floats on the raised surface a theme can lift', () => {
+    render(<ConfirmDialog title="Delete this record?" description="It cannot be undone." onConfirm={noop} onCancel={noop} />)
+    expect(screen.getByRole('dialog')).toHaveClass('bg-surface-raised')
+  })
+
   it('takes the labels of the two buttons from the caller', () => {
     render(<ConfirmDialog title="Sure?" description="Really." confirmLabel="Yes, drop it" cancelLabel="No, keep it" onConfirm={noop} onCancel={noop} />)
     expect(screen.getByRole('button', { name: 'Yes, drop it' })).toBeInTheDocument()

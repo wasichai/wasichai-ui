@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LayoutGrid, Plus, Trash2 } from 'lucide-react'
-import { PageHeader } from '@wasichai/core'
-import { Button } from '@wasichai/ui'
+import { LayoutGrid, MoreHorizontal, Plus, Trash2 } from 'lucide-react'
+import { ModelInRepositoryNotice, PageHeader } from '@wasichai/core'
+import { Button, ConfirmDialog, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@wasichai/ui'
 import { Card, CardBody } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
@@ -30,6 +30,8 @@ export function WorkflowBuilderPage() {
   const [error, setError] = useState<string | null>(null)
   const [violations, setViolations] = useState<{ field: string; message: string }[]>([])
   const [refusal, setRefusal] = useState<string | null>(null)
+  const [asking, setAsking] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // react-query keeps the last good data after an error, so a fresh 404 (deleted just now)
   // would still look like a stored workflow. the error wins.
@@ -197,15 +199,17 @@ export function WorkflowBuilderPage() {
     }
   }
 
+  // the dialog stays open on a refusal and says why there
   const destroy = async () => {
     if (!stored) return
-    if (!window.confirm(t('workflows.confirmDelete', { object: objectName }))) return
+    setDeleteError(null)
     setError(null)
     setViolations([])
     try {
       await remove.mutateAsync(objectName)
+      setAsking(false)
     } catch (cause) {
-      setError(cause instanceof ApiError ? cause.message : String(cause))
+      setDeleteError(cause instanceof ApiError ? cause.message : String(cause))
     }
   }
 
@@ -213,7 +217,20 @@ export function WorkflowBuilderPage() {
     <>
       <PageHeader title={t('workflows.title')} subtitle={t('workflows.subtitle')} />
 
+      {asking && stored ? (
+        <ConfirmDialog
+          title={t('workflows.delete')}
+          description={t('workflows.confirmDelete', { object: objectName })}
+          confirmLabel={t('workflows.delete')}
+          busy={remove.isPending}
+          error={deleteError}
+          onConfirm={() => void destroy()}
+          onCancel={() => setAsking(false)}
+        />
+      ) : null}
+
       <div className="space-y-5 p-8">
+        <ModelInRepositoryNotice />
         <Card>
           <CardBody className="flex flex-wrap items-end justify-between gap-4">
             <div className="w-full max-w-sm space-y-1.5">
@@ -241,15 +258,31 @@ export function WorkflowBuilderPage() {
                   <LayoutGrid className="h-4 w-4" />
                   {t('workflows.autoLayout')}
                 </Button>
-                {stored ? (
-                  <Button variant="danger" size="sm" onClick={() => void destroy()} disabled={remove.isPending}>
-                    <Trash2 className="h-4 w-4" />
-                    {t('workflows.delete')}
-                  </Button>
-                ) : null}
                 <Button size="sm" onClick={() => void submit()} disabled={save.isPending || problems.length > 0}>
                   {t('workflows.save')}
                 </Button>
+                {/* deleting is rare and cannot be undone: out of the toolbar, behind a question */}
+                {stored ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label={t('workflows.moreActions')} title={t('workflows.moreActions')}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        variant="danger"
+                        onSelect={() => {
+                          setDeleteError(null)
+                          setAsking(true)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        {t('workflows.delete')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
               </div>
             ) : null}
           </CardBody>

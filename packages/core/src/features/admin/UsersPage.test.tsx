@@ -78,8 +78,16 @@ describe('UsersPage', () => {
 
     expect(await screen.findByText('Ana Admin')).toBeInTheDocument()
     expect(screen.getByText('beto@wasichai.test')).toBeInTheDocument()
-    expect(screen.getByText('INSPECTOR')).toBeInTheDocument()
     expect(screen.getByText('Inactivo')).toBeInTheDocument()
+  })
+
+  it('shows each role by its label, with the code as the title', async () => {
+    stubApi()
+    renderWithProviders(<UsersPage />, { user: signedIn })
+
+    const badge = await screen.findByTitle('INSPECTOR')
+    expect(badge).toHaveTextContent('Inspector')
+    expect(screen.queryByText('INSPECTOR')).not.toBeInTheDocument()
   })
 
   it('refuses to let the signed-in user delete themselves', async () => {

@@ -31,6 +31,10 @@ describe('theme.css under tailwind', () => {
     expect(await build(['bg-danger-soft'])).toMatch(/\.bg-danger-soft\s*\{\s*background-color:\s*var\(--danger-soft\);/)
   })
 
+  it('generates the raised surface floating layers sit on', async () => {
+    expect(await build(['bg-surface-raised'])).toMatch(/\.bg-surface-raised\s*\{\s*background-color:\s*var\(--surface-raised\);/)
+  })
+
   it('generates the control border and the placeholder colors', async () => {
     expect(await build(['border-border-control'])).toMatch(/\.border-border-control\s*\{\s*border-color:\s*var\(--border-control\);/)
     expect(await build(['placeholder:text-placeholder'])).toMatch(/color:\s*var\(--placeholder\);/)

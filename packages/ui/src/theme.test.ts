@@ -22,7 +22,15 @@ describe('theme.css', () => {
 })
 
 // light and dark alias these, so adding them changed nothing already drawn
-const ALIASES = { link: 'brand', focus: 'brand', 'table-head': 'surface-muted', line: 'border', 'border-control': 'border', placeholder: 'ink-muted' }
+const ALIASES = {
+  link: 'brand',
+  focus: 'brand',
+  'table-head': 'surface-muted',
+  line: 'border',
+  'surface-raised': 'surface',
+  'border-control': 'border',
+  placeholder: 'ink-muted'
+}
 
 // text on the background it sits on: AA, 4.5:1
 const TEXT_ON = [
@@ -46,7 +54,7 @@ describe.each(['light', 'dark'])('%s theme', (theme) => {
     expect(tokens(`[data-theme='${theme}']`)).toEqual([...BASE, ...EXTENSION].sort())
   })
 
-  it('aliases link, focus, table-head, line, border-control and placeholder to base tokens', () => {
+  it('aliases link, focus, table-head, line, surface-raised, border-control and placeholder to base tokens', () => {
     for (const [token, base] of Object.entries(ALIASES)) expect(block.get(`--${token}`), token).toBe(`var(--${base})`)
   })
 

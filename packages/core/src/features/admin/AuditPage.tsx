@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
-import { Button } from '@wasichai/ui'
+import { Button, CopyButton } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
@@ -15,6 +15,7 @@ import { OperationBadge } from '../history/OperationBadge'
 import { useAuditExtensions } from '../history/useAuditExtensions'
 import type { AuditEntry, AuditOperation } from '../../types/audit'
 import { useObjectDefinition, useObjects } from '../../queries'
+import { useWasichaiConfig } from '../../app/context'
 
 const OPERATIONS: AuditOperation[] = ['CREATE', 'UPDATE', 'DELETE']
 const LIMITS = [25, 50, 100, 200]
@@ -134,6 +135,7 @@ export function AuditPage() {
 
 function AuditRow({ entry }: { entry: AuditEntry }) {
   const { t } = useTranslation()
+  const { timeZone } = useWasichaiConfig()
   const [open, setOpen] = useState(false)
   // only an update carries changes, and only an open row needs the object metadata
   const expandable = entry.operation === 'UPDATE' && entry.changes.length > 0
@@ -152,7 +154,16 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
           <OperationBadge operation={entry.operation} />
         </Td>
         <Td>{entry.objectName}</Td>
-        <Td className="font-mono text-xs text-ink-muted">{entry.recordId ?? '—'}</Td>
+        <Td className="font-mono text-xs whitespace-nowrap text-ink-muted">
+          {entry.recordId ? (
+            <span className="inline-flex items-center gap-1">
+              {entry.recordId}
+              <CopyButton value={entry.recordId} label={t('history.copyId')} copiedLabel={t('history.copied')} />
+            </span>
+          ) : (
+            '—'
+          )}
+        </Td>
         <Td>
           <AuditActor entry={entry} />
         </Td>
@@ -160,10 +171,17 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
         <Td className="max-w-xs truncate" title={entry.reason ?? undefined}>
           {entry.reason ?? '—'}
         </Td>
-        <Td className="text-xs text-ink-muted">
-          <time dateTime={entry.occurredAt} title={absoluteTime(entry.occurredAt)}>
-            {relativeTime(entry.occurredAt)}
-          </time>
+        <Td className="text-xs whitespace-nowrap text-ink-muted">
+          {/* with config.timeZone the exact time in that zone shows, the relative one moves to the title */}
+          {timeZone ? (
+            <time dateTime={entry.occurredAt} title={relativeTime(entry.occurredAt)}>
+              {absoluteTime(entry.occurredAt, timeZone)}
+            </time>
+          ) : (
+            <time dateTime={entry.occurredAt} title={absoluteTime(entry.occurredAt)}>
+              {relativeTime(entry.occurredAt)}
+            </time>
+          )}
         </Td>
       </tr>
       {expandable && open ? (

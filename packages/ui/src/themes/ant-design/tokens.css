@@ -42,6 +42,7 @@
     --table-stripe: #ffffff;
     --line: #f0f0f0;
     --map-selected: #fa541c;
+    --surface-raised: var(--surface);
     --border-control: var(--border);
     --placeholder: var(--ink-muted);
 
@@ -111,6 +112,7 @@
     --line: #303030;
     /* volcano-6 of the dark palette */
     --map-selected: #d84a1b;
+    --surface-raised: var(--surface);
     --border-control: var(--border);
     --placeholder: var(--ink-muted);
 
