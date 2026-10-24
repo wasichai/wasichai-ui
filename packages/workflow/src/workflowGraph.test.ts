@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   initialState,
+  localized,
   layoutStates,
   outgoingTransitions,
   refuseConnection,
@@ -89,7 +90,27 @@ describe('outgoingTransitions', () => {
   })
 })
 
+describe('localized', () => {
+  const labels = { es: 'Aprobar', en: 'Approve', pt: 'Aprovar' }
+
+  it('takes the text of the language', () => {
+    expect(localized('Aprobar', labels, 'en')).toBe('Approve')
+  })
+
+  it('falls back to the primary subtag, then to the label', () => {
+    expect(localized('Aprobar', labels, 'pt-BR')).toBe('Aprovar')
+    expect(localized('Aprobar', labels, 'qu')).toBe('Aprobar')
+    expect(localized('Aprobar', undefined, 'en')).toBe('Aprobar')
+  })
+})
+
 describe('stateLabel', () => {
+  it('reads the label of the language it is given', () => {
+    const states = definition().states.map((state) => (state.name === 'review' ? { ...state, labels: { en: 'In review' } } : state))
+    expect(stateLabel(states, 'review', '', 'en')).toBe('In review')
+    expect(stateLabel(states, 'review', '', 'es')).toBe('En revisión')
+  })
+
   it('resolves a state name to its label', () => {
     expect(stateLabel(definition().states, 'review')).toBe('En revisión')
   })

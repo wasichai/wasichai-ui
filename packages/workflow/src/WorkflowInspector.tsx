@@ -5,7 +5,7 @@ import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
-import { useRoles } from '@wasichai/core'
+import { useRoles, useWasichaiConfig } from '@wasichai/core'
 import type { StateType, WorkflowPayload, WorkflowState, WorkflowTransition } from './types'
 
 const STATE_TYPES: StateType[] = ['INITIAL', 'INTERMEDIATE', 'FINAL']
@@ -88,6 +88,7 @@ function StateFields({ state, onPatch }: { state: WorkflowState; onPatch: (patch
         <Label htmlFor="state-label">{t('workflows.stateLabel')}</Label>
         <Input id="state-label" value={state.label} onChange={(event) => onPatch({ label: event.target.value })} />
       </div>
+      <LabelsFields prefix="state" labels={state.labels} onChange={(labels) => onPatch({ labels })} />
       <div className="space-y-1.5">
         <Label>{t('workflows.stateType')}</Label>
         <Select value={state.type} onValueChange={(value) => onPatch({ type: value as StateType })}>
@@ -129,6 +130,7 @@ function TransitionFields({
         <Label htmlFor="transition-label">{t('workflows.label')}</Label>
         <Input id="transition-label" value={transition.label} onChange={(event) => onPatch({ label: event.target.value })} />
       </div>
+      <LabelsFields prefix="transition" labels={transition.labels} onChange={(labels) => onPatch({ labels })} />
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>{t('workflows.from')}</Label>
@@ -158,6 +160,35 @@ function TransitionFields({
         <p className="text-xs text-ink-muted">{t('workflows.rolesHint')}</p>
       </div>
     </>
+  )
+}
+
+// one text per app language (ADR-070). an empty one is dropped: that language shows the label above
+function LabelsFields({
+  prefix,
+  labels = {},
+  onChange
+}: {
+  prefix: string
+  labels?: Record<string, string>
+  onChange: (labels: Record<string, string>) => void
+}) {
+  const { t } = useTranslation(['workflow', 'common'])
+  const { languages } = useWasichaiConfig()
+  const set = (language: string, text: string) => {
+    const rest = Object.fromEntries(Object.entries(labels).filter(([key]) => key !== language))
+    onChange(text.trim() ? { ...rest, [language]: text } : rest)
+  }
+  return (
+    <div className="space-y-2">
+      {languages.map((language) => (
+        <div key={language} className="space-y-1.5">
+          <Label htmlFor={`${prefix}-label-${language}`}>{t('workflows.labelIn', { language })}</Label>
+          <Input id={`${prefix}-label-${language}`} value={labels[language] ?? ''} onChange={(event) => set(language, event.target.value)} />
+        </div>
+      ))}
+      <p className="text-xs text-ink-muted">{t('workflows.labelsHint')}</p>
+    </div>
   )
 }
 

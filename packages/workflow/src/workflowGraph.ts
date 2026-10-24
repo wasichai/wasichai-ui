@@ -3,10 +3,17 @@ import type { DefinitionProblem, WorkflowDefinition, WorkflowState, WorkflowTran
 // pure helpers over a workflow definition. no react, no fetch: the canvas, the inspector
 // and the panel all reason about the graph, and the tests only need these.
 
+// the text for a language: its own, then its primary subtag's (pt for pt-BR), then the plain label
+export function localized(label: string, labels: Record<string, string> | undefined, language: string | undefined): string {
+  if (!labels || !language) return label
+  return labels[language] || labels[language.split('-')[0]] || label
+}
+
 // name -> label, falling back to the raw name for a state the definition no longer has
-export function stateLabel(states: WorkflowState[], name: string | null | undefined, fallback = ''): string {
+export function stateLabel(states: WorkflowState[], name: string | null | undefined, fallback = '', language?: string): string {
   if (!name) return fallback
-  return states.find((state) => state.name === name)?.label || name
+  const state = states.find((item) => item.name === name)
+  return (state && localized(state.label, state.labels, language)) || name
 }
 
 export function findState(states: WorkflowState[], name: string | null | undefined) {

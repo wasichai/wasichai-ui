@@ -10,6 +10,8 @@ export interface WorkflowState {
   // where the editor put the box. absent means nobody placed it yet.
   x?: number | null
   y?: number | null
+  // a label per language tag ({ es, en }); `label` covers any language it lacks (ADR-070)
+  labels?: Record<string, string>
 }
 
 // empty roles means anyone who may update the record
@@ -19,6 +21,7 @@ export interface WorkflowTransition {
   from: string
   to: string
   roles: string[]
+  labels?: Record<string, string>
 }
 
 export interface WorkflowDefinition {
@@ -51,6 +54,10 @@ export interface AvailableTransition {
   toLabel: string
   allowed: boolean
   reason: string | null
+  // per language, as the definition holds them. useAvailableTransitions already put the active
+  // language's text in label and toLabel
+  labels?: Record<string, string>
+  toLabels?: Record<string, string>
 }
 
 // records carry their state once the object has a workflow. metadata.ts stays untouched.

@@ -10,7 +10,7 @@ import type { AvailableTransition, RecordWithState, Workflow } from './types'
 
 // the panel's strings live in the workflow namespace. core declares the 'automation' nav group
 // workflowModule's nav item points at, and createRegistry validates that eagerly
-const renderWithProviders = (ui: ReactElement) => renderBase(ui, { modules: [coreModule, workflowModule()] })
+const renderWithProviders = (ui: ReactElement, language?: string) => renderBase(ui, { modules: [coreModule, workflowModule()], language })
 
 // the mock factories run at import time, so the mutable fixture has to be hoisted with them
 const { state } = vi.hoisted(() => ({
@@ -100,6 +100,13 @@ describe('WorkflowPanel', () => {
   it('shows the label of the state the record is in', () => {
     renderWithProviders(<WorkflowPanel objectName="predio" recordId="r-1" />)
     expect(screen.getByTestId('workflow-state')).toHaveTextContent('En revisión')
+  })
+
+  it('shows the state in the active language when the workflow has it', () => {
+    const states = workflow.definition.states.map((item) => (item.name === 'review' ? { ...item, labels: { en: 'In review' } } : item))
+    state.workflow = { ...workflow, definition: { ...workflow.definition, states } }
+    renderWithProviders(<WorkflowPanel objectName="predio" recordId="r-1" />, 'en')
+    expect(screen.getByTestId('workflow-state')).toHaveTextContent('In review')
   })
 
   it('falls back to a placeholder when the record has no state yet', () => {

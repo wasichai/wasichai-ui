@@ -18,7 +18,7 @@ interface WorkflowPanelProps {
 // the workflow of one record: where it is and where it can go. an object without a workflow
 // draws nothing at all, so a component left on a page never leaves an empty box.
 export function WorkflowPanel({ objectName, recordId }: WorkflowPanelProps) {
-  const { t } = useTranslation(['workflow', 'common'])
+  const { t, i18n } = useTranslation(['workflow', 'common'])
   const workflow = useWorkflow(objectName)
   const transitions = useAvailableTransitions(objectName, recordId)
   // already in cache: the detail page fetched it. here only for `state`.
@@ -43,7 +43,7 @@ export function WorkflowPanel({ objectName, recordId }: WorkflowPanelProps) {
       <CardHeader className="flex items-center justify-between gap-3">
         <CardTitle>{workflow.data.label || t('workflows.panelTitle')}</CardTitle>
         <Badge data-testid="workflow-state" className={cn('px-3 py-1 text-sm', stateTone(findState(states, current)?.type))}>
-          {stateLabel(states, current, t('workflows.unknownState'))}
+          {stateLabel(states, current, t('workflows.unknownState'), i18n.language)}
         </Badge>
       </CardHeader>
       <CardBody className="space-y-3">
