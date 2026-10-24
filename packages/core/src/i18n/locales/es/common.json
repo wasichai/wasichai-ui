@@ -255,5 +255,9 @@
             "appendOnly": "Uno de los dos objetos es de solo anexado: no se vincula ni se desvincula.",
             "apiOnly": "Uno de los dos objetos solo lo escribe la aplicación: los vínculos son de solo lectura."
         }
+    },
+    "modelSource": {
+        "title": "El modelo vive en el repositorio.",
+        "inRepository": "La fuente de verdad de los objetos y los flujos de esta aplicación es su repositorio: lo que cambies aquí no queda en él y el próximo despliegue puede deshacerlo."
     }
 }

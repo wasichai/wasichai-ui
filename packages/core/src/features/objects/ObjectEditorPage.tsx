@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
+import { ModelInRepositoryNotice } from '../../components/model-source/ModelInRepositoryNotice'
 import { Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Input, Textarea } from '@wasichai/ui'
@@ -153,6 +154,7 @@ export function ObjectEditorPage() {
       />
 
       <div className="space-y-5 p-8">
+        <ModelInRepositoryNotice />
         {error ? (
           <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 px-4 py-2.5 text-sm text-danger">
             {error}
