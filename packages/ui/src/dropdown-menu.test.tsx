@@ -28,6 +28,7 @@ describe('DropdownMenu', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     const item = screen.getByRole('menuitem', { name: 'Eliminar flujo' })
     expect(screen.getByRole('menu')).toHaveAttribute('data-slot', 'dropdown-menu')
+    expect(screen.getByRole('menu')).toHaveClass('bg-surface-raised')
     expect(item).toHaveAttribute('data-variant', 'danger')
     await userEvent.click(item)
 

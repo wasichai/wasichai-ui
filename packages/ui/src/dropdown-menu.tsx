@@ -17,7 +17,7 @@ export function DropdownMenuContent({ className, ...props }: ComponentProps<type
         data-slot="dropdown-menu"
         align="end"
         sideOffset={4}
-        className={cn('z-50 min-w-40 rounded-md border border-border bg-surface p-1 shadow-lg', className)}
+        className={cn('z-50 min-w-40 rounded-md border border-border bg-surface-raised p-1 shadow-lg', className)}
         {...props}
       />
     </MenuPrimitive.Portal>
