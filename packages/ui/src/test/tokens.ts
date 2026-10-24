@@ -31,7 +31,9 @@ export const EXTENSION = [
   'table-stripe',
   'line',
   'map-selected',
-  'surface-raised'
+  'surface-raised',
+  'border-control',
+  'placeholder'
 ]
 
 // the custom properties a declaration block sets, sorted

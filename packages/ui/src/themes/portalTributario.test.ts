@@ -98,7 +98,7 @@ describe('tokens.css', () => {
 
   it('reaches WCAG AA (4.5:1) on every text pair', () => {
     const pairs: [string, string][] = [
-      ...['ink', 'ink-muted', 'brand-strong', 'danger', 'success', 'warning', 'link'].map((text): [string, string] => [text, 'surface']),
+      ...['ink', 'ink-muted', 'placeholder', 'brand-strong', 'danger', 'success', 'warning', 'link'].map((text): [string, string] => [text, 'surface']),
       ['on-brand', 'brand'],
       ['shell-ink', 'shell'],
       ['on-danger', 'danger'],

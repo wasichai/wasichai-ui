@@ -34,6 +34,8 @@
     --line: #e4e4e4;
     --map-selected: #c9302c;
     --surface-raised: var(--surface);
+    --border-control: var(--border);
+    --placeholder: var(--ink-muted);
 
     --font-sans: Arial, Helvetica, sans-serif;
     --radius: 3px;

@@ -39,6 +39,9 @@
     --map-selected: #e8590c;
     /* menus, popovers, drawers and dialogs float over the page; an app may lift them off it (dark themes) */
     --surface-raised: var(--surface);
+    /* a field's border (Input, Textarea, Select) and its example text. the placeholder is full ink-muted: at 60% it missed AA */
+    --border-control: var(--border);
+    --placeholder: var(--ink-muted);
 }
 
 [data-theme='dark'] {
@@ -74,6 +77,9 @@
     --map-selected: #e8590c;
     /* menus, popovers, drawers and dialogs float over the page; an app may lift them off it (dark themes) */
     --surface-raised: var(--surface);
+    /* a field's border (Input, Textarea, Select) and its example text. the placeholder is full ink-muted: at 60% it missed AA */
+    --border-control: var(--border);
+    --placeholder: var(--ink-muted);
 }
 
 @theme inline {
@@ -106,6 +112,8 @@
     --color-line: var(--line);
     --color-map-selected: var(--map-selected);
     --color-surface-raised: var(--surface-raised);
+    --color-border-control: var(--border-control);
+    --color-placeholder: var(--placeholder);
 }
 
 @theme {
