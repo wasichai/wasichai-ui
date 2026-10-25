@@ -29,6 +29,7 @@ describe('gisModule', () => {
     const links = createLinks(createRegistry([coreModule, gisModule()]))
     expect(links.to('gis:map')).toBe('/gis/map')
     expect(links.to('gis:layers')).toBe('/gis/layers')
+    expect(links.to('gis:mapViews')).toBe('/gis/map-views')
   })
 
   it('moves every route when the app picks another base path', () => {
@@ -37,14 +38,14 @@ describe('gisModule', () => {
     expect(links.to('gis:layers')).toBe('/x/layers')
   })
 
-  it('puts maps and layers in its own sidebar group, map views as a placeholder', () => {
+  it('puts maps, layers and map views in its own sidebar group', () => {
     const registry = createRegistry([coreModule, gisModule()])
     const group = registry.navGroups.find((candidate) => candidate.id === 'gis')!
     expect(group.labelKey).toBe('gis:nav.gis')
     expect(group.items.map((item) => [item.labelKey, item.to, item.disabled])).toEqual([
       ['gis:nav.maps', '/gis/map', false],
       ['gis:nav.layers', '/gis/layers', false],
-      ['gis:nav.mapViews', null, true]
+      ['gis:nav.mapViews', '/gis/map-views', false]
     ])
   })
 

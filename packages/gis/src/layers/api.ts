@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@wasichai/core'
+import type { AttributeStyle } from '../lib/style'
 import type { GeoServerServices, LayerStatus } from './types'
 
 const LAYERS_KEY = ['gis', 'layers']
@@ -27,10 +28,12 @@ export function useGeoServerServices() {
   })
 }
 
+// a style publishes the layer with its SLD; none sets geoserver's own back
 export function usePublishLayer() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ objectName, geometryName }: LayerKey) => api<LayerStatus>(`/gis/layers/${objectName}/${geometryName}`, { method: 'POST' }),
+    mutationFn: ({ objectName, geometryName, style }: LayerKey & { style?: AttributeStyle | null }) =>
+      api<LayerStatus>(`/gis/layers/${objectName}/${geometryName}`, style ? { method: 'POST', body: JSON.stringify({ style }) } : { method: 'POST' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: LAYERS_KEY })
   })
 }

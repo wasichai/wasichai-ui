@@ -33,13 +33,14 @@ export function gisModule(options: GisModuleOptions = {}): WasichaiModule {
     basePath: options.basePath ?? 'gis',
     routes: [
       { id: 'map', path: 'map', lazy: () => import('./map/MapPage').then((module) => ({ default: module.MapPage })) },
-      { id: 'layers', path: 'layers', lazy: () => import('./layers/LayersPage').then((module) => ({ default: module.LayersPage })) }
+      { id: 'layers', path: 'layers', lazy: () => import('./layers/LayersPage').then((module) => ({ default: module.LayersPage })) },
+      { id: 'mapViews', path: 'map-views', lazy: () => import('./mapViews/MapViewsPage').then((module) => ({ default: module.MapViewsPage })) }
     ],
     navGroups: [{ id: 'gis', labelKey: 'gis:nav.gis', order: 20 }],
     nav: [
       { group: 'gis', labelKey: 'gis:nav.maps', order: 10, icon: MapIcon, route: 'map' },
       { group: 'gis', labelKey: 'gis:nav.layers', order: 20, icon: Layers, route: 'layers' },
-      { group: 'gis', labelKey: 'gis:nav.mapViews', order: 30, icon: Globe2, disabled: true }
+      { group: 'gis', labelKey: 'gis:nav.mapViews', order: 30, icon: Globe2, route: 'mapViews' }
     ],
     fieldRenderers: {
       GEOMETRY: {

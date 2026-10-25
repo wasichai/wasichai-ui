@@ -3,6 +3,7 @@ import { cn } from '@wasichai/ui'
 import type { MapViewProps } from './MapView'
 
 export type { MapViewProps, WmsLayerSpec } from './MapView'
+export type { FeatureStyle } from '../lib/style'
 
 // maplibre and terra-draw load with the first map drawn, not with the module: they stay out of the
 // app's first bundle, and registering gis never evaluates them

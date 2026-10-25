@@ -7,6 +7,7 @@ import { DEFAULT_BASEMAP, DEFAULT_INITIAL_VIEW, basemapStyle, keepOverlays, type
 import { boundsOf } from '../lib/geo'
 import { popupHtml } from '../lib/popup'
 import { applyMapWorkerUrl } from '../lib/mapWorker'
+import type { FeatureStyle } from '../lib/style'
 import { cn } from '@wasichai/ui'
 import { useMapDefaults } from './MapDefaults'
 import type { Feature, FeatureCollection, GeoJsonGeometry } from '../types'
@@ -32,10 +33,26 @@ export interface MapViewProps {
   basemap?: BasemapSpec
   // camera before features arrive. read once, when the map is built
   initialView?: MapInitialView
+  // paint of the features: a colour or a maplibre expression (useAttributeStyle builds one). default: one blue
+  featureStyle?: FeatureStyle
   className?: string
 }
 
-export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, onFeatureClick, wmsLayers, basemap, initialView, className }: MapViewProps) {
+const FILL = '#4f6ef7'
+const LINE = '#3b53c4'
+
+export function MapView({
+  featureCollection,
+  drawMode,
+  drawValue,
+  onDrawChange,
+  onFeatureClick,
+  wmsLayers,
+  basemap,
+  initialView,
+  featureStyle,
+  className
+}: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MapLibreMap | null>(null)
   const draw = useRef<TerraDraw | null>(null)
@@ -50,6 +67,12 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
   const wms = useRef<WmsLayerSpec[]>([])
   wms.current = wmsLayers ?? []
   const wmsKey = JSON.stringify(wms.current)
+  // an expression is rebuilt every render too: same trick
+  const paint = useRef<FeatureStyle | undefined>(undefined)
+  paint.current = featureStyle
+  const paintKey = JSON.stringify(featureStyle ?? null)
+  // what the layers were last painted with: the plain paint is already in them when they are built
+  const painted = useRef('null')
   // prop, then gisModule's default, then OSM over Lima
   const defaults = useMapDefaults()
   // the build effect runs once: it reads the latest spec and view from refs
@@ -95,14 +118,14 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
         type: 'fill',
         source: SOURCE,
         filter: ['==', ['geometry-type'], 'Polygon'],
-        paint: { 'fill-color': '#4f6ef7', 'fill-opacity': 0.25 }
+        paint: { 'fill-color': FILL, 'fill-opacity': 0.25 }
       })
       instance.addLayer({
         id: `${SOURCE}-line`,
         type: 'line',
         source: SOURCE,
         filter: ['in', ['geometry-type'], ['literal', ['Polygon', 'LineString']]],
-        paint: { 'line-color': '#3b53c4', 'line-width': 2 }
+        paint: { 'line-color': LINE, 'line-width': 2 }
       })
       instance.addLayer({
         id: `${SOURCE}-point`,
@@ -111,7 +134,7 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
         filter: ['==', ['geometry-type'], 'Point'],
         paint: {
           'circle-radius': 6,
-          'circle-color': '#4f6ef7',
+          'circle-color': FILL,
           'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 2
         }
@@ -192,6 +215,22 @@ export function MapView({ featureCollection, drawMode, drawValue, onDrawChange, 
     if (!instance) return
     whenReady(() => syncWmsLayers(instance, wms.current))
   }, [wmsKey])
+
+  // colour by attribute: repaint in place. a styled fill is denser, or pale classes vanish into the base map
+  useEffect(() => {
+    const instance = map.current
+    if (!instance || painted.current === paintKey) return
+    painted.current = paintKey
+    whenReady(() => {
+      const style = paint.current
+      const color = style?.color
+      instance.setPaintProperty(`${SOURCE}-fill`, 'fill-color', color ?? FILL)
+      instance.setPaintProperty(`${SOURCE}-fill`, 'fill-opacity', color ? 0.6 : 0.25)
+      instance.setPaintProperty(`${SOURCE}-line`, 'line-color', color ?? LINE)
+      instance.setPaintProperty(`${SOURCE}-line`, 'line-offset', style?.lineOffset ?? 0)
+      instance.setPaintProperty(`${SOURCE}-point`, 'circle-color', color ?? FILL)
+    })
+  }, [paintKey])
 
   // base map swap: same map, our overlays merged into the new style. maplibre diffs it in, or rebuilds
   // the style when it cannot diff, and transformStyle carries them either way
