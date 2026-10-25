@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/wasichai/wasichai-ui/compare/v1.1.0...v1.2.0) (2026-10-25)
+
+
+### Features
+
+* **gis:** colour maps by attribute, legend and map views ([#87](https://github.com/wasichai/wasichai-ui/issues/87)) ([93e2215](https://github.com/wasichai/wasichai-ui/commit/93e2215f94cd8908a37aa31c51096d06174c4309)), closes [#86](https://github.com/wasichai/wasichai-ui/issues/86)
+
 ## [1.1.0](https://github.com/wasichai/wasichai-ui/compare/v1.0.0...v1.1.0) (2026-10-24)
 
 
