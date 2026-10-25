@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/agent",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Wasichai assistant module",
     "type": "module",
     "files": [
