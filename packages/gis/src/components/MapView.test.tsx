@@ -15,6 +15,7 @@ const { FakeMap, adapters } = vi.hoisted(() => {
     style: StyleSpecification
     handlers = new Map<string, Handler[]>()
     setStyle = vi.fn()
+    setPaintProperty = vi.fn()
     remove = vi.fn()
     constructor(options: FakeMap['options']) {
       this.options = options
@@ -228,5 +229,33 @@ describe('MapView module default', () => {
     act(() => FakeMap.instances[0].fire('load'))
     rerender(<MapView />)
     expect(FakeMap.instances[0].setStyle.mock.calls[0][0]).toMatchObject({ sources: { basemap: { tiles: [ORG] } } })
+  })
+})
+
+describe('MapView feature style', () => {
+  it('leaves the plain paint alone until a style is given', () => {
+    render(<MapView />)
+    act(() => FakeMap.instances[0].fire('load'))
+    expect(FakeMap.instances[0].setPaintProperty).not.toHaveBeenCalled()
+  })
+
+  it('repaints fill, line and points with the expression, and back without it', () => {
+    const color = ['match', ['to-string', ['get', 'uso']], 'a', '#ff0000', '#9e9e9e'] as never
+    const { rerender } = render(<MapView featureStyle={{ color, lineOffset: 4 }} />)
+    const map = FakeMap.instances[0]
+    act(() => map.fire('load'))
+    expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-fill', 'fill-color', color)
+    expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-fill', 'fill-opacity', 0.6)
+    expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-line', 'line-color', color)
+    expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-line', 'line-offset', 4)
+    expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-point', 'circle-color', color)
+
+    map.setPaintProperty.mockClear()
+    rerender(<MapView featureStyle={{ color, lineOffset: 4 }} />)
+    expect(map.setPaintProperty).not.toHaveBeenCalled()
+
+    rerender(<MapView />)
+    expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-fill', 'fill-color', '#4f6ef7')
+    expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-line', 'line-offset', 0)
   })
 })

@@ -115,8 +115,8 @@ The OpenStreetMap default needs `https://tile.openstreetmap.org` in `connect-src
 
 | Slot | Contribution |
 |---|---|
-| routes | `gis:map` → `/gis/map` (`?object=&geometry=`), `gis:layers` → `/gis/layers` |
-| nav | group "GIS" (order 20): Maps, Layers, Map views (placeholder) |
+| routes | `gis:map` → `/gis/map` (`?object=&geometry=&by=&type=&classes=&view=`), `gis:layers` → `/gis/layers`, `gis:mapViews` → `/gis/map-views` |
+| nav | group "GIS" (order 20): Maps, Layers, Map views |
 | fieldRenderers | `GEOMETRY`: values in `record.geometries`; settings `geometryType` (default `POLYGON`) and `srid` (default `4326`) |
 | pageComponents | `MAP`: draws the record's shapes, optionally one targeted geometry field |
 | recordListActions | "Map" button on spatial objects' record lists |
@@ -124,6 +124,34 @@ The OpenStreetMap default needs `https://tile.openstreetmap.org` in `connect-src
 | auditValueFormatters / auditFieldLabels | shape changes read "geometry updated", never coordinates |
 | recordQueryKeys | `['features', object]` goes stale on every record write |
 | providers | the `basemap` and `initialView` options, read by every `MapView` in the app |
+
+## Colouring by an attribute
+
+The map page colours an object by one of its fields, shows a legend, saves the map as a map view and publishes the
+GeoServer layer with the same colours. A style is `{ by, type: 'categories' | 'quantiles', classes?, palette? }`:
+categories for an `ENUM`, `BOOLEAN` or `TEXT` field, quantiles (2–9 classes, default 5) for an `INTEGER` or
+`DECIMAL`. The server computes the classes from all of the tenant's rows, so the map, its legend and the WMS layer
+agree.
+
+To colour a `MapView` of your own:
+
+```tsx
+import { MapLegend, MapView, useAttributeStyle, useFeatures } from '@wasichai/gis'
+
+function Aranceles() {
+  const features = useFeatures('tramo')
+  const styled = useAttributeStyle('tramo', { by: 'arancel', type: 'quantiles', classes: 5 })
+  return (
+    <>
+      <MapView featureCollection={features.data} featureStyle={styled.featureStyle} />
+      <MapLegend items={styled.legend} />
+    </>
+  )
+}
+```
+
+`featureStyle` also takes a colour or a MapLibre expression of your own (`{ color: ['match', …] }`), and
+`lineOffset` to draw lines beside their axis.
 
 ## Options
 
@@ -139,6 +167,8 @@ The OpenStreetMap default needs `https://tile.openstreetmap.org` in `connect-src
 Paths are the backend's routes. The frontend reaches them through `apiBaseUrl` (default `/api`), so a proxy that
 mounts the API elsewhere changes the prefix, not these paths.
 
-Needs the wasichai GIS backend module: `/gis/objects/{object}/features`, `/gis/layers`, `/gis/services`.
+Needs the wasichai GIS backend module: `/gis/objects/{object}/features`, `/gis/objects/{object}/style-classes`,
+`/gis/layers` (a publish may carry `{ style }`), `/gis/services`, `/gis/map-views` and
+`/gis/objects/{object}/map-views`.
 Layer publishing also needs GeoServer; without it the layers page lists the spatial objects and
 disables publishing. Endpoints of an absent backend module must answer 404.

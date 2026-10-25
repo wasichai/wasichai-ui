@@ -15,7 +15,39 @@ export const gisMessages = {
       selectObject: 'Selecciona un objeto',
       attributes: 'Atributos',
       features: '{{count}} entidades',
-      geometryColumn: 'Geometría'
+      geometryColumn: 'Geometría',
+      saveView: 'Guardar como vista de mapa',
+      publishStyled: 'Publicar WMS con este estilo',
+      publishedStyled: 'Capa publicada con este estilo'
+    },
+    style: {
+      colorBy: 'Colorear por',
+      none: 'Sin colorear',
+      classes: 'Clases',
+      categories: 'Categorías',
+      quantiles: 'Cuantiles',
+      legend: 'Leyenda',
+      other: 'Otros',
+      loadError: 'No se pudo calcular el estilo'
+    },
+    mapViews: {
+      title: 'Vistas de mapa',
+      subtitle: 'Mapas guardados: un objeto, una de sus geometrías y su coloreado',
+      empty: 'Todavía no hay vistas de mapa. Guarda una desde Mapas.',
+      label: 'Etiqueta',
+      name: 'Nombre',
+      nameHint: 'Minúsculas, números, guiones; empieza con una letra',
+      object: 'Objeto',
+      geometry: 'Geometría',
+      style: 'Estilo',
+      unstyled: 'Sin colorear',
+      open: 'Abrir',
+      delete: 'Eliminar',
+      confirmDelete: '¿Eliminar esta vista de mapa?',
+      save: 'Guardar',
+      saveTitle: 'Guardar vista de mapa',
+      overwrite: 'Ya existe una vista con ese nombre; se actualizará',
+      notFound: 'La vista de mapa no existe'
     },
     pages: {
       types: { MAP: 'Mapa' },
@@ -69,7 +101,39 @@ export const gisMessages = {
       selectObject: 'Select an object',
       attributes: 'Attributes',
       features: '{{count}} features',
-      geometryColumn: 'Geometry'
+      geometryColumn: 'Geometry',
+      saveView: 'Save as map view',
+      publishStyled: 'Publish WMS with this style',
+      publishedStyled: 'Layer published with this style'
+    },
+    style: {
+      colorBy: 'Colour by',
+      none: 'No colouring',
+      classes: 'Classes',
+      categories: 'Categories',
+      quantiles: 'Quantiles',
+      legend: 'Legend',
+      other: 'Other',
+      loadError: 'Could not compute the style'
+    },
+    mapViews: {
+      title: 'Map views',
+      subtitle: 'Saved maps: one object, one of its geometries and its colouring',
+      empty: 'No map views yet. Save one from Maps.',
+      label: 'Label',
+      name: 'Name',
+      nameHint: 'Lowercase letters, digits, hyphens; starts with a letter',
+      object: 'Object',
+      geometry: 'Geometry',
+      style: 'Style',
+      unstyled: 'No colouring',
+      open: 'Open',
+      delete: 'Delete',
+      confirmDelete: 'Delete this map view?',
+      save: 'Save',
+      saveTitle: 'Save map view',
+      overwrite: 'A view with this name exists; it will be updated',
+      notFound: 'The map view does not exist'
     },
     pages: {
       types: { MAP: 'Map' },
