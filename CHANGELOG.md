@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/wasichai/wasichai-ui/compare/v1.2.0...v1.3.0) (2026-10-26)
+
+
+### Features
+
+* **gis:** apply the saved view's style on ?view= and send the session token to WMS tiles ([#90](https://github.com/wasichai/wasichai-ui/issues/90)) ([b77b805](https://github.com/wasichai/wasichai-ui/commit/b77b8051047e11df2807b636f35051eb363bf4cc)), closes [#89](https://github.com/wasichai/wasichai-ui/issues/89)
+
 ## [1.2.0](https://github.com/wasichai/wasichai-ui/compare/v1.1.0...v1.2.0) (2026-10-25)
 
 
