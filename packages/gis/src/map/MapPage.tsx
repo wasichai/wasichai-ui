@@ -37,23 +37,21 @@ export function MapPage() {
     }
   }, [current, geoObjects, setSearchParams])
 
-  // a saved view opens with its geometry and style in the url, so changing them is just changing the map
+  // a saved view gives the geometry and style the url leaves out. read, never copied into the url: the url cannot
+  // carry the palette, and a link with ?geometry= but no style still opens coloured
   const savedView = useMapView(current || undefined, viewName)
-  useEffect(() => {
-    const view = savedView.data
-    if (!view || searchParams.get('geometry') || searchParams.get('by')) return
-    setSearchParams({ object: view.objectName, view: view.name, geometry: view.geometryName, ...styleParams(view.style) }, { replace: true })
-  }, [savedView.data, searchParams, setSearchParams])
+  const view = savedView.data?.objectName === current ? savedView.data : undefined
 
   // an object may carry several geometries and a map draws one at a time
   const definition = useObjectDefinition(current || undefined)
   const geometries = definition.data ? geometryFields(definition.data) : []
-  const geometry = searchParams.get('geometry') ?? geometries[0]?.name ?? ''
+  const geometry = searchParams.get('geometry') ?? view?.geometryName ?? geometries[0]?.name ?? ''
   const features = useFeatures(current || undefined, geometry || undefined)
 
   // only the fields a style can colour by, each with the one kind of style it fits
   const stylable = (definition.data?.fields ?? []).filter((field) => styleTypeFor(field.type) !== null)
-  const style = styleFromParams(searchParams)
+  // by/type in the url win; an empty by is "no colour" over the view's. the view's palette stays while its field does
+  const style = searchParams.has('by') ? withPalette(styleFromParams(searchParams), view?.style) : (view?.style ?? null)
   const styled = useAttributeStyle(current || undefined, style)
   const publish = usePublishLayer()
 
@@ -64,7 +62,8 @@ export function MapPage() {
     if (viewName) params.view = viewName
     const nextGeometry = next.geometry ?? searchParams.get('geometry')
     if (nextGeometry) params.geometry = nextGeometry
-    setSearchParams({ ...params, ...styleParams(next.style === undefined ? style : next.style) })
+    const nextStyle = next.style === undefined ? style : next.style
+    setSearchParams({ ...params, ...(nextStyle || !view?.style ? styleParams(nextStyle) : { by: '' }) })
   }
 
   const pickField = (value: string) => {
@@ -241,4 +240,10 @@ export function MapPage() {
       ) : null}
     </>
   )
+}
+
+// the url carries no palette: a style on the view's field and kind takes the view's colours
+function withPalette(style: AttributeStyle | null, saved: AttributeStyle | null | undefined): AttributeStyle | null {
+  if (!style || !saved?.palette || saved.by !== style.by || saved.type !== style.type) return style
+  return { ...style, palette: saved.palette }
 }

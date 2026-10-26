@@ -1,5 +1,15 @@
 import { useEffect, useRef } from 'react'
-import { GeoJSONSource, Map as MapLibreMap, NavigationControl, Popup, RasterTileSource, ScaleControl, setWorkerUrl, type MapLayerMouseEvent } from 'maplibre-gl'
+import {
+  GeoJSONSource,
+  Map as MapLibreMap,
+  NavigationControl,
+  Popup,
+  RasterTileSource,
+  ScaleControl,
+  setWorkerUrl,
+  type MapLayerMouseEvent,
+  type RequestTransformFunction
+} from 'maplibre-gl'
 import { TerraDraw, TerraDrawLineStringMode, TerraDrawPointMode, TerraDrawPolygonMode } from 'terra-draw'
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter'
 import { WMS_TILE_SIZE, wmsTileUrl } from '../lib/wms'
@@ -35,6 +45,9 @@ export interface MapViewProps {
   initialView?: MapInitialView
   // paint of the features: a colour or a maplibre expression (useAttributeStyle builds one). default: one blue
   featureStyle?: FeatureStyle
+  // maplibre's transformRequest: headers or a rewritten url per request (a WMS that wants a token). default: gisModule's
+  // wmsAuth, else none
+  transformRequest?: RequestTransformFunction
   className?: string
 }
 
@@ -51,6 +64,7 @@ export function MapView({
   basemap,
   initialView,
   featureStyle,
+  transformRequest,
   className
 }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
@@ -84,6 +98,9 @@ export function MapView({
   const shown = useRef<string | null>(null)
   const view = useRef<MapInitialView>(DEFAULT_INITIAL_VIEW)
   view.current = initialView ?? defaults.initialView ?? DEFAULT_INITIAL_VIEW
+  // maplibre takes it once, at build: hand it a function that reads the latest one
+  const request = useRef<RequestTransformFunction | undefined>(undefined)
+  request.current = transformRequest ?? defaults.transformRequest
 
   const whenReady = (task: () => void) => {
     if (ready.current) task()
@@ -101,6 +118,7 @@ export function MapView({
       style: basemapStyle(first.type === 'style' ? { type: 'none' } : first),
       center: view.current.center,
       zoom: view.current.zoom,
+      transformRequest: (url, resourceType) => request.current?.(url, resourceType),
       attributionControl: { compact: true }
     })
     shown.current = JSON.stringify(first)

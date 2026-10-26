@@ -123,7 +123,7 @@ The OpenStreetMap default needs `https://tile.openstreetmap.org` in `connect-src
 | dashboardCards / objectTileDetails / objectColumns | spatial object count, `TYPE · EPSG:n` lines, objects-table column |
 | auditValueFormatters / auditFieldLabels | shape changes read "geometry updated", never coordinates |
 | recordQueryKeys | `['features', object]` goes stale on every record write |
-| providers | the `basemap` and `initialView` options, read by every `MapView` in the app |
+| providers | the `basemap`, `initialView` and `wmsAuth` options, read by every `MapView` in the app |
 
 ## Colouring by an attribute
 
@@ -153,6 +153,26 @@ function Aranceles() {
 `featureStyle` also takes a colour or a MapLibre expression of your own (`{ color: ['match', …] }`), and
 `lineOffset` to draw lines beside their axis.
 
+A link to `/gis/map?object=…&view=<name>` opens the saved view with its geometry and its whole style, palette
+included. `geometry`, `by` and `type` in the url win over the view's; the view's palette stays while the url colours
+by the same field the same way, since the url cannot carry it.
+
+## Protected WMS
+
+A GeoServer behind the app's own authentication (nginx `auth_request`, say) answers 401 to tiles without a token.
+`gisModule({ wmsAuth: true })` makes every `MapView` (the layers preview included) send the session's
+`Authorization: Bearer` header with each tile it asks of the app's own origin; another host never sees the token.
+The WMS urls must then reach GeoServer through that origin: the browser uses the urls `/gis/layers` answers with as
+they are, so set `wasichai.gis.geoserver.public-url` on the backend (a relative `/geoserver`, say) when GeoServer's
+own url is an internal host.
+
+For anything else, a `MapView` takes MapLibre's `transformRequest` (headers or a rewritten url per request), which
+wins over `wmsAuth`:
+
+```tsx
+<MapView wmsLayers={layers} transformRequest={(url) => ({ url, headers: { 'X-Api-Key': key } })} />
+```
+
 ## Options
 
 | Option | Default | Meaning |
@@ -161,6 +181,7 @@ function Aranceles() {
 | `workerUrl` | none | MapLibre worker script url (see above). Module-level: the last `gisModule({ workerUrl })` call wins for every `MapView` on the page. |
 | `basemap` | OpenStreetMap raster | base map of every `MapView` in the app (see "Base map"). A `MapView`'s own `basemap` prop wins. |
 | `initialView` | `{ center: [-77.04, -12.05], zoom: 11 }` | camera of every map before its features load. A `MapView`'s own `initialView` prop wins. |
+| `wmsAuth` | `false` | send the session's token with every tile of the app's origin (see "Protected WMS"). A `MapView`'s own `transformRequest` prop wins. |
 
 ## Backend
 

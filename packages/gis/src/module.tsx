@@ -1,9 +1,10 @@
 import { Globe2, Layers, Map as MapIcon } from 'lucide-react'
-import type { WasichaiModule } from '@wasichai/core'
+import { getToken, type WasichaiModule } from '@wasichai/core'
 import { mapDefaultsProvider } from './components/MapDefaults'
 import { gisMessages } from './i18n'
 import type { BasemapSpec, MapInitialView } from './lib/basemap'
 import { setMapWorkerUrl } from './lib/mapWorker'
+import { sessionTokenRequest } from './lib/wms'
 import { GEOMETRY_AUDIT_FIELD_LABELS, geometryAuditFormatter } from './slots/audit'
 import { GeometryInput } from './slots/GeometryInput'
 import { GEOMETRY_SETTING_DEFAULTS, GeometrySettingsEditor, geometryPayload } from './slots/geometrySettings'
@@ -24,6 +25,9 @@ export interface GisModuleOptions {
   basemap?: BasemapSpec
   // camera of every map before its features arrive. a MapView's own initialView prop wins
   initialView?: MapInitialView
+  // send the session's token with every tile of this origin, for a WMS behind the app's own auth. a MapView's own
+  // transformRequest prop wins. see the README, "Protected WMS"
+  wmsAuth?: boolean
 }
 
 export function gisModule(options: GisModuleOptions = {}): WasichaiModule {
@@ -65,6 +69,12 @@ export function gisModule(options: GisModuleOptions = {}): WasichaiModule {
     auditFieldLabels: { ...GEOMETRY_AUDIT_FIELD_LABELS },
     recordQueryKeys: (objectName) => [['features', objectName]],
     i18n: gisMessages,
-    providers: [mapDefaultsProvider({ basemap: options.basemap, initialView: options.initialView })]
+    providers: [
+      mapDefaultsProvider({
+        basemap: options.basemap,
+        initialView: options.initialView,
+        transformRequest: options.wmsAuth ? sessionTokenRequest(getToken) : undefined
+      })
+    ]
   }
 }
