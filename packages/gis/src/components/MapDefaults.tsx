@@ -1,4 +1,5 @@
 import { createContext, use, type ComponentType, type ReactNode } from 'react'
+import type { RequestTransformFunction } from 'maplibre-gl'
 import type { BasemapSpec, MapInitialView } from '../lib/basemap'
 
 // gisModule's map defaults. one context, so the module's own pages and app code inside WasichaiApp
@@ -7,6 +8,8 @@ import type { BasemapSpec, MapInitialView } from '../lib/basemap'
 export interface MapDefaults {
   basemap?: BasemapSpec
   initialView?: MapInitialView
+  // what wmsAuth turns into: the token on this origin's tiles
+  transformRequest?: RequestTransformFunction
 }
 
 const MapDefaultsContext = createContext<MapDefaults>({})

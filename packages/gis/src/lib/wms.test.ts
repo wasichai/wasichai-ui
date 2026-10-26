@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { wmsTileUrl } from './wms'
+import { sessionTokenRequest, wmsTileUrl } from './wms'
 
 const BASE = 'http://localhost:8600/geoserver/wasichai/wms'
 
@@ -63,5 +63,28 @@ describe('wmsTileUrl', () => {
     const query = params(wmsTileUrl(`${BASE}?layers=wasichai:predio`, 512))
     expect(query.get('width')).toBe('512')
     expect(query.get('height')).toBe('512')
+  })
+})
+
+describe('sessionTokenRequest', () => {
+  const ORIGIN = 'https://catastro.example.org'
+  const tile = 'Tile' as never
+
+  it('adds the bearer token to a tile of the same origin, absolute or relative', () => {
+    const transform = sessionTokenRequest(() => 'abc', ORIGIN)
+    expect(transform(`${ORIGIN}/geoserver/wms?layers=a`, tile)).toEqual({
+      url: `${ORIGIN}/geoserver/wms?layers=a`,
+      headers: { Authorization: 'Bearer abc' }
+    })
+    expect(transform('/geoserver/wms?layers=a', tile)).toMatchObject({ headers: { Authorization: 'Bearer abc' } })
+  })
+
+  it('never sends the token to another host', () => {
+    expect(sessionTokenRequest(() => 'abc', ORIGIN)('https://tile.openstreetmap.org/1/0/0.png', tile)).toBeUndefined()
+  })
+
+  it('leaves styles, glyphs and signed-out sessions alone', () => {
+    expect(sessionTokenRequest(() => 'abc', ORIGIN)(`${ORIGIN}/style.json`, 'Style' as never)).toBeUndefined()
+    expect(sessionTokenRequest(() => null, ORIGIN)(`${ORIGIN}/geoserver/wms`, tile)).toBeUndefined()
   })
 })

@@ -11,7 +11,12 @@ const { FakeMap, adapters } = vi.hoisted(() => {
   type Handler = () => void
   class FakeMap {
     static instances: FakeMap[] = []
-    options: { style: StyleSpecification | string; center: [number, number]; zoom: number }
+    options: {
+      style: StyleSpecification | string
+      center: [number, number]
+      zoom: number
+      transformRequest: (url: string, resourceType?: string) => unknown
+    }
     style: StyleSpecification
     handlers = new Map<string, Handler[]>()
     setStyle = vi.fn()
@@ -257,5 +262,37 @@ describe('MapView feature style', () => {
     rerender(<MapView />)
     expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-fill', 'fill-color', '#4f6ef7')
     expect(map.setPaintProperty).toHaveBeenCalledWith('wasichai-features-line', 'line-offset', 0)
+  })
+})
+
+describe('MapView transformRequest', () => {
+  const TILE = `${window.location.origin}/geoserver/wms?layers=a`
+  // what maplibre would ask before fetching a tile
+  const transform = () => FakeMap.instances[0].options.transformRequest(TILE, 'Tile')
+
+  it('asks the prop, and reads the latest one', () => {
+    const first = vi.fn(() => ({ url: 'first' }))
+    const second = vi.fn(() => ({ url: 'second' }))
+    const { rerender } = render(<MapView transformRequest={first} />)
+    expect(transform()).toEqual({ url: 'first' })
+    rerender(<MapView transformRequest={second} />)
+    expect(transform()).toEqual({ url: 'second' })
+    expect(FakeMap.instances).toHaveLength(1)
+  })
+
+  it('leaves requests alone by default', () => {
+    render(<MapView />)
+    expect(transform()).toBeUndefined()
+  })
+
+  it('sends the session token with gisModule({ wmsAuth: true })', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('abc')
+    renderWithProviders(<MapView />, { modules: [gisModule({ wmsAuth: true })] })
+    expect(transform()).toEqual({ url: TILE, headers: { Authorization: 'Bearer abc' } })
+  })
+
+  it('lets the prop win over wmsAuth', () => {
+    renderWithProviders(<MapView transformRequest={() => ({ url: 'mine' })} />, { modules: [gisModule({ wmsAuth: true })] })
+    expect(transform()).toEqual({ url: 'mine' })
   })
 })

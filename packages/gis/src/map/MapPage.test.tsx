@@ -156,4 +156,49 @@ describe('MapPage', () => {
     expect(await screen.findByRole('heading', { name: 'Aranceles por vía' })).toBeInTheDocument()
     await vi.waitFor(() => expect(state.styles.at(-1)).toEqual({ by: 'arancel', type: 'quantiles', classes: 3 }))
   })
+
+  describe('a saved view with a palette', () => {
+    const palette = ['#ffffcc', '#800026']
+    beforeEach(() => {
+      state.view = {
+        id: 'v1',
+        name: 'aranceles',
+        label: 'Aranceles por vía',
+        objectName: 'tramo',
+        geometryName: 'eje',
+        style: { by: 'arancel', type: 'quantiles', classes: 3, palette }
+      }
+    })
+
+    // the link catastro builds: geometry in the url, the style only in the view
+    it('colours with the view style and palette when the url names the geometry', async () => {
+      render('/?object=tramo&geometry=eje&view=aranceles')
+      await vi.waitFor(() => expect(state.styles.at(-1)).toEqual({ by: 'arancel', type: 'quantiles', classes: 3, palette }))
+      expect(screen.getByRole('combobox', { name: 'Colorear por' })).toHaveTextContent('Arancel')
+    })
+
+    it('lets by and type in the url win, keeping the palette while the field is the same', async () => {
+      render('/?object=tramo&view=aranceles&by=arancel&type=quantiles&classes=4')
+      await vi.waitFor(() => expect(state.styles.at(-1)).toEqual({ by: 'arancel', type: 'quantiles', classes: 4, palette }))
+    })
+
+    it('drops the palette for another field', async () => {
+      render('/?object=tramo&view=aranceles&by=via&type=categories')
+      await vi.waitFor(() => expect(state.styles.at(-1)).toEqual({ by: 'via', type: 'categories' }))
+    })
+
+    it('stays uncoloured once the user picks no colour', async () => {
+      render('/?object=tramo&view=aranceles')
+      await vi.waitFor(() => expect(state.styles.at(-1)).toMatchObject({ by: 'arancel' }))
+      await pick('Colorear por', 'Sin colorear')
+      await vi.waitFor(() => expect(state.styles.at(-1)).toBeNull())
+      expect(screen.getByRole('combobox', { name: 'Colorear por' })).toHaveTextContent('Sin colorear')
+    })
+
+    it('publishes the layer with the palette of the view', async () => {
+      render('/?object=tramo&view=aranceles')
+      await userEvent.click(await screen.findByRole('button', { name: 'Publicar WMS con este estilo' }))
+      expect(state.publish).toHaveBeenCalledWith({ objectName: 'tramo', geometryName: 'eje', style: { by: 'arancel', type: 'quantiles', classes: 3, palette } })
+    })
+  })
 })
