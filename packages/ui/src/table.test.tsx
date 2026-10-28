@@ -41,5 +41,7 @@ describe('Table', () => {
     const table = screen.getByRole('table', { name: 'Casos' })
     expect(table).toHaveClass('w-full', 'border-collapse')
     expect(table.parentElement).toHaveClass('overflow-x-auto')
+    // an sr-only (absolute) inside a header is placed against the scroll box, not the page it would widen
+    expect(table.parentElement).toHaveClass('relative')
   })
 })

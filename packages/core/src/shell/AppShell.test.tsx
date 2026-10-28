@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
@@ -101,5 +101,73 @@ describe('AppShell', () => {
     unmount()
     renderWithProviders(<AppShell />, { modules: [coreModule] })
     expect(screen.getByText('Wasichai')).toBeInTheDocument()
+  })
+})
+
+// jsdom applies no css: the narrow drawer is read from its state (aria, classes), the breakpoint from the md: classes
+describe('AppShell on a narrow screen', () => {
+  const menuButton = () => screen.getByRole('button', { name: 'Abrir el menú' })
+  const drawer = () => document.getElementById(menuButton().getAttribute('aria-controls') ?? '')!
+
+  it('starts with the drawer closed', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    expect(menuButton()).toHaveAttribute('aria-expanded', 'false')
+    expect(drawer().tagName).toBe('ASIDE')
+    expect(drawer()).toHaveClass('-translate-x-full', 'invisible')
+    expect(screen.queryByTestId('shell-backdrop')).not.toBeInTheDocument()
+  })
+
+  it('opens with the menu button and puts focus in the drawer', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    await userEvent.click(menuButton())
+    expect(menuButton()).toHaveAttribute('aria-expanded', 'true')
+    expect(drawer()).toHaveClass('translate-x-0')
+    expect(drawer()).not.toHaveClass('invisible')
+    expect(drawer()).toContainElement(document.activeElement as HTMLElement)
+    expect(screen.getByTestId('shell-backdrop')).toBeInTheDocument()
+  })
+
+  it('closes with Escape and gives focus back to the menu button', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    await userEvent.click(menuButton())
+    await userEvent.keyboard('{Escape}')
+    expect(menuButton()).toHaveAttribute('aria-expanded', 'false')
+    expect(menuButton()).toHaveFocus()
+  })
+
+  it('closes with a click on the backdrop and with its own close button', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    await userEvent.click(menuButton())
+    await userEvent.click(screen.getByTestId('shell-backdrop'))
+    expect(menuButton()).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(menuButton())
+    await userEvent.click(within(drawer()).getByRole('button', { name: 'Cerrar el menú' }))
+    expect(menuButton()).toHaveAttribute('aria-expanded', 'false')
+    expect(menuButton()).toHaveFocus()
+  })
+
+  it('closes when the user navigates', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    await userEvent.click(menuButton())
+    await userEvent.click(within(drawer()).getByRole('link', { name: 'Hojas' }))
+    expect(menuButton()).toHaveAttribute('aria-expanded', 'false')
+    expect(drawer()).toHaveClass('invisible')
+  })
+
+  it('names the menu button in english too', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule], language: 'en' })
+    expect(screen.getByRole('button', { name: 'Open the menu' })).toHaveAttribute('aria-expanded', 'false')
+  })
+})
+
+describe('AppShell on a wide screen', () => {
+  it('keeps the sidebar static and open beside main, and hides the menu bar', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule] })
+    const aside = document.querySelector('aside')!
+    expect(aside).toHaveClass('w-60', 'shrink-0', 'md:static', 'md:translate-x-0', 'md:visible')
+    expect(aside.parentElement).toHaveClass('md:flex-row')
+    expect(aside.nextElementSibling?.tagName).toBe('MAIN')
+    expect(screen.getByRole('button', { name: 'Abrir el menú' }).closest('header')).toHaveClass('md:hidden')
+    expect(within(aside).getByRole('button', { name: 'Cerrar el menú' })).toHaveClass('md:hidden')
   })
 })
