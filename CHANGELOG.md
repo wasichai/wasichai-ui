@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/wasichai/wasichai-ui/compare/v1.3.0...v1.3.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* **shell:** bajo md la barra lateral de AppShell es un drawer y Table es relative ([#93](https://github.com/wasichai/wasichai-ui/issues/93)) ([13b8d7e](https://github.com/wasichai/wasichai-ui/commit/13b8d7e4fee82d72b7117f0c77bde1d3918e5087))
+
 ## [1.3.0](https://github.com/wasichai/wasichai-ui/compare/v1.2.0...v1.3.0) (2026-10-26)
 
 
