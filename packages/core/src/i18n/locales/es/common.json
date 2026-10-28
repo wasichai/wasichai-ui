@@ -41,6 +41,8 @@
         "dismissAlert": "Entendido, cerrar el aviso",
         "goHome": "Ir al inicio",
         "hideMenu": "Ocultar el menú",
+        "openMenu": "Abrir el menú",
+        "closeMenu": "Cerrar el menú",
         "create": "Crear",
         "edit": "Editar",
         "delete": "Eliminar",
