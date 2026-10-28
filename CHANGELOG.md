@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/wasichai/wasichai-ui/compare/v1.3.1...v1.4.0) (2026-10-28)
+
+
+### Features
+
+* **core:** appName and appTagline per organization, and useCurrentOrganization ([#96](https://github.com/wasichai/wasichai-ui/issues/96)) ([86618fa](https://github.com/wasichai/wasichai-ui/commit/86618fac57b019d3e0fd4bc0dd33a3c913201592)), closes [#95](https://github.com/wasichai/wasichai-ui/issues/95)
+
 ## [1.3.1](https://github.com/wasichai/wasichai-ui/compare/v1.3.0...v1.3.1) (2026-10-28)
 
 
