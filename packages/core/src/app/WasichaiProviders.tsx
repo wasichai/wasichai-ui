@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { setActiveApiClient, type ApiClient } from '../api/client'
 import { AuthProvider } from '../auth/AuthProvider'
+import { DocumentTitleSync } from '../organization/currentOrganization'
 import type { WasichaiRegistry } from '../registry/createRegistry'
 import { ThemeProvider } from '../theme/ThemeProvider'
 import type { AuthUser, CallerPermissions } from '../types/auth'
@@ -39,6 +40,7 @@ export function WasichaiProviders({ config, registry, apiClient, i18n, queryClie
       <I18nextProvider i18n={i18n}>
         <WasichaiContext value={value}>
           <AuthProvider initialUser={initialUser} initialPermissions={initialPermissions}>
+            <DocumentTitleSync />
             <ThemeProvider>{wrapped}</ThemeProvider>
           </AuthProvider>
         </WasichaiContext>

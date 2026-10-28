@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { useAppTitle } from '../organization/currentOrganization'
 import { useAuth } from './AuthProvider'
 import { Button } from '@wasichai/ui'
 import { Input } from '@wasichai/ui'
@@ -13,6 +14,7 @@ export function LoginPage() {
   const { user, signIn } = useAuth()
   const navigate = useNavigate()
   const config = useWasichaiConfig()
+  const title = useAppTitle()
   const links = useWasichaiLinks()
   const [email, setEmail] = useState(config.defaultLoginEmail)
   const [password, setPassword] = useState('')
@@ -38,8 +40,8 @@ export function LoginPage() {
   return (
     <div className="flex h-full items-center justify-center bg-shell px-4">
       <form onSubmit={submit} className="w-full max-w-sm rounded-card bg-surface p-7 shadow-xl" noValidate>
-        <p className="text-xl font-semibold tracking-tight text-ink">{config.appName ?? t('app.name')}</p>
-        <p className="mt-1 text-sm text-ink-muted">{config.appTagline ?? t('app.tagline')}</p>
+        <p className="text-xl font-semibold tracking-tight text-ink">{title.appName}</p>
+        <p className="mt-1 text-sm text-ink-muted">{title.appTagline}</p>
 
         <div className="mt-6 space-y-4">
           <div className="space-y-1.5">
