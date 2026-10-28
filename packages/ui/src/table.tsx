@@ -1,10 +1,11 @@
 import type { ComponentProps } from 'react'
 import { cn } from './cn'
 
-// data-slot: hooks a theme sheet styles (ADR-035), on the table itself, not its scroll box. before props, so a caller can override them
+// data-slot: hooks a theme sheet styles (ADR-035), on the table itself, not its scroll box. before props, so a caller can override them.
+// relative: an absolute child (an sr-only in a header) is placed against the scroll box, not the page it would widen (#92)
 export function Table({ className, ...props }: ComponentProps<'table'>) {
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="relative w-full overflow-x-auto">
       <table data-slot="table" className={cn('w-full border-collapse text-sm', className)} {...props} />
     </div>
   )
