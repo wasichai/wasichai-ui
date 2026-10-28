@@ -6,6 +6,7 @@ import { Button, cn } from '@wasichai/ui'
 import { ApiError } from '../api/client'
 import { useWasichaiConfig, useWasichaiLinks, useRegistry } from '../app/context'
 import { RouteErrorBoundary } from '../app/RouteErrorBoundary'
+import { useAppTitle } from '../organization/currentOrganization'
 import { useAuth } from '../auth/AuthProvider'
 import { useSetLocale } from '../preferences/preferences'
 import { useTheme } from '../theme/ThemeProvider'
@@ -24,6 +25,7 @@ export function AppShell() {
   const { t, i18n } = useTranslation()
   const { user, permissions, signOut } = useAuth()
   const config = useWasichaiConfig()
+  const title = useAppTitle()
   const registry = useRegistry()
   const links = useWasichaiLinks()
   const { preference, themes, setPreference } = useTheme()
@@ -81,8 +83,8 @@ export function AppShell() {
       >
         <div className="flex items-start gap-2 px-5 py-5">
           <div className="min-w-0 flex-1">
-            <p className="text-lg font-semibold tracking-tight">{config.appName ?? t('app.name')}</p>
-            <p className="mt-0.5 text-[11px] leading-tight text-shell-muted">{config.appTagline ?? t('app.tagline')}</p>
+            <p className="text-lg font-semibold tracking-tight">{title.appName}</p>
+            <p className="mt-0.5 text-[11px] leading-tight text-shell-muted">{title.appTagline}</p>
           </div>
           <button
             type="button"

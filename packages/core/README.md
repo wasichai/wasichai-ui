@@ -41,7 +41,8 @@ createRoot(document.getElementById('root')!).render(
 | `apiBaseUrl` | `/api` | REST base url (trailing slash ignored) |
 | `storagePrefix` | `wasichai` | localStorage keys `<prefix>.token/.user/.lang/.theme`; give each app on an origin its own |
 | `languages` | `['es', 'en']` | first is default and fallback; the shell toggle cycles through them |
-| `appName`, `appTagline` | the `app.name`/`app.tagline` strings | shell and login header |
+| `appName`, `appTagline` | the `app.name`/`app.tagline` strings | shell and login header: a string, or a function of the caller's organization, see [Per-tenant name](#per-tenant-name) |
+| `syncDocumentTitle` | `true` | a function `appName` also sets `document.title`; `false` leaves the title to the app |
 | `basename` | – | router basename when not served from `/` |
 | `defaultLoginEmail` | `''` | login form prefill (demo apps) |
 | `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there, see [Themes](#themes-and-preferences) |
@@ -50,6 +51,23 @@ createRoot(document.getElementById('root')!).render(
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
+
+### Per-tenant name
+
+One build can serve several organizations. Give `appName` (or `appTagline`) a function and the shell
+calls it with the caller's organization (`GET /organizations/current`):
+
+```tsx
+<WasichaiApp config={{ appName: (org) => (org ? `Catastro ${org.name}` : 'Catastro') }} modules={[]} />
+```
+
+- it gets `null` before login, while the organization loads, after logout and when the request fails;
+- with a function `appName`, `document.title` follows it (opt out with `syncDocumentTitle: false`);
+- a plain string works as before: no request, and `document.title` stays what `index.html` says.
+
+`useCurrentOrganization()` is the same lookup for any screen: it returns `{ id, name, slug, createdAt }`, or `null`
+when signed out, loading or on error. It asks only with a session, once per organization (`staleTime: Infinity`),
+and sign out clears it. `useAppTitle()` returns the resolved `{ appName, appTagline }`.
 
 ## Full app
 

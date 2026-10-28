@@ -1,4 +1,4 @@
-export { DEFAULT_CONFIG, resolveConfig, storageKeys, type WasichaiConfig, type StorageKeys } from './app/config'
+export { DEFAULT_CONFIG, resolveConfig, storageKeys, type AppText, type WasichaiConfig, type StorageKeys } from './app/config'
 export {
   ApiError,
   api,
@@ -37,6 +37,13 @@ export { fillPath, joinPath } from './links/paths'
 export { CORE_MODULE_ID, CORE_ROUTE_PATHS, createLinks, type WasichaiLinks, type WasichaiRouteMap, type CoreRouteId } from './links/links'
 export { CORE_NAMESPACE, changeLanguage, createWasichaiI18n, type WasichaiI18nOptions } from './i18n/createI18n'
 export { useApiClient, useWasichai, useWasichaiConfig, useWasichaiLinks, useRegistry, type WasichaiContextValue } from './app/context'
+export {
+  useAppTitle,
+  useCurrentOrganization,
+  type AppTitle,
+  type CurrentOrganization,
+  type CurrentOrganizationOptions
+} from './organization/currentOrganization'
 export { AuthProvider, useAuth, type AuthContextValue, type AuthProviderProps } from './auth/AuthProvider'
 export { WasichaiProviders, type WasichaiProvidersProps } from './app/WasichaiProviders'
 export { ThemeProvider, useTheme, type ThemeContextValue } from './theme/ThemeProvider'

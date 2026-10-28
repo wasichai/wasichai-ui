@@ -1,5 +1,9 @@
 import { isTimeZone } from '../lib/timeZone'
+import type { CurrentOrganization } from '../organization/currentOrganization'
 import { availableThemes, type SystemThemes, type ThemeDefinition } from '../theme/themes'
+
+// a fixed text, or one per tenant: called with null before login, while loading and on error
+export type AppText = string | ((org: CurrentOrganization | null) => string)
 
 export interface WasichaiConfig {
   // where the REST api lives: '/api', 'https://host/api'. a trailing slash is dropped
@@ -8,9 +12,12 @@ export interface WasichaiConfig {
   storagePrefix: string
   // first one is the default and the fallback
   languages: string[]
-  // shell header. unset falls back to the `app.name` / `app.tagline` strings
-  appName?: string
-  appTagline?: string
+  // shell and login header. unset falls back to the `app.name` / `app.tagline` strings. a function
+  // gets the caller's organization, so one build can say «Catastro Ica» and «Catastro Perené»
+  appName?: AppText
+  appTagline?: AppText
+  // a function appName also sets document.title. false leaves the title to the app. unset = true
+  syncDocumentTitle?: boolean
   // router basename when the app is not served from '/'
   basename?: string
   // login form prefill. empty for real apps, examples put a demo account here
