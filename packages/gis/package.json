@@ -29,7 +29,7 @@
     "dependencies": {
         "lucide-react": "^1.61.0",
         "maplibre-gl": "6.10.0",
-        "terra-draw": "1.35.0",
+        "terra-draw": "1.39.0",
         "terra-draw-maplibre-gl-adapter": "1.4.1"
     },
     "peerDependencies": {
