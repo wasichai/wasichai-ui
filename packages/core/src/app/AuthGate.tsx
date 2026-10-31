@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Navigate } from 'react-router'
+import { Navigate, useLocation } from 'react-router'
 import { useAuth } from '../auth/AuthProvider'
 import { useWasichaiLinks } from './context'
 
@@ -7,5 +7,7 @@ import { useWasichaiLinks } from './context'
 export function AuthGate({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const links = useWasichaiLinks()
-  return user ? children : <Navigate to={links.login()} replace />
+  const location = useLocation()
+  // remember where the visitor was going, so login can send them back
+  return user ? children : <Navigate to={links.login({ returnTo: location.pathname + location.search + location.hash })} replace />
 }

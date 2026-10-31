@@ -271,6 +271,18 @@ export function plansModule(): WasichaiModule {
 Links: `useWasichaiLinks()` gives `records(object)`, `record(object, id)`, … for core screens and
 `to('plans:list')` / `has('plans:list')` for module routes.
 
+Back after login: `links.login({ returnTo })` adds `?returnTo=` to the login link, and the gate that sends a
+signed-out visitor to login adds the page they asked for (path, search and hash). After signing in, and when
+someone already signed in opens the login page, `LoginPage` goes there instead of `home()`. Pass a router path, as
+`useLocation()` gives it (`location.pathname + location.search`), not `window.location`: the router adds the
+basename. Only an app path is followed: it starts with a single `/` (not `//` or `/\`), has no scheme or host and
+is not the login page itself; anything else, or no `returnTo`, goes to `home()` as before.
+
+```tsx
+const location = useLocation()
+<Link to={links.login({ returnTo: location.pathname + location.search })}>{t('courses.signInToEnroll')}</Link>
+```
+
 Errors: `api()` rejects with an `ApiError` (`status`, `message`, `violations`). `describeError(cause)` gives
 the line every core screen shows for a refusal, `message — field: reason — …`, and `String(cause)` for anything
 else. `formError(cause)` splits it for a form instead: `{ message, violations }`, each violation drawn under its field.

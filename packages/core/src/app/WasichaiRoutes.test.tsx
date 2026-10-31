@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useLocation } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
 import type { WasichaiModule } from '../registry/contract'
@@ -8,6 +9,12 @@ import { coreModule } from './coreModule'
 
 const Sheet = () => <p>hoja suelta</p>
 const Plans = () => <p>planos cargados</p>
+const Course = () => <p>curso abierto</p>
+// the url the router is on, drawn beside the routes
+const Url = () => {
+  const location = useLocation()
+  return <output aria-label="url">{location.pathname + location.search + location.hash}</output>
+}
 const Broken = (): never => {
   throw new Error('plano corrupto')
 }
@@ -17,6 +24,7 @@ const plans: WasichaiModule = {
   routes: [
     { id: 'sheet', path: 'sheet/:id', component: Sheet, chrome: 'bare' },
     { id: 'list', path: '', lazy: async () => ({ default: Plans }) },
+    { id: 'course', path: 'course/:id', component: Course },
     // after a deploy an open tab asks for a chunk that no longer exists
     { id: 'gone', path: 'gone', lazy: () => Promise.reject(new TypeError('Failed to fetch dynamically imported module: /assets/Gone.js')) },
     { id: 'broken', path: 'broken', component: Broken },
@@ -44,12 +52,24 @@ function mount(route: string, signedIn = true) {
     },
     { path: '/auth/me/permissions', body: { admin: true, objects: {} } }
   ])
-  return renderWithProviders(<WasichaiRoutes />, {
-    modules: [coreModule, plans],
-    route,
-    user: signedIn ? undefined : null,
-    permissions: signedIn ? undefined : null
-  })
+  return renderWithProviders(
+    <>
+      <WasichaiRoutes />
+      <Url />
+    </>,
+    {
+      modules: [coreModule, plans],
+      route,
+      user: signedIn ? undefined : null,
+      permissions: signedIn ? undefined : null
+    }
+  )
+}
+
+async function signIn() {
+  await userEvent.type(await screen.findByLabelText('Contraseña'), 'secret')
+  await userEvent.type(screen.getByLabelText('Correo'), 'ana@wasichai.test')
+  await userEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 }
 
 describe('WasichaiRoutes', () => {
@@ -88,6 +108,38 @@ describe('WasichaiRoutes', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
     expect(fetch?.calls.find((call) => call.path === '/auth/login')?.body).toEqual({ email: 'ana@wasichai.test', password: 'secret' })
+  })
+
+  describe('returning to the page that asked for a sign in', () => {
+    it('remembers the page a signed-out visitor was going to', async () => {
+      mount('/plans/course/7?tab=2#enroll', false)
+      expect(await screen.findByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument()
+      expect(screen.getByLabelText('url')).toHaveTextContent('/login?returnTo=%2Fplans%2Fcourse%2F7%3Ftab%3D2%23enroll')
+    })
+
+    it('goes back to that page after signing in', async () => {
+      mount('/plans/course/7?tab=2#enroll', false)
+      await signIn()
+      expect(await screen.findByText('curso abierto')).toBeInTheDocument()
+      expect(screen.getByLabelText('url')).toHaveTextContent('/plans/course/7?tab=2#enroll')
+    })
+
+    it('sends an already signed-in visitor of the login page there too', async () => {
+      mount('/login?returnTo=%2Fplans%2Fcourse%2F7')
+      expect(await screen.findByText('curso abierto')).toBeInTheDocument()
+    })
+
+    it.each(['https://evil.test', '//evil.test', '/\\evil.test', 'javascript:alert(1)', '/login'])('lands on the dashboard instead of %s', async (returnTo) => {
+      mount(`/login?returnTo=${encodeURIComponent(returnTo)}`, false)
+      await signIn()
+      expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+      expect(screen.getByLabelText('url')).toHaveTextContent(/^\/$/)
+    })
+
+    it('sends an already signed-in visitor home when the target is refused', async () => {
+      mount(`/login?returnTo=${encodeURIComponent('//evil.test')}`)
+      expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    })
   })
 
   // with no boundary a throw anywhere unmounted the whole root: a white page, sidebar and all

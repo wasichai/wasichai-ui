@@ -34,7 +34,15 @@ export {
   type ResolvedRoute
 } from './registry/createRegistry'
 export { fillPath, joinPath } from './links/paths'
-export { CORE_MODULE_ID, CORE_ROUTE_PATHS, createLinks, type WasichaiLinks, type WasichaiRouteMap, type CoreRouteId } from './links/links'
+export {
+  CORE_MODULE_ID,
+  CORE_ROUTE_PATHS,
+  createLinks,
+  type WasichaiLinks,
+  type WasichaiRouteMap,
+  type CoreRouteId,
+  type LoginLinkOptions
+} from './links/links'
 export { CORE_NAMESPACE, changeLanguage, createWasichaiI18n, type WasichaiI18nOptions } from './i18n/createI18n'
 export { useApiClient, useWasichai, useWasichaiConfig, useWasichaiLinks, useRegistry, type WasichaiContextValue } from './app/context'
 export {

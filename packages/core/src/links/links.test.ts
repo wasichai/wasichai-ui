@@ -19,6 +19,11 @@ describe('core links', () => {
     expect(links.record('predio', 'r1')).toBe('/data/objects/predio/records/r1')
   })
 
+  it('carries an optional return target on the login link', () => {
+    expect(links.login({})).toBe('/login')
+    expect(links.login({ returnTo: '/gis/map?layer=a#x' })).toBe('/login?returnTo=%2Fgis%2Fmap%3Flayer%3Da%23x')
+  })
+
   it('percent-encodes parameters instead of letting them break the path', () => {
     expect(links.record('predio', 'a/b?c')).toBe('/data/objects/predio/records/a%2Fb%3Fc')
   })

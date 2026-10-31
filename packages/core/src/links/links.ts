@@ -35,7 +35,8 @@ export interface WasichaiLinks {
   to<K extends RouteKey = RouteKey>(route: K, params?: Record<string, string>, search?: Record<string, string>): string
   has(route: RouteKey): boolean
   home(): string
-  login(): string
+  // returnTo: router path to go back to after signing in (LoginPage checks it before using it)
+  login(options?: LoginLinkOptions): string
   objects(): string
   newObject(): string
   editObject(object: string): string
@@ -49,6 +50,13 @@ export interface WasichaiLinks {
   audit(): string
   serviceAccounts(): string
 }
+
+export interface LoginLinkOptions {
+  returnTo?: string
+}
+
+// query parameter LoginPage reads
+export const RETURN_TO_PARAM = 'returnTo'
 
 function withSearch(path: string, search?: Record<string, string>): string {
   const query = search ? new URLSearchParams(search).toString() : ''
@@ -67,7 +75,7 @@ export function createLinks(registry: WasichaiRegistry): WasichaiLinks {
     },
     has: (route) => paths.has(route),
     home: () => core('home'),
-    login: () => core('login'),
+    login: (options) => withSearch(core('login'), options?.returnTo ? { [RETURN_TO_PARAM]: options.returnTo } : undefined),
     objects: () => core('objects'),
     newObject: () => core('newObject'),
     editObject: (object) => core('editObject', { object }),
