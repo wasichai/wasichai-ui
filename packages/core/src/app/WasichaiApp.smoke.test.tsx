@@ -29,7 +29,7 @@ beforeEach(() => {
 afterEach(() => fetch?.restore())
 
 describe('WasichaiApp', () => {
-  it('sends a signed-out deep link to login, signs in, and reaches a module page from the sidebar', async () => {
+  it('sends a signed-out deep link to login, signs in, comes back to it and reaches home from the sidebar', async () => {
     fetch = mockFetch(
       [
         { method: 'POST', path: '/auth/login', body: { token: 't', expiresAt: '2026-12-31T00:00:00Z', user: ana } },
@@ -42,18 +42,38 @@ describe('WasichaiApp', () => {
     render(<WasichaiApp config={{ apiBaseUrl: '/backend/api', storagePrefix: 'smoke', appName: 'Catastro' }} modules={[plans]} />)
 
     await userEvent.type(await screen.findByLabelText('Correo'), 'ana@wasichai.test')
+    expect(window.location.pathname + window.location.search).toBe('/login?returnTo=%2Fplans%2Fsheets')
     await userEvent.type(screen.getByLabelText('Contraseña'), 'secret')
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
-    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+    expect(await screen.findByText('hojas del plano')).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/plans/sheets')
     expect(screen.getByText('Catastro')).toBeInTheDocument()
     expect(screen.getByText('Planos')).toBeInTheDocument()
     expect(localStorage.getItem('smoke.token')).toBe('t')
     expect(fetch.calls.map((call) => call.url)).toContain('/backend/api/auth/login')
 
-    await userEvent.click(screen.getByRole('link', { name: 'Hojas' }))
+    await userEvent.click(screen.getByRole('link', { name: 'Inicio' }))
+    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+  })
+
+  // returnTo is a router path: the router puts the basename back, so it never leaves the app
+  it('comes back to the deep link under the basename', async () => {
+    fetch = mockFetch([
+      { method: 'POST', path: '/auth/login', body: { token: 't', expiresAt: '2026-12-31T00:00:00Z', user: ana } },
+      { path: '/auth/me/permissions', body: { admin: true, objects: {} } },
+      { path: '/objects', body: [] }
+    ])
+    window.history.pushState({}, '', '/catastro/plans/sheets')
+    render(<WasichaiApp config={{ storagePrefix: 'smoke', basename: '/catastro' }} modules={[plans]} />)
+
+    await userEvent.type(await screen.findByLabelText('Correo'), 'ana@wasichai.test')
+    expect(window.location.pathname + window.location.search).toBe('/catastro/login?returnTo=%2Fplans%2Fsheets')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'secret')
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+
     expect(await screen.findByText('hojas del plano')).toBeInTheDocument()
-    expect(window.location.pathname).toBe('/plans/sheets')
+    expect(window.location.pathname).toBe('/catastro/plans/sheets')
   })
 
   it('comes back signed in from its storage prefix and opens the deep link directly', async () => {

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAppTitle } from '../organization/currentOrganization'
 import { useAuth } from './AuthProvider'
@@ -8,6 +8,8 @@ import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { ApiError } from '../api/client'
 import { useWasichaiConfig, useWasichaiLinks } from '../app/context'
+import { RETURN_TO_PARAM } from '../links/links'
+import { safeReturnTo } from './returnTo'
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -20,8 +22,11 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [search] = useSearchParams()
+  // anything not provably ours goes home: no open redirect, no loop back to login
+  const next = safeReturnTo(search.get(RETURN_TO_PARAM), links.login()) ?? links.home()
 
-  if (user) return <Navigate to={links.home()} replace />
+  if (user) return <Navigate to={next} replace />
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -29,7 +34,7 @@ export function LoginPage() {
     setError(null)
     try {
       await signIn(email, password)
-      void navigate(links.home())
+      void navigate(next)
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : t('auth.invalid'))
     } finally {
