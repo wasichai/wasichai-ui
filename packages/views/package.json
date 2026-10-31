@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/views",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "description": "Wasichai list view builder module",
     "type": "module",
     "files": [
