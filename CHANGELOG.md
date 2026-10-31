@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/wasichai/wasichai-ui/compare/v1.4.0...v1.5.0) (2026-10-31)
+
+
+### Features
+
+* **core:** return to the requested page after signing in ([#113](https://github.com/wasichai/wasichai-ui/issues/113)) ([536678a](https://github.com/wasichai/wasichai-ui/commit/536678a2b9935b06cf94c59254db2277a70e54f3)), closes [#112](https://github.com/wasichai/wasichai-ui/issues/112)
+
 ## [1.4.0](https://github.com/wasichai/wasichai-ui/compare/v1.3.1...v1.4.0) (2026-10-28)
 
 
