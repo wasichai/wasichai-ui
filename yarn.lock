@@ -2506,10 +2506,10 @@ terra-draw-maplibre-gl-adapter@1.4.1:
   resolved "https://registry.yarnpkg.com/terra-draw-maplibre-gl-adapter/-/terra-draw-maplibre-gl-adapter-1.4.1.tgz#ba346d0f7ba4a08a30bd978485482f41b02abc3d"
   integrity sha512-qZ/bc9bVPnyt0keLVTofV8xiTPkdkbO6RzqrfNLe9zH/edW5PsjvJw97m1EksPZeXNJtFxsVbhi12cPaoNiWfg==
 
-terra-draw@1.35.0:
-  version "1.35.0"
-  resolved "https://registry.yarnpkg.com/terra-draw/-/terra-draw-1.35.0.tgz#38cfdb47d8acb98fa3f06d17e375ba4239d1bd83"
-  integrity sha512-uQI8lcPiUMqwVV29CexTfvT/AM4lGHtA+xWraW4njVExiM1+eGvRetYOBXmXEmgy5pL4X2dmjwMRH8JEYVtbgw==
+terra-draw@1.39.0:
+  version "1.39.0"
+  resolved "https://registry.yarnpkg.com/terra-draw/-/terra-draw-1.39.0.tgz#a54352babea1caf1f12c51d4c664b129b383d945"
+  integrity sha512-W9myUqAlxTQYydNM6cI1kmaU3/i9IlNUfzbfjr7sZVfE5YrJ1ogEpMTKKXdlXdON7tB/nMd3sPL26u7CAzCxKA==
 
 tinybench@^6.2.2:
   version "6.2.2"
