@@ -85,6 +85,32 @@ describe('AppShell', () => {
     expect(screen.queryByText(/no mock for/)).not.toBeInTheDocument()
   })
 
+  it('names an app theme by its text per language, without any module i18n (#115)', async () => {
+    fetch = mockFetch([])
+    const quipu = { id: 'quipu-dark', label: { es: 'Quipu oscuro', en: 'Quipu dark' }, colorScheme: 'dark' as const }
+    renderWithProviders(<AppShell />, { modules: [coreModule], config: { themes: [quipu] } })
+    expect(screen.getByRole('option', { name: 'Quipu oscuro' })).toHaveValue('quipu-dark')
+
+    await userEvent.click(screen.getByRole('button', { name: 'EN' }))
+    expect(await screen.findByRole('option', { name: 'Quipu dark' })).toBeInTheDocument()
+    await waitForSettled()
+  })
+
+  it('carries data-slot hooks on the menu and the theme select for a theme sheet (#116)', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('data-slot', 'nav-item')
+    const sheets = screen.getByRole('link', { name: 'Hojas' })
+    expect(sheets).toHaveAttribute('data-slot', 'nav-item')
+    expect(screen.getByText('Planos')).toHaveAttribute('data-slot', 'nav-group')
+    expect(screen.getByRole('combobox', { name: 'Tema' })).toHaveAttribute('data-slot', 'theme-select')
+  })
+
+  it('keeps aria-current on the current menu item', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans], route: '/plans/sheets' })
+    expect(screen.getByRole('link', { name: 'Hojas' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Inicio' })).not.toHaveAttribute('aria-current')
+  })
+
   it('shows why a theme could not be saved', async () => {
     fetch = mockFetch([
       { path: '/auth/me/preferences', body: { theme: 'system', locale: null } },

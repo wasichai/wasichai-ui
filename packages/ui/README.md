@@ -188,6 +188,8 @@ The components carry `data-slot` attributes that a theme sheet can style:
 |                       | `tabs-content`       | each `role="tabpanel"`                                                                       |
 
 Core's `NavTree` carries `nav-tree`, `nav-tree-group`, `nav-tree-leaf` and `nav-tree-caret` (see `@wasichai/core`'s README).
+Core's `AppShell` carries `nav-item` on each link of its menu (Inicio too, with `aria-current="page"` on the current
+one), `nav-group` on each group's heading and `theme-select` on the theme `<select>`.
 
 They never change `light` or `dark`: `theme.css` does not style them. A theme sheet targets them in its own scope
 (`@scope ([data-theme='<id>'])`). An unlayered rule wins over the Tailwind utilities whatever their specificity, so it

@@ -163,11 +163,16 @@ a theme or has the other `colorScheme`.
 ```ts
 // config
 themes: [
-  { id: 'acme-day', label: 'theme.acmeDay', colorScheme: 'light' },
-  { id: 'acme-night', label: 'theme.acmeNight', colorScheme: 'dark' }
+  { id: 'acme-day', label: { es: 'Acme día', en: 'Acme day' }, colorScheme: 'light' },
+  { id: 'acme-night', label: { es: 'Acme noche', en: 'Acme night' }, colorScheme: 'dark' }
 ],
 systemThemes: { light: 'acme-day', dark: 'acme-night' }
 ```
+
+A theme's `label` is an i18n key (`'theme.light'`, or a module's `'plans:theme.x'`) or, for an app theme that has no
+namespace of its own, the text per language: `{ es: 'Acme día', en: 'Acme day' }`. The selector shows the current
+language's text (`en-GB` reads `en`), else that of `config.languages[0]`, else any. `themeLabel(label, t, language,
+fallback)` does the same for an app's own selector.
 
 To avoid a flash of the light theme before React mounts, put this boot script in `index.html`, before the
 bundle. It lists every theme the app offers with its color scheme, so a stored app theme gets its
