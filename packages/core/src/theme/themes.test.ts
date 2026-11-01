@@ -11,6 +11,7 @@ import {
   BUILT_IN_THEMES,
   PORTAL_TRIBUTARIO_THEME,
   resolveTheme,
+  themeLabel,
   type ThemeDefinition
 } from './themes'
 
@@ -38,7 +39,7 @@ describe('PORTAL_TRIBUTARIO_THEME', () => {
   })
 
   it('has its label in both core locales', () => {
-    const [group, key] = PORTAL_TRIBUTARIO_THEME.label.split('.')
+    const [group, key] = (PORTAL_TRIBUTARIO_THEME.label as string).split('.')
     expect(en).toHaveProperty([group, key], 'Tax portal')
     expect(es).toHaveProperty([group, key], 'Portal tributario')
   })
@@ -65,7 +66,7 @@ describe('ANT_DESIGN_THEME', () => {
   })
 
   it('has its label in both core locales', () => {
-    const [group, key] = ANT_DESIGN_THEME.label.split('.')
+    const [group, key] = (ANT_DESIGN_THEME.label as string).split('.')
     expect(en).toHaveProperty([group, key], 'Ant Design')
     expect(es).toHaveProperty([group, key], 'Ant Design')
   })
@@ -83,7 +84,7 @@ describe('ANT_DESIGN_DARK_THEME', () => {
   })
 
   it('has its label in both core locales', () => {
-    const [group, key] = ANT_DESIGN_DARK_THEME.label.split('.')
+    const [group, key] = (ANT_DESIGN_DARK_THEME.label as string).split('.')
     expect(en).toHaveProperty([group, key], 'Ant Design dark')
     expect(es).toHaveProperty([group, key], 'Ant Design oscuro')
   })
@@ -133,5 +134,28 @@ describe('resolveTheme with systemThemes', () => {
 
   it('falls to the first theme when the list lacks the pair', () => {
     expect(resolveTheme('system', BUILT_IN_THEMES, true, PAIR).id).toBe('light')
+  })
+})
+
+describe('themeLabel', () => {
+  const t = (key: string) => `t(${key})`
+  const quipu = { es: 'Quipu oscuro', en: 'Quipu dark' }
+
+  it('translates a key', () => {
+    expect(themeLabel('theme.light', t, 'es')).toBe('t(theme.light)')
+  })
+
+  it('takes the text of the current language', () => {
+    expect(themeLabel(quipu, t, 'en')).toBe('Quipu dark')
+    expect(themeLabel(quipu, t, 'es')).toBe('Quipu oscuro')
+  })
+
+  it('reads a regional language as its base', () => {
+    expect(themeLabel(quipu, t, 'en-GB')).toBe('Quipu dark')
+  })
+
+  it('falls back to the fallback language, then to any text', () => {
+    expect(themeLabel(quipu, t, 'pt', 'es')).toBe('Quipu oscuro')
+    expect(themeLabel({ en: 'Quipu dark' }, t, 'pt', 'es')).toBe('Quipu dark')
   })
 })

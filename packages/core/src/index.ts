@@ -63,8 +63,10 @@ export {
   BUILT_IN_THEMES,
   PORTAL_TRIBUTARIO_THEME,
   SYSTEM_THEME,
+  themeLabel,
   type SystemThemes,
-  type ThemeDefinition
+  type ThemeDefinition,
+  type ThemeLabel
 } from './theme/themes'
 export { usePreferences, useUpdatePreferences, useSetLocale, type UserPreferences } from './preferences/preferences'
 export { useObjectFlags } from './registry/hooks'

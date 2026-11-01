@@ -10,6 +10,7 @@ import { useAppTitle } from '../organization/currentOrganization'
 import { useAuth } from '../auth/AuthProvider'
 import { useSetLocale } from '../preferences/preferences'
 import { useTheme } from '../theme/ThemeProvider'
+import { themeLabel } from '../theme/themes'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -97,14 +98,16 @@ export function AppShell() {
         </div>
 
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4" onClick={drawer.hideOnLink}>
-          <NavLink to={links.home()} end className={linkClass}>
+          <NavLink to={links.home()} end data-slot="nav-item" className={linkClass}>
             <Home className="h-4 w-4" />
             {t('nav.home')}
           </NavLink>
 
           {groups.map((group) => (
             <div key={group.id}>
-              <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-shell-muted/70">{t(group.labelKey)}</p>
+              <p data-slot="nav-group" className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-shell-muted/70">
+                {t(group.labelKey)}
+              </p>
               <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon
@@ -122,7 +125,7 @@ export function AppShell() {
                     )
                   }
                   return (
-                    <NavLink key={item.key} to={item.to} className={linkClass}>
+                    <NavLink key={item.key} to={item.to} data-slot="nav-item" className={linkClass}>
                       {icon}
                       {t(item.labelKey)}
                     </NavLink>
@@ -137,6 +140,7 @@ export function AppShell() {
           <p className="truncate text-xs text-shell-ink">{user?.displayName}</p>
           <p className="truncate text-[11px] text-shell-muted">{user?.email}</p>
           <select
+            data-slot="theme-select"
             aria-label={t('theme.label')}
             value={themeValue}
             onChange={(event) => save(setPreference(event.target.value))}
@@ -145,7 +149,7 @@ export function AppShell() {
             <option value="system">{t('theme.system')}</option>
             {themes.map((theme) => (
               <option key={theme.id} value={theme.id}>
-                {t(theme.label)}
+                {themeLabel(theme.label, t, i18n.language, languages[0])}
               </option>
             ))}
           </select>

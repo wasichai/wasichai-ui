@@ -1,9 +1,12 @@
 import type { WasichaiConfig } from '../app/config'
 
+// an app theme has no i18n namespace of its own: it may give its words per language instead of a key (#115)
+export type ThemeLabel = string | Readonly<Record<string, string>>
+
 export interface ThemeDefinition {
   id: string
-  // i18n key in the core namespace or the app's
-  label: string
+  // an i18n key (core's namespace or a module's), or the text per language: { es: 'Quipu oscuro', en: 'Quipu dark' }
+  label: ThemeLabel
   // tells the browser (scrollbars, inputs) and modules like gis which side the theme is on
   colorScheme: 'light' | 'dark'
 }
@@ -46,4 +49,12 @@ export function resolveTheme(
   const chosen = themes.find((theme) => theme.id === preference)
   if (chosen) return chosen
   return themes.find((theme) => theme.id === (systemDark ? systemThemes.dark : systemThemes.light)) ?? themes[0]
+}
+
+// a key goes through t. a text per language: the current one, then the fallback (config.languages[0]), then any,
+// so the selector never shows nothing
+export function themeLabel(label: ThemeLabel, t: (key: string) => string, language: string, fallback?: string): string {
+  if (typeof label === 'string') return t(label)
+  const base = language.split('-')[0]
+  return label[language] ?? label[base] ?? (fallback ? label[fallback] : undefined) ?? Object.values(label)[0] ?? ''
 }
