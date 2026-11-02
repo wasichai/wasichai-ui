@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.0](https://github.com/wasichai/wasichai-ui/compare/v1.5.0...v1.6.0) (2026-11-02)
+
+
+### Features
+
+* **core:** shellNav and homeRoute, so the app picks the shell menu and the start page ([#121](https://github.com/wasichai/wasichai-ui/issues/121)) ([df8ac27](https://github.com/wasichai/wasichai-ui/commit/df8ac27157d707136316160da6d9c8ca36e7eaa5)), closes [#119](https://github.com/wasichai/wasichai-ui/issues/119) [#120](https://github.com/wasichai/wasichai-ui/issues/120)
+* **core:** theme labels per language and data-slot hooks on the shell menu ([#117](https://github.com/wasichai/wasichai-ui/issues/117)) ([147a77c](https://github.com/wasichai/wasichai-ui/commit/147a77cbe277dcb726a93f4616fc752eb128d6fc)), closes [#115](https://github.com/wasichai/wasichai-ui/issues/115) [#116](https://github.com/wasichai/wasichai-ui/issues/116)
+
 ## [1.5.0](https://github.com/wasichai/wasichai-ui/compare/v1.4.0...v1.5.0) (2026-10-31)
 
 
