@@ -48,6 +48,8 @@ createRoot(document.getElementById('root')!).render(
 | `themes` | – | extra `ThemeDefinition`s (`{ id, label, colorScheme }`); `light` and `dark` are always there, see [Themes](#themes-and-preferences) |
 | `systemThemes` | `{ light: 'light', dark: 'dark' }` | what `system` and an unknown id resolve to on a light / dark OS, see [Themes](#themes-and-preferences) |
 | `timeZone` | – (browser zone) | IANA zone (`America/Lima`) `DynamicForm` reads and writes `DATETIME` wall times in; a field's own `timeZone` wins; an unknown name throws |
+| `shellNav` | – (every group) | `(groups, { pathname, permissions }) => groups`: the sidebar groups `AppShell` offers, see [Menu and start page](#menu-and-start-page) |
+| `homeRoute` | – (the dashboard) | `(permissions) => routeKey \| null`: where `/`, «Inicio» and `links.home()` lead, see [Menu and start page](#menu-and-start-page) |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -198,6 +200,38 @@ and `system` = `{ light: 'ant-design', dark: 'ant-design-dark' }` when it pairs 
   } catch {}
 </script>
 ```
+
+## Menu and start page
+
+An app that mounts all its screens as modules of one `WasichaiApp` (an LMS: students and admins in one bundle) picks
+what the shell offers each caller. Both are courtesies: routes stay mounted, `links.*` keep working, and the server
+still answers `403`.
+
+```tsx
+const ADMIN_GROUPS = ['data', 'builder', 'automation', 'administration']
+
+<WasichaiApp
+  modules={[learningModule]}
+  config={{
+    // core's groups only to admins, and only inside /admin and /data
+    shellNav: (groups, { pathname, permissions }) =>
+      permissions?.admin && /^\/(admin|data)(\/|$)/.test(pathname) ? groups : groups.filter((group) => !ADMIN_GROUPS.includes(group.id)),
+    // a student starts on their courses, an admin keeps the dashboard
+    homeRoute: (permissions) => (permissions.admin ? null : 'learning:myCourses')
+  }}
+/>
+```
+
+`shellNav` gets the resolved groups (`ResolvedNavGroup`), the path relative to `basename` and the permissions (`null`
+while they load), on every route or permissions change. What it returns still goes through each entry's `visible`,
+and a group left empty is not drawn. «Inicio» is always there: it is the way back.
+
+`homeRoute` gets the server's permissions (`GET /auth/me/permissions`) and returns a registered route key, or
+`null` for the dashboard. `/` then redirects there (replacing the history entry) without mounting `DashboardPage`, and
+«Inicio», `links.home()`, unknown paths and a sign in without `returnTo` lead there too; a `returnTo` still wins. While
+the permissions load, `/` shows the loading text and `links.home()` is `/`; if they fail, or nobody is signed in, it
+is the dashboard. A key that is not registered, or a route that needs parameters, fails on `/` with the key in the
+message.
 
 ## Tree menu (`NavTree`)
 

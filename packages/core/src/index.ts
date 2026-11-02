@@ -1,4 +1,4 @@
-export { DEFAULT_CONFIG, resolveConfig, storageKeys, type AppText, type WasichaiConfig, type StorageKeys } from './app/config'
+export { DEFAULT_CONFIG, resolveConfig, storageKeys, type AppText, type HomeRoute, type ShellNav, type WasichaiConfig, type StorageKeys } from './app/config'
 export {
   ApiError,
   api,
@@ -41,7 +41,8 @@ export {
   type WasichaiLinks,
   type WasichaiRouteMap,
   type CoreRouteId,
-  type LoginLinkOptions
+  type LoginLinkOptions,
+  type CreateLinksOptions
 } from './links/links'
 export { CORE_NAMESPACE, changeLanguage, createWasichaiI18n, type WasichaiI18nOptions } from './i18n/createI18n'
 export { useApiClient, useWasichai, useWasichaiConfig, useWasichaiLinks, useRegistry, type WasichaiContextValue } from './app/context'
@@ -81,6 +82,7 @@ export { coreModule } from './app/coreModule'
 export { WasichaiApp, type WasichaiAppProps } from './app/WasichaiApp'
 export { LoginPage } from './auth/LoginPage'
 export { DashboardPage } from './features/dashboard/DashboardPage'
+export { HomePage } from './app/HomePage'
 export { DataTable, type DataTableProps } from './components/data-table/DataTable'
 export { DynamicForm, type DynamicFormProps } from './components/dynamic-form/DynamicForm'
 export { FieldInput } from './components/dynamic-form/fields/FieldInput'

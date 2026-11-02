@@ -63,7 +63,12 @@ function withSearch(path: string, search?: Record<string, string>): string {
   return query ? `${path}?${query}` : path
 }
 
-export function createLinks(registry: WasichaiRegistry): WasichaiLinks {
+export interface CreateLinksOptions {
+  // what home() answers instead of '/': config.homeRoute's pick, resolved by useWasichaiLinks
+  home?: string
+}
+
+export function createLinks(registry: WasichaiRegistry, options: CreateLinksOptions = {}): WasichaiLinks {
   const paths = new Map(registry.routes.map((route) => [route.key, route.path]))
   const core = (id: CoreRouteId, params?: Record<string, string>) => fillPath(joinPath(CORE_ROUTE_PATHS[id]), params)
 
@@ -74,7 +79,7 @@ export function createLinks(registry: WasichaiRegistry): WasichaiLinks {
       return withSearch(fillPath(pattern, params), search)
     },
     has: (route) => paths.has(route),
-    home: () => core('home'),
+    home: () => options.home ?? core('home'),
     login: (options) => withSearch(core('login'), options?.returnTo ? { [RETURN_TO_PARAM]: options.returnTo } : undefined),
     objects: () => core('objects'),
     newObject: () => core('newObject'),

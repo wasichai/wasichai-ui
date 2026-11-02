@@ -1,10 +1,11 @@
 import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
 import { coreModule } from '../app/coreModule'
 import type { WasichaiModule } from '../registry/contract'
 import { AppShell } from './AppShell'
+import type { ShellNav } from '../app/config'
 
 let fetch: FetchMock | null = null
 afterEach(() => fetch?.restore())
@@ -195,5 +196,71 @@ describe('AppShell on a wide screen', () => {
     expect(aside.nextElementSibling?.tagName).toBe('MAIN')
     expect(screen.getByRole('button', { name: 'Abrir el menú' }).closest('header')).toHaveClass('md:hidden')
     expect(within(aside).getByRole('button', { name: 'Cerrar el menú' })).toHaveClass('md:hidden')
+  })
+})
+
+describe('AppShell shellNav', () => {
+  it('without shellNav, offers every group as before', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    const headings = screen.getAllByText(/^(Datos|Planos|Administración)$/).map((node) => node.textContent)
+    expect(headings).toEqual(['Datos', 'Planos', 'Administración'])
+  })
+
+  it('draws only the groups shellNav returns, with the route and the permissions', () => {
+    const permissions = { admin: false, objects: {} }
+    const shellNav = vi.fn<ShellNav>((groups) => groups.filter((group) => group.id === 'plans'))
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans], permissions, route: '/plans/sheets', config: { shellNav } })
+
+    expect(screen.queryByText('Datos')).not.toBeInTheDocument()
+    expect(screen.queryByText('Administración')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Hojas' })).toBeInTheDocument()
+    // Inicio stays: the way back
+    expect(screen.getByRole('link', { name: 'Inicio' })).toBeInTheDocument()
+    expect(shellNav).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ id: 'data' })]), { pathname: '/plans/sheets', permissions })
+  })
+
+  it('passes null permissions while they load', () => {
+    const shellNav = vi.fn<ShellNav>((groups) => groups)
+    renderWithProviders(<AppShell />, { modules: [coreModule], permissions: null, config: { shellNav } })
+    expect(shellNav).toHaveBeenCalledWith(expect.any(Array), { pathname: '/', permissions: null })
+  })
+
+  it('still applies visible to what it returns, and drops a group left empty', () => {
+    const only =
+      (id: string): ShellNav =>
+      (groups) =>
+        groups.filter((group) => group.id === id)
+    const { unmount } = renderWithProviders(<AppShell />, {
+      modules: [coreModule, plans],
+      permissions: { admin: false, objects: {} },
+      config: { shellNav: only('plans') }
+    })
+    expect(screen.getByText('Hojas')).toBeInTheDocument()
+    expect(screen.queryByText('Secreto')).not.toBeInTheDocument()
+    unmount()
+
+    // a group shellNav makes up out of hidden entries is still a heading over nothing
+    const hiddenOnly: ShellNav = (groups) =>
+      groups.filter((group) => group.id === 'plans').map((group) => ({ ...group, items: group.items.filter((item) => item.visible) }))
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans], permissions: { admin: false, objects: {} }, config: { shellNav: hiddenOnly } })
+    expect(screen.queryByText('Planos')).not.toBeInTheDocument()
+  })
+
+  it('asks again when the route changes', async () => {
+    // a section menu: the plans group only outside plans
+    const shellNav: ShellNav = (groups, { pathname }) => (pathname.startsWith('/plans') ? groups.filter((group) => group.id !== 'plans') : groups)
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans], config: { shellNav } })
+
+    await userEvent.click(screen.getByRole('link', { name: 'Hojas' }))
+    expect(screen.queryByText('Planos')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('link', { name: 'Inicio' }))
+    expect(screen.getByText('Planos')).toBeInTheDocument()
+  })
+
+  it('only decides the menu: routes and links stay', () => {
+    const shellNav: ShellNav = () => []
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans], config: { shellNav } })
+    expect(screen.queryByText('Datos')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/')
   })
 })

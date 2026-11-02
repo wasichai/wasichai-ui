@@ -5,7 +5,6 @@ import { PermissionsPage } from '../features/admin/PermissionsPage'
 import { RolesPage } from '../features/admin/RolesPage'
 import { ServiceAccountsPage } from '../features/admin/ServiceAccountsPage'
 import { UsersPage } from '../features/admin/UsersPage'
-import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { ObjectBuilderPage } from '../features/objects/ObjectBuilderPage'
 import { ObjectEditorPage } from '../features/objects/ObjectEditorPage'
 import { ObjectsPage } from '../features/objects/ObjectsPage'
@@ -16,6 +15,7 @@ import { RelationshipsPage } from '../features/relationships/RelationshipsPage'
 import { CORE_MODULE_ID, CORE_ROUTE_PATHS } from '../links/links'
 import type { WasichaiModule } from '../registry/contract'
 import type { CallerPermissions } from '../types/auth'
+import { HomePage } from './HomePage'
 
 // an older server sends no capabilities: show the entry and let its 403 decide
 function canManageOrganization(permissions: CallerPermissions | null): boolean {
@@ -34,7 +34,7 @@ export const coreModule: WasichaiModule = {
   ],
   routes: [
     { id: 'login', path: CORE_ROUTE_PATHS.login, component: LoginPage, chrome: 'public' },
-    { id: 'home', path: CORE_ROUTE_PATHS.home, component: DashboardPage },
+    { id: 'home', path: CORE_ROUTE_PATHS.home, component: HomePage },
     { id: 'objects', path: CORE_ROUTE_PATHS.objects, component: ObjectsPage },
     { id: 'newObject', path: CORE_ROUTE_PATHS.newObject, component: ObjectBuilderPage },
     { id: 'editObject', path: CORE_ROUTE_PATHS.editObject, component: ObjectEditorPage },
