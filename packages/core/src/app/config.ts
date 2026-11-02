@@ -1,9 +1,22 @@
 import { isTimeZone } from '../lib/timeZone'
 import type { CurrentOrganization } from '../organization/currentOrganization'
+import type { ResolvedNavGroup } from '../registry/createRegistry'
+import type { CallerPermissions } from '../types/auth'
 import { availableThemes, type SystemThemes, type ThemeDefinition } from '../theme/themes'
 
 // a fixed text, or one per tenant: called with null before login, while loading and on error
 export type AppText = string | ((org: CurrentOrganization | null) => string)
+
+// what AppShell's sidebar offers, by route and permissions. pathname is relative to the basename, permissions null while
+// they load. only the menu: routes stay mounted and links do not change
+export type ShellNav = (
+  groups: readonly ResolvedNavGroup[],
+  context: { pathname: string; permissions: CallerPermissions | null }
+) => readonly ResolvedNavGroup[]
+
+// where '/' and «Inicio» lead, by the server's permissions: a registered route key ('learning:mine').
+// null = the dashboard. never called while permissions load or after they fail
+export type HomeRoute = (permissions: CallerPermissions) => string | null | undefined
 
 export interface WasichaiConfig {
   // where the REST api lives: '/api', 'https://host/api'. a trailing slash is dropped
@@ -31,6 +44,11 @@ export interface WasichaiConfig {
   // the app's repository is the source of truth of its model: the object and workflow editors warn that
   // what is changed there may be undone by the next deployment. unset = no notice
   modelInRepository?: boolean
+  // the app picks the sidebar groups, before `visible` and the empty-group drop. unset = all of them. a courtesy:
+  // the server decides
+  shellNav?: ShellNav
+  // the app picks the start page. unset = the dashboard. a courtesy: the route still answers to the server
+  homeRoute?: HomeRoute
 }
 
 export const DEFAULT_CONFIG: WasichaiConfig = {

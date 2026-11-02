@@ -1,8 +1,10 @@
 import { createContext, use, useMemo } from 'react'
 import type { ApiClient } from '../api/client'
+import { useOptionalAuth } from '../auth/AuthProvider'
 import { createLinks, type WasichaiLinks } from '../links/links'
 import type { WasichaiRegistry } from '../registry/createRegistry'
 import type { WasichaiConfig } from './config'
+import { homePath, resolveHome } from './home'
 
 export interface WasichaiContextValue {
   config: WasichaiConfig
@@ -30,8 +32,16 @@ export function useApiClient(): ApiClient {
   return useWasichai().apiClient
 }
 
-// every in-app url goes through here, so a module mounted elsewhere is still found
+// every in-app url goes through here, so a module mounted elsewhere is still found. home() follows config.homeRoute
 export function useWasichaiLinks(): WasichaiLinks {
-  const registry = useRegistry()
-  return useMemo(() => createLinks(registry), [registry])
+  const { config, registry } = useWasichai()
+  const auth = useOptionalAuth()
+  const user = auth?.user ?? null
+  const permissions = auth?.permissions ?? null
+  const permissionsError = auth?.permissionsError ?? null
+  const home = useMemo(
+    () => homePath(resolveHome(config.homeRoute, registry, { user, permissions, permissionsError })),
+    [config.homeRoute, registry, user, permissions, permissionsError]
+  )
+  return useMemo(() => createLinks(registry, { home }), [registry, home])
 }

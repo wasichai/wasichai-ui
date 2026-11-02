@@ -45,8 +45,10 @@ export function AppShell() {
   const languages = config.languages
   const next = languages[(languages.indexOf(i18n.language) + 1) % languages.length]
   const themeValue = preference === 'system' || themes.some((theme) => theme.id === preference) ? preference : 'system'
-  // a group whose every entry is hidden or missing would be a heading over nothing
-  const groups = registry.navGroups
+  // the app's pick first (#119), then the entries' own visible. a group whose every entry is hidden or
+  // missing would be a heading over nothing
+  const offered = config.shellNav ? config.shellNav(registry.navGroups, { pathname, permissions }) : registry.navGroups
+  const groups = offered
     .map((group) => ({ ...group, items: group.items.filter((item) => item.visible?.(permissions) ?? true) }))
     .filter((group) => group.items.length > 0)
 

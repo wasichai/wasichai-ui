@@ -102,6 +102,11 @@ export function AuthProvider({ children, initialUser, initialPermissions }: Auth
   return <AuthContext value={value}>{children}</AuthContext>
 }
 
+// links read the session when there is one; a bare WasichaiContext (no AuthProvider) still gets links
+export function useOptionalAuth(): AuthContextValue | null {
+  return use(AuthContext)
+}
+
 export function useAuth(): AuthContextValue {
   const context = use(AuthContext)
   if (!context) throw new Error('useAuth must be used inside AuthProvider')
