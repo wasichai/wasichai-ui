@@ -1,4 +1,5 @@
 import { getI18n } from 'react-i18next'
+import { enumOptionLabel, fieldLabel } from '../../lib/localizedMetadata'
 import { fixedOffset } from '../../lib/timeZone'
 import type { AuditValueFormatter } from '../../registry/contract'
 import type { AuditEntry, ChangeDescription } from '../../types/audit'
@@ -48,7 +49,8 @@ function sameValue(before: unknown, after: unknown): boolean {
 // module gave it; anything else falls back to its technical name.
 function resolveLabel(field: string, definition: ObjectDefinition | undefined, extensions: AuditExtensions): string {
   const meta = definition?.fields.find((candidate) => candidate.name === field)
-  if (meta) return meta.label
+  // in the user's language, as every other screen draws it (#140)
+  if (meta) return fieldLabel(meta, language())
   const key = extensions.fieldLabels[field]
   return key ? t(key) : field
 }
@@ -60,12 +62,20 @@ export function describeChanges(
 ): ChangeDescription[] {
   return (entry.changes ?? [])
     .filter((change) => !sameValue(change.before, change.after))
-    .map((change) => ({
-      field: change.field,
-      label: resolveLabel(change.field, definition, extensions),
-      before: formatAuditValue(change.before, extensions),
-      after: formatAuditValue(change.after, extensions)
-    }))
+    .map((change) => {
+      const meta = definition?.fields.find((candidate) => candidate.name === change.field)
+      // an ENUM value reads as its option's text, as in the forms and tables (#140)
+      const format = (value: unknown) =>
+        meta?.type === 'ENUM' && typeof value === 'string' && value.trim() !== ''
+          ? enumOptionLabel(meta, value, language())
+          : formatAuditValue(value, extensions)
+      return {
+        field: change.field,
+        label: resolveLabel(change.field, definition, extensions),
+        before: format(change.before),
+        after: format(change.after)
+      }
+    })
 }
 
 const BUCKETS: { limit: number; unit: Intl.RelativeTimeFormatUnit; seconds: number }[] = [

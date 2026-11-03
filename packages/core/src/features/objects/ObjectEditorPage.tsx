@@ -38,6 +38,8 @@ import {
   type FieldDraft,
   type ObjectDetailsDraft
 } from './objectDraft'
+import { FieldTexts } from './FieldTexts'
+import { LanguageTexts, LanguageTextsHint } from './LanguageTexts'
 import { ObjectActions } from './ObjectActions'
 import { ObjectFieldSets } from './ObjectFieldSets'
 import { ObjectRelationships } from './ObjectRelationships'
@@ -75,6 +77,8 @@ export function ObjectEditorPage() {
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [systemOpen, setSystemOpen] = useState(false)
+  // the field whose texts per language are open, by name
+  const [textsOpen, setTextsOpen] = useState<string | null>(null)
 
   // the server owns the truth; the form only borrows it. a refetch keeps what the user changed and has not saved.
   useEffect(() => {
@@ -193,6 +197,33 @@ export function ObjectEditorPage() {
                 <Label htmlFor="description">{t('objects.description')}</Label>
                 <Textarea id="description" className="min-h-9" value={details.description} onChange={(event) => edit({ description: event.target.value })} />
               </div>
+              {/* the same texts per language of config.languages, as the workflow editor does (ADR-078) */}
+              <fieldset className="space-y-3 sm:col-span-2">
+                <legend className="mb-1 text-sm font-semibold">{t('objects.translations')}</legend>
+                <div className="space-y-1.5">
+                  <Label>{t('objects.label')}</Label>
+                  <LanguageTexts id="label" name={t('objects.label')} texts={details.labels} onChange={(labels) => edit({ labels })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t('objects.pluralLabel')}</Label>
+                  <LanguageTexts
+                    id="pluralLabel"
+                    name={t('objects.pluralLabel')}
+                    texts={details.pluralLabels}
+                    onChange={(pluralLabels) => edit({ pluralLabels })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t('objects.description')}</Label>
+                  <LanguageTexts
+                    id="description"
+                    name={t('objects.description')}
+                    texts={details.descriptions}
+                    onChange={(descriptions) => edit({ descriptions })}
+                  />
+                </div>
+                <LanguageTextsHint />
+              </fieldset>
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={details.enabled} onChange={(event) => edit({ enabled: event.target.checked })} />
@@ -393,7 +424,8 @@ export function ObjectEditorPage() {
               {definition.fields.map((field) => {
                 // a relationship owns the column it created; the server refuses to drop it here
                 const owner = relationshipOfField(relationships, object, field.name)
-                return (
+                const textsShown = textsOpen === field.name
+                return [
                   <tr key={field.id} className="hover:bg-surface-muted">
                     <Td>
                       {/* on blur, not on change: one PUT per keystroke would be a PUT per keystroke */}
@@ -406,6 +438,18 @@ export function ObjectEditorPage() {
                           if (next && next !== field.label) void run(() => updateField.mutateAsync({ field: field.name, payload: { label: next } }))
                         }}
                       />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-1 px-0 text-xs"
+                        aria-expanded={textsShown}
+                        aria-controls={`texts-${field.name}`}
+                        onClick={() => setTextsOpen(textsShown ? null : field.name)}
+                      >
+                        {textsShown ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                        {t('objects.translations')}
+                      </Button>
                     </Td>
                     <Td className="font-mono text-xs text-ink-muted">{field.name}</Td>
                     <Td>
@@ -458,8 +502,19 @@ export function ObjectEditorPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </Td>
-                  </tr>
-                )
+                  </tr>,
+                  textsShown ? (
+                    <tr key={`${field.id}-texts`} id={`texts-${field.name}`}>
+                      <Td colSpan={5} className="bg-surface-muted/40">
+                        <FieldTexts
+                          field={field}
+                          saving={updateField.isPending}
+                          onSave={(payload) => void run(() => updateField.mutateAsync({ field: field.name, payload: { ...payload } }))}
+                        />
+                      </Td>
+                    </tr>
+                  ) : null
+                ]
               })}
             </tbody>
           </Table>

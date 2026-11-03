@@ -20,10 +20,30 @@ function optional(schema: z.ZodTypeAny, required: boolean): z.ZodTypeAny {
   return required ? schema : schema.optional()
 }
 
+// what a field can be refused for on the client
+export type ValidationProblem = 'required' | 'email' | 'url' | 'option' | 'integer' | 'date' | 'dateTime' | 'reference'
+
+// the message for a problem of a field, by its label. DynamicForm passes one in the user's language (#140)
+export type ValidationMessages = (problem: ValidationProblem, label: string) => string
+
+const ENGLISH: Record<ValidationProblem, string> = {
+  required: 'required',
+  email: 'invalid email',
+  url: 'invalid URL',
+  option: 'invalid option',
+  integer: 'must be an integer',
+  date: 'invalid date',
+  dateTime: 'invalid date-time',
+  reference: 'invalid reference'
+}
+
+// the messages of before, for a caller that passes none
+export const englishValidationMessages: ValidationMessages = (problem, label) => `${label}: ${ENGLISH[problem]}`
+
 // metadata -> validation. the form never hardcodes a rule per object.
-export function fieldSchema(field: FieldMeta): z.ZodTypeAny {
+export function fieldSchema(field: FieldMeta, messages: ValidationMessages = englishValidationMessages): z.ZodTypeAny {
   const label = field.label || field.name
-  const requiredMessage = `${label}: required`
+  const requiredMessage = messages('required', label)
 
   switch (field.type) {
     case 'LONG_TEXT':
@@ -31,23 +51,23 @@ export function fieldSchema(field: FieldMeta): z.ZodTypeAny {
     case 'UUID':
       return z.preprocess(blankToUndefined, optional(z.string({ error: requiredMessage }).min(1, requiredMessage), field.required))
     case 'EMAIL':
-      return z.preprocess(blankToUndefined, optional(z.string({ error: requiredMessage }).email(`${label}: invalid email`), field.required))
+      return z.preprocess(blankToUndefined, optional(z.string({ error: requiredMessage }).email(messages('email', label)), field.required))
     case 'URL':
-      return z.preprocess(blankToUndefined, optional(z.string({ error: requiredMessage }).url(`${label}: invalid URL`), field.required))
+      return z.preprocess(blankToUndefined, optional(z.string({ error: requiredMessage }).url(messages('url', label)), field.required))
     case 'ENUM': {
       const options = field.enumOptions ?? []
       return z.preprocess(
         blankToUndefined,
         optional(
           z.string({ error: requiredMessage }).refine((value) => options.includes(value), {
-            error: `${label}: invalid option`
+            error: messages('option', label)
           }),
           field.required
         )
       )
     }
     case 'INTEGER':
-      return z.preprocess(toNumber, optional(z.number({ error: requiredMessage }).int(`${label}: must be an integer`), field.required))
+      return z.preprocess(toNumber, optional(z.number({ error: requiredMessage }).int(messages('integer', label)), field.required))
     case 'DECIMAL':
       return z.preprocess(toNumber, optional(z.number({ error: requiredMessage }), field.required))
     case 'BOOLEAN':
@@ -57,7 +77,7 @@ export function fieldSchema(field: FieldMeta): z.ZodTypeAny {
         blankToUndefined,
         optional(
           z.string({ error: requiredMessage }).refine((value) => !Number.isNaN(Date.parse(value)), {
-            error: `${label}: invalid date`
+            error: messages('date', label)
           }),
           field.required
         )
@@ -67,23 +87,23 @@ export function fieldSchema(field: FieldMeta): z.ZodTypeAny {
         blankToUndefined,
         optional(
           z.string({ error: requiredMessage }).refine((value) => !Number.isNaN(Date.parse(value)), {
-            error: `${label}: invalid date-time`
+            error: messages('dateTime', label)
           }),
           field.required
         )
       )
     case 'RELATION':
-      return z.preprocess(blankToUndefined, optional(z.string({ error: requiredMessage }).uuid(`${label}: invalid reference`), field.required))
+      return z.preprocess(blankToUndefined, optional(z.string({ error: requiredMessage }).uuid(messages('reference', label)), field.required))
     default:
       return z.preprocess(blankToUndefined, z.unknown().optional())
   }
 }
 
-export function buildRecordSchema(fields: FieldMeta[]) {
+export function buildRecordSchema(fields: FieldMeta[], messages?: ValidationMessages) {
   const shape: Record<string, z.ZodTypeAny> = {}
   for (const field of fields) {
     if (!field.editable) continue
-    shape[field.name] = fieldSchema(field)
+    shape[field.name] = fieldSchema(field, messages)
   }
   return z.object(shape)
 }

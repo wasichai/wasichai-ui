@@ -25,7 +25,32 @@ export {
   type FieldViolation
 } from './api/client'
 export * from './types/metadata'
-export { buildRecordSchema, toAttributes, toFormValues, type DateTimeOptions } from './lib/metadata-to-zod'
+export {
+  buildRecordSchema,
+  englishValidationMessages,
+  toAttributes,
+  toFormValues,
+  type DateTimeOptions,
+  type ValidationMessages,
+  type ValidationProblem
+} from './lib/metadata-to-zod'
+export {
+  enumOptionLabel,
+  fieldDescription,
+  fieldLabel,
+  localizeDefinition,
+  localizeField,
+  localizedText,
+  objectDescription,
+  objectLabel,
+  objectPluralLabel,
+  relationshipInverseLabel,
+  relationshipLabel,
+  sideLabel,
+  sideObjectLabel,
+  useLocalizedDefinition,
+  useLocalizedFields
+} from './lib/localizedMetadata'
 export { CHANGE_REASON_HEADER, CHANGE_REASON_MAX_LENGTH, changeReasonHeader, normalizeReason, reasonProblem, type ReasonProblem } from './lib/changeReason'
 export { useWritePolicy, writePolicy, type WritePolicy, type WriteRules } from './lib/writePolicy'
 export { ReasonDialog, type ReasonDialogProps } from './components/reason/ReasonDialog'

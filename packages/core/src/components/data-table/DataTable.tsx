@@ -6,6 +6,7 @@ import { Input } from '@wasichai/ui'
 import { Table, Td, Th } from '@wasichai/ui'
 import { cn } from '@wasichai/ui'
 import { useRegistry } from '../../app/context'
+import { useLocalizedFields } from '../../lib/localizedMetadata'
 import { FieldCell } from '../field-value'
 import type { FieldMeta, Paged, RecordItem } from '../../types/metadata'
 
@@ -43,7 +44,8 @@ export function DataTable({
   const { t } = useTranslation()
   const { fieldRenderers } = useRegistry()
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const shown = selectColumns(fields, columns)
+  // headers in the user's language (#140)
+  const shown = selectColumns(useLocalizedFields(fields), columns)
   const records = page?.content ?? []
 
   const toggle = (id: string) =>

@@ -174,7 +174,11 @@
                 "BUILT_IN": "That is a built-in action",
                 "DUPLICATE": "Already declared"
             }
-        }
+        },
+        "translations": "Translations",
+        "translationsHint": "One per language. Left empty, that language shows the text above.",
+        "enumOption": "Option",
+        "saveTranslations": "Save translations"
     },
     "records": {
         "new": "New record",
@@ -260,5 +264,15 @@
     "modelSource": {
         "title": "The model lives in the repository.",
         "inRepository": "This app's repository is the source of truth for its objects and workflows: what you change here is not saved there, and the next deployment may undo it."
+    },
+    "validation": {
+        "required": "{{label}}: required",
+        "email": "{{label}}: invalid email",
+        "url": "{{label}}: invalid URL",
+        "option": "{{label}}: invalid option",
+        "integer": "{{label}}: must be an integer",
+        "date": "{{label}}: invalid date",
+        "dateTime": "{{label}}: invalid date-time",
+        "reference": "{{label}}: invalid reference"
     }
 }

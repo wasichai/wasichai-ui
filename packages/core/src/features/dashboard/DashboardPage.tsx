@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Card, CardBody } from '@wasichai/ui'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
+import { objectPluralLabel } from '../../lib/localizedMetadata'
 import { useObjects } from '../../queries'
 import { PageHeader } from '../../shell/PageHeader'
 
 export function DashboardPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const links = useWasichaiLinks()
   const { dashboardCards, objectTileDetails } = useRegistry()
   const { data: objects = [], isLoading } = useObjects()
@@ -37,7 +38,7 @@ export function DashboardPage() {
             to={links.records(item.name)}
             className="rounded-card border border-border bg-surface px-5 py-4 transition-colors hover:border-brand"
           >
-            <p className="font-medium text-ink">{item.pluralLabel}</p>
+            <p className="font-medium text-ink">{objectPluralLabel(item, i18n.language)}</p>
             {objectTileDetails.map((Detail, index) => (
               <Detail key={index} object={item} />
             ))}

@@ -8,6 +8,7 @@ import { Badge, Table, Td, Th } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { describeError } from '../../api/client'
+import { sideLabel, useLocalizedDefinition } from '../../lib/localizedMetadata'
 import { useWritePolicy } from '../../lib/writePolicy'
 import { FieldCell } from '../field-value'
 import { reasonRefusal, useReasonPrompt } from '../reason/useReasonPrompt'
@@ -23,13 +24,15 @@ interface RelatedListProps {
 
 // one related list per relationship the object takes part in, columns from the other object.
 export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const links = useWasichaiLinks()
   const { fieldRenderers } = useRegistry()
   const definition = useObjectDefinition(side.objectName)
+  // its title and columns in the user's language (#140)
+  const localized = useLocalizedDefinition(definition.data)
   const related = useRelatedRecords(objectName, recordId, side.relationship)
   const { link, unlink } = useLinkRelated(objectName, recordId, side.relationship)
-  const columns = (definition.data?.fields ?? []).filter((field) => field.visible).slice(0, 4)
+  const columns = (localized?.fields ?? []).filter((field) => field.visible).slice(0, 4)
   const manyToMany = side.type === 'MANY_TO_MANY'
   // a link writes both ends: either one's rules hold
   const policy = useWritePolicy(objectName, side.objectName)
@@ -44,7 +47,7 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
     <Card>
       <CardHeader className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <CardTitle>{side.label}</CardTitle>
+          <CardTitle>{sideLabel(side, i18n.language)}</CardTitle>
           <Badge>{side.type}</Badge>
           <span className="text-xs text-ink-muted">{related.data?.totalElements ?? 0}</span>
         </div>

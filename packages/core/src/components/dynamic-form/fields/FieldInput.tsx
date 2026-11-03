@@ -1,6 +1,8 @@
 import { Controller, type Control, type UseFormRegister } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Input, Textarea } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
+import { enumOptionLabel } from '../../../lib/localizedMetadata'
 import { RelationField } from './RelationField'
 import type { FieldMeta } from '../../../types/metadata'
 
@@ -17,6 +19,7 @@ interface FieldInputProps {
 
 // one switch, every object. no per-object form component exists anywhere. ADR-003.
 export function FieldInput({ field, control, register, invalid, disabled }: FieldInputProps) {
+  const { i18n } = useTranslation()
   const common = { id: field.name, 'aria-invalid': invalid, disabled }
 
   switch (field.type) {
@@ -63,8 +66,9 @@ export function FieldInput({ field, control, register, invalid, disabled }: Fiel
               </SelectTrigger>
               <SelectContent>
                 {(field.enumOptions ?? []).map((option) => (
+                  // the text in the user's language, the value as stored (#140)
                   <SelectItem key={option} value={option}>
-                    {option}
+                    {enumOptionLabel(field, option, i18n.language)}
                   </SelectItem>
                 ))}
               </SelectContent>
