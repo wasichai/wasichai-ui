@@ -8,7 +8,7 @@ import { ReasonDialog } from './ReasonDialog'
 import { useReasonPrompt } from './useReasonPrompt'
 import { WritePolicyNotice } from './WritePolicyNotice'
 
-function renderDialog(props: { error?: string; busy?: boolean } = {}) {
+function renderDialog(props: { error?: string; busy?: boolean; label?: string; maxLength?: number } = {}) {
   const onConfirm = vi.fn()
   const onCancel = vi.fn()
   renderWithProviders(<ReasonDialog onConfirm={onConfirm} onCancel={onCancel} {...props} />, { language: 'es' })
@@ -53,6 +53,32 @@ describe('ReasonDialog', () => {
 
     expect(screen.getByText('Como máximo 500 caracteres')).toBeInTheDocument()
     expect(onConfirm).not.toHaveBeenCalled()
+  })
+
+  it('takes its own limit, for a reason the app sends in a body (#129)', async () => {
+    const { onConfirm } = renderDialog({ maxLength: 4000 })
+
+    expect(screen.getByText('0/4000')).toBeInTheDocument()
+    expect(screen.getByText('Obligatorio, hasta 4000 caracteres.')).toBeInTheDocument()
+    screen.getByLabelText('Motivo').focus()
+    await userEvent.paste('a'.repeat(501))
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(onConfirm).toHaveBeenCalledWith('a'.repeat(501))
+
+    screen.getByLabelText('Motivo').focus()
+    await userEvent.paste('a'.repeat(3500))
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(screen.getByText('Como máximo 4000 caracteres')).toBeInTheDocument()
+    expect(onConfirm).toHaveBeenCalledTimes(1)
+  })
+
+  it('takes its own label, still tied to the field (#129)', async () => {
+    const { onConfirm } = renderDialog({ label: 'Comentario para la autora' })
+
+    expect(screen.queryByLabelText('Motivo')).not.toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Comentario para la autora'), 'falta un ejemplo')
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(onConfirm).toHaveBeenCalledWith('falta un ejemplo')
   })
 
   it('cancels on Escape and on the cancel button', async () => {

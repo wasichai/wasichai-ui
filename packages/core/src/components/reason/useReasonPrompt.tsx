@@ -7,6 +7,8 @@ export interface ReasonPromptOptions {
   title?: ReactNode
   description?: ReactNode
   confirmLabel?: ReactNode
+  label?: ReactNode
+  maxLength?: number
 }
 
 export interface ReasonPrompt {
@@ -74,6 +76,8 @@ export function useReasonPrompt(): ReasonPrompt {
       title={pending.options.title}
       description={pending.options.description}
       confirmLabel={pending.options.confirmLabel}
+      label={pending.options.label}
+      maxLength={pending.options.maxLength}
       busy={busy}
       error={error}
       onConfirm={(reason) => void confirm(pending, reason)}

@@ -13,12 +13,13 @@ export function normalizeReason(raw: string | null | undefined): string | null {
   return trimmed ? trimmed : null
 }
 
-// for a required reason: what the server would refuse, checked before anything is sent
-export function reasonProblem(raw: string | null | undefined): ReasonProblem | null {
+// for a required reason: what the server would refuse, checked before anything is sent. maxLength: a reason the app
+// sends in a body has its own limit, not the header's (#129)
+export function reasonProblem(raw: string | null | undefined, maxLength: number = CHANGE_REASON_MAX_LENGTH): ReasonProblem | null {
   const reason = normalizeReason(raw)
   if (reason === null) return 'REQUIRED'
   // code points, like the server, not utf-16 units: an emoji counts once
-  if (Array.from(reason).length > CHANGE_REASON_MAX_LENGTH) return 'TOO_LONG'
+  if (Array.from(reason).length > maxLength) return 'TOO_LONG'
   if (CONTROL.test(reason)) return 'CONTROL'
   return null
 }
