@@ -162,6 +162,22 @@ in its own `[data-theme]` block, e.g. `--surface-raised: oklch(26% 0.015 265)`, 
 The fields' example text was `ink-muted` at 60%, under AA; it is now the `placeholder` token, full `ink-muted` by default,
 so it reads a little darker. A theme that wants a lighter example text sets `placeholder` and keeps it at 4.5:1 on `surface`.
 
+### An app's own text sizes (`extendCn`)
+
+`cn()` merges classes with `tailwind-merge`, which knows Tailwind's sizes (`text-sm`…) but not the ones an app declares
+in `@theme` (`--text-title-1`): it reads `text-title-1` as a colour, so `<Th className="text-title-1">` loses its
+`text-ink-muted` and keeps its `text-xs`. Name them once at startup, before the first render:
+
+```ts
+import { extendCn } from '@wasichai/ui'
+
+extendCn({ fontSizes: ['display', 'title-1', 'title-2', 'title-3', 'read-body'] })
+```
+
+Then `cn('text-ink', 'text-title-1')` keeps both and `cn('text-sm', 'text-title-1')` keeps only `text-title-1`. It is
+the one `cn` of the package, so `@wasichai/ui`'s and `@wasichai/core`'s components follow it too. A second call
+replaces the first. Without it nothing changes.
+
 ## Styling hooks (`data-slot`)
 
 The components carry `data-slot` attributes that a theme sheet can style:
