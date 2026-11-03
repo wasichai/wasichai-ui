@@ -225,7 +225,11 @@ const ADMIN_GROUPS = ['data', 'builder', 'automation', 'administration']
 
 `shellNav` gets the resolved groups (`ResolvedNavGroup`), the path relative to `basename` and the permissions (`null`
 while they load), on every route or permissions change. What it returns still goes through each entry's `visible`,
-and a group left empty is not drawn. «Inicio» is always there: it is the way back.
+and a group left empty is not drawn. «Inicio» is there unless `shellHome` says otherwise: it is the way back.
+
+When `homeRoute` points at a screen the menu already offers («Mis cursos»), the two entries lead to the same page and
+both read as current. `shellHome: false` leaves «Inicio» out; `shellHome: { label }` renames it, with an i18n key or
+the text per language (`{ es: 'Portada', en: 'Front page' }`), as a theme label.
 
 Below `md` the sidebar is a drawer behind a menu button. Open, it is a modal dialog named «Menú» (`common.menu`):
 focus goes into it, Escape, the backdrop, its close button or a link close it, and focus returns to the button.

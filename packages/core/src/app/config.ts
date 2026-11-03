@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { CurrentOrganization } from '../organization/currentOrganization'
 import type { ResolvedNavGroup } from '../registry/createRegistry'
 import type { CallerPermissions } from '../types/auth'
-import { availableThemes, type SystemThemes, type ThemeDefinition } from '../theme/themes'
+import { availableThemes, type SystemThemes, type ThemeDefinition, type ThemeLabel } from '../theme/themes'
 
 // a fixed text, or one per tenant: called with null before login, while loading and on error
 export type AppText = string | ((org: CurrentOrganization | null) => string)
@@ -53,7 +53,12 @@ export interface WasichaiConfig {
   shellNav?: ShellNav
   // the app picks the start page. unset = the dashboard. a courtesy: the route still answers to the server
   homeRoute?: HomeRoute
+  // «Inicio» in the shell menu. false leaves it out (a menu entry already leads home, #138); a label renames it, an
+  // i18n key or the text per language. unset = «Inicio»
+  shellHome?: ShellHome
 }
+
+export type ShellHome = false | { label: ThemeLabel }
 
 export const DEFAULT_CONFIG: WasichaiConfig = {
   apiBaseUrl: '/api',

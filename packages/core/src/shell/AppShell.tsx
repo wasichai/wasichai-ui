@@ -124,10 +124,12 @@ export function AppShell() {
         </div>
 
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4" onClick={drawer.hideOnLink}>
-          <NavLink to={links.home()} end data-slot="nav-item" className={linkClass}>
-            <Home className="h-4 w-4" />
-            {t('nav.home')}
-          </NavLink>
+          {config.shellHome === false ? null : (
+            <NavLink to={links.home()} end data-slot="nav-item" className={linkClass}>
+              <Home className="h-4 w-4" />
+              {config.shellHome ? themeLabel(config.shellHome.label, t, i18n.language, languages[0]) : t('nav.home')}
+            </NavLink>
+          )}
 
           {groups.map((group) => (
             <div key={group.id}>
