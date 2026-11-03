@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { ConfirmDialog } from './confirm-dialog'
 
@@ -112,5 +113,57 @@ describe('ConfirmDialog', () => {
   it('puts the hook a theme sheet styles it by on the content', () => {
     render(<ConfirmDialog title="Sure?" description="Really." onConfirm={noop} onCancel={noop} />)
     expect(screen.getByRole('dialog')).toHaveAttribute('data-slot', 'confirm-dialog')
+  })
+
+  describe('focus on close (#134)', () => {
+    // the caller mounts it while asking, as the core screens do
+    function Row({ removeOnConfirm = false, fallback }: { removeOnConfirm?: boolean; fallback?: boolean }) {
+      const [asking, setAsking] = useState(false)
+      const [gone, setGone] = useState(false)
+      return (
+        <>
+          <h2 tabIndex={-1} id="list">
+            Lista
+          </h2>
+          {gone ? null : (
+            <button type="button" onClick={() => setAsking(true)}>
+              Borrar fila
+            </button>
+          )}
+          {asking && (
+            <ConfirmDialog
+              title="¿Borrar?"
+              description="No se puede deshacer."
+              onConfirm={() => {
+                setAsking(false)
+                if (removeOnConfirm) setGone(true)
+              }}
+              onCancel={() => setAsking(false)}
+              returnFocusTo={fallback ? () => document.getElementById('list') : undefined}
+            />
+          )}
+        </>
+      )
+    }
+
+    it('goes back to what had it at open, on cancel and on Escape', async () => {
+      render(<Row />)
+      const opener = screen.getByRole('button', { name: 'Borrar fila' })
+      await userEvent.click(opener)
+      expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement)
+      await userEvent.click(screen.getByRole('button', { name: CANCEL }))
+      await vi.waitFor(() => expect(opener).toHaveFocus())
+
+      await userEvent.click(opener)
+      await userEvent.keyboard('{Escape}')
+      await vi.waitFor(() => expect(opener).toHaveFocus())
+    })
+
+    it('goes to the caller target when that element is gone', async () => {
+      render(<Row removeOnConfirm fallback />)
+      await userEvent.click(screen.getByRole('button', { name: 'Borrar fila' }))
+      await userEvent.click(screen.getByRole('button', { name: DELETE }))
+      await vi.waitFor(() => expect(screen.getByRole('heading', { name: 'Lista' })).toHaveFocus())
+    })
   })
 })

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from './button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './dialog'
+import { useReturnFocus } from './return-focus'
 
 export interface ConfirmDialogProps {
   title: ReactNode
@@ -13,17 +14,31 @@ export interface ConfirmDialogProps {
   error?: ReactNode // under the description, role=alert
   onConfirm: () => void
   onCancel: () => void
+  // where focus goes on close when what had it at open is gone. default: what had it at open
+  returnFocusTo?: () => HTMLElement | null | undefined
 }
 
 // a question before something that cannot be undone. mounted open: the caller renders it only while asking.
 // cancel, Escape, the X and a click outside all end in onCancel.
 // data-slot: hook a theme sheet styles (ADR-035).
-export function ConfirmDialog({ title, description, confirmLabel, cancelLabel, variant = 'danger', busy, error, onConfirm, onCancel }: ConfirmDialogProps) {
+export function ConfirmDialog({
+  title,
+  description,
+  confirmLabel,
+  cancelLabel,
+  variant = 'danger',
+  busy,
+  error,
+  onConfirm,
+  onCancel,
+  returnFocusTo
+}: ConfirmDialogProps) {
   const { t } = useTranslation()
+  const returnFocus = useReturnFocus(returnFocusTo)
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent data-slot="confirm-dialog" className="max-w-md">
+      <DialogContent data-slot="confirm-dialog" className="max-w-md" onCloseAutoFocus={returnFocus}>
         <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
         <DialogDescription className="mt-2 text-sm text-ink-muted">{description}</DialogDescription>
         {error && (

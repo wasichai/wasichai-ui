@@ -1,4 +1,5 @@
 export { cn, extendCn, type CnExtension } from './cn'
+export { useReturnFocus } from './return-focus'
 export { Alert, type AlertProps, type AlertTone } from './alert'
 export { Button } from './button'
 export { Card, CardBody, CardHeader, CardTitle } from './card'

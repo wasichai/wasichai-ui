@@ -405,7 +405,8 @@ code points, no control characters but tab and line breaks (`reasonProblem(reaso
 keeps the dialog open on a refused reason and never rethrows (read the mutation's `error`; while `prompt.dialog` is
 up, skip an error `reasonRefusal(error)` names, the dialog already says it). A reason the app sends in its own request
 body, not the header, may take `label` (who reads it) and `maxLength` on `ReasonDialog` and on the prompt's options;
-the check (`reasonProblem(reason, maxLength)`), the hint and the counter use the same number, 500 by default:
+the check (`reasonProblem(reason, maxLength)`), the hint and the counter use the same number, 500 by default. On close,
+focus goes back to what had it at open, as with `ConfirmDialog`, or to `returnFocusTo()` when that is gone:
 
 ```tsx
 function DeleteButton({ object, id }: { object: string; id: string }) {
