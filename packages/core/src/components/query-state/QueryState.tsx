@@ -14,6 +14,10 @@ export interface EmptyStateProps {
   title: string
   // default Inbox
   icon?: LucideIcon
+  // a line under the title; children stay for the actions
+  description?: ReactNode
+  // the title as h2/h3/h4, same look. without it a <p>: core cannot know the outline of the screen around it
+  headingLevel?: 2 | 3 | 4
   children?: ReactNode
 }
 
@@ -40,11 +44,13 @@ export function LoadingState({ label }: LoadingStateProps) {
 }
 
 // icon: an app draws its own thing, e.g. a cube for a list of lots
-export function EmptyState({ title, icon: Icon = Inbox, children }: EmptyStateProps) {
+export function EmptyState({ title, icon: Icon = Inbox, description, headingLevel, children }: EmptyStateProps) {
+  const Title = headingLevel ? (`h${headingLevel}` as const) : 'p'
   return (
     <div data-slot="query-state" data-state="empty" className="flex flex-col items-center gap-2 py-12 text-center text-sm text-ink-muted">
       <Icon className="size-8 text-border" />
-      <p className="font-medium text-ink">{title}</p>
+      <Title className="font-medium text-ink">{title}</Title>
+      {description ? <p>{description}</p> : null}
       {children}
     </div>
   )
