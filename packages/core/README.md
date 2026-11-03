@@ -50,7 +50,7 @@ createRoot(document.getElementById('root')!).render(
 | `systemThemes` | `{ light: 'light', dark: 'dark' }` | what `system` and an unknown id resolve to on a light / dark OS, see [Themes](#themes-and-preferences) |
 | `timeZone` | – (browser zone) | IANA zone (`America/Lima`) `DynamicForm` reads and writes `DATETIME` wall times in; a field's own `timeZone` wins; an unknown name throws |
 | `shellNav` | – (every group) | `(groups, { pathname, permissions }) => groups`: the sidebar groups `AppShell` offers, see [Menu and start page](#menu-and-start-page) |
-| `homeRoute` | – (the dashboard) | `(permissions) => routeKey \| null`: where `/`, «Inicio» and `links.home()` lead, see [Menu and start page](#menu-and-start-page) |
+| `homeRoute` | – (the dashboard) | `(permissions, { permissionsFailed }) => routeKey \| null`: where `/`, «Inicio» and `links.home()` lead, see [Menu and start page](#menu-and-start-page) |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -237,8 +237,14 @@ focus goes into it, Escape, the backdrop, its close button or a link close it, a
 `homeRoute` gets the server's permissions (`GET /auth/me/permissions`) and returns a registered route key, or
 `null` for the dashboard. `/` then redirects there (replacing the history entry) without mounting `DashboardPage`, and
 «Inicio», `links.home()`, unknown paths and a sign in without `returnTo` lead there too; a `returnTo` still wins. While
-the permissions load, `/` shows the loading text and `links.home()` is `/`; if they fail, or nobody is signed in, it
-is the dashboard. A key that is not registered, or a route that needs parameters, fails on `/` with the key in the
+the permissions load, `/` shows the loading text and `links.home()` is `/`. Nobody signed in means the dashboard.
+
+If the permissions request fails, `homeRoute` is still called, with no permissions (`{ admin: false, objects: {},
+capabilities: [] }`, what `can()` reads then) and `{ permissionsFailed: true }` as its second argument, so the app
+picks: `(permissions) => (permissions.admin ? null : 'learning:myCourses')` sends everyone to their courses, and
+`(_, { permissionsFailed }) => (permissionsFailed ? null : …)` keeps the dashboard as before. If the request never
+answers, `/` stays on the loading text: core sets no timeout of its own, the browser's or a proxy's ends it, and then
+it counts as failed. A key that is not registered, or a route that needs parameters, fails on `/` with the key in the
 message.
 
 The shell's first tab stop is a «Saltar al contenido» link (`common.skipToContent`, `data-slot="skip-link"`), hidden

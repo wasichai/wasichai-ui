@@ -15,13 +15,17 @@ export interface HomeAuth {
 
 const DASHBOARD: HomeTarget = { kind: 'dashboard' }
 const LOADING: HomeTarget = { kind: 'loading' }
+// what a failed fetch leaves: nothing held, as can() reads it
+const NO_PERMISSIONS: CallerPermissions = { admin: false, objects: {}, capabilities: [] }
 
-// where '/' leads (#120). no homeRoute, signed out or permissions failed = the dashboard, as before. the dashboard
-// is never a fallback while they load: it would mount and fetch, then leave
+// where '/' leads (#120). no homeRoute or signed out = the dashboard, as before. failed permissions = the app picks
+// from none (#136): a student must not land on the admin dashboard. the dashboard is never a fallback while they
+// load: it would mount and fetch, then leave
 export function resolveHome(homeRoute: HomeRoute | undefined, registry: WasichaiRegistry, auth: HomeAuth | null): HomeTarget {
-  if (!homeRoute || !auth?.user || auth.permissionsError) return DASHBOARD
-  if (!auth.permissions) return LOADING
-  const key = homeRoute(auth.permissions)
+  if (!homeRoute || !auth?.user) return DASHBOARD
+  const failed = auth.permissionsError !== null
+  if (!failed && !auth.permissions) return LOADING
+  const key = failed ? homeRoute(NO_PERMISSIONS, { permissionsFailed: true }) : homeRoute(auth.permissions!, { permissionsFailed: false })
   if (!key || key === `${CORE_MODULE_ID}:home`) return DASHBOARD
   const route = registry.routes.find((candidate) => candidate.key === key)
   if (!route) return { kind: 'error', error: new Error(`wasichai: config.homeRoute returned '${key}', which is not a registered route`) }
