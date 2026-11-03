@@ -96,6 +96,31 @@ describe('EmptyState', () => {
     expect(withIcon.querySelector('svg')).toHaveClass('lucide-cuboid')
     expect(withDefault.querySelector('svg')).toHaveClass('lucide-inbox')
   })
+
+  it('draws a description between the title and the actions (#125)', () => {
+    renderWithProviders(
+      <EmptyState title="Sin cursos" description="Cuando te matricules, aparecerán aquí.">
+        <button type="button">Ver catálogo</button>
+      </EmptyState>
+    )
+    const box = document.querySelector('[data-slot="query-state"]')!
+    expect(box).toHaveAttribute('data-state', 'empty')
+    expect([...box.children].map((node) => node.textContent)).toEqual(['', 'Sin cursos', 'Cuando te matricules, aparecerán aquí.', 'Ver catálogo'])
+  })
+
+  it('draws the title as a heading of the level it is given, with the same look (#125)', () => {
+    renderWithProviders(<EmptyState title="Sin sesiones" headingLevel={3} />)
+    const heading = screen.getByRole('heading', { level: 3, name: 'Sin sesiones' })
+    expect(heading).toHaveClass('font-medium', 'text-ink')
+  })
+
+  it('keeps its markup without the new props (#125)', () => {
+    const { container } = renderWithProviders(<EmptyState title="Sin predios" />)
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+    const box = container.querySelector('[data-slot="query-state"]')!
+    expect(box.children).toHaveLength(2)
+    expect(box.children[1].outerHTML).toBe('<p class="font-medium text-ink">Sin predios</p>')
+  })
 })
 
 describe('ErrorState', () => {

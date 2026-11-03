@@ -326,6 +326,17 @@ Errors: `api()` rejects with an `ApiError` (`status`, `message`, `violations`). 
 the line every core screen shows for a refusal, `message — field: reason — …`, and `String(cause)` for anything
 else. `formError(cause)` splits it for a form instead: `{ message, violations }`, each violation drawn under its field.
 
+Query states: `QueryState` draws `LoadingState`, `ErrorState` or the data of a react-query result; all three carry
+`data-slot="query-state"` and `data-state`. `EmptyState` takes a `title`, an `icon`, a `description` (a line under the
+title) and its actions as `children`. Its title is a `<p>`; `headingLevel={2 | 3 | 4}` draws it as that heading, same
+look, where the empty state stands for a section or a screen:
+
+```tsx
+<EmptyState title={t('courses.none')} description={t('courses.noneHint')} headingLevel={2}>
+  <Button onClick={openCatalog}>{t('courses.catalog')}</Button>
+</EmptyState>
+```
+
 ## Administration
 
 Core mounts the tenant's admin screens under `/admin`, in the sidebar's `administration` group: users
