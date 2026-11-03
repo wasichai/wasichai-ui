@@ -116,9 +116,13 @@ export function AppShell() {
                   const Icon = item.icon
                   const icon = Icon ? <Icon className="h-4 w-4" /> : <span className="h-4 w-4" />
                   if (!item.to || item.disabled) {
+                    // a link that goes nowhere yet: said disabled to assistive tech, so axe skips its contrast (#131)
                     return (
                       <span
                         key={item.key}
+                        role="link"
+                        aria-disabled="true"
+                        data-slot="nav-item"
                         className="flex cursor-not-allowed items-center gap-2.5 rounded-md px-3 py-2 text-sm text-shell-muted/45"
                         title={t(item.labelKey)}
                       >
