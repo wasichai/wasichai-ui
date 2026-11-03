@@ -5,6 +5,7 @@ import { Alert, Button, Card, CardBody, CardHeader, CardTitle, Input, Label, Tab
 import { describeError } from '../../api/client'
 import { EmptyState, ErrorState, LoadingState } from '../../components/query-state/QueryState'
 import { PageHeader } from '../../shell/PageHeader'
+import { AdminForbidden, isForbidden } from './Forbidden'
 import { useCreateServiceAccount, useDeleteServiceAccount, useRoles, useRotateServiceAccountSecret, useServiceAccounts, useUpdateServiceAccount } from './api'
 import { RoleBadges } from './RoleBadges'
 import { PROTECTED_ROLE, SERVICE_ACCOUNT_NAME, type ServiceAccount, type ServiceAccountWithSecret } from './types'
@@ -142,6 +143,10 @@ export function ServiceAccountsPage() {
       ))}
     </div>
   )
+
+  if (isForbidden(accounts.error)) {
+    return <AdminForbidden title={t('admin.serviceAccounts.title')} subtitle={t('admin.serviceAccounts.subtitle')} error={accounts.error} />
+  }
 
   return (
     <>

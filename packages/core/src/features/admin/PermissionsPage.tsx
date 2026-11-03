@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ShieldAlert } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
+import { AdminForbidden, isForbidden } from './Forbidden'
 import { Button } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
@@ -20,7 +21,7 @@ type FieldGrants = Record<string, { read: boolean; write: boolean }>
 
 export function PermissionsPage() {
   const { t } = useTranslation()
-  const { data: roles = [] } = useRoles()
+  const { data: roles = [], error: rolesError } = useRoles()
   const { data: objects = [] } = useObjects()
   const savePermissions = useUpdateRolePermissions()
   const saveFields = useUpdateRoleFieldPermissions()
@@ -91,6 +92,10 @@ export function PermissionsPage() {
     } catch (cause) {
       setFieldError(describeError(cause))
     }
+  }
+
+  if (isForbidden(rolesError)) {
+    return <AdminForbidden title={t('admin.permissions.title')} subtitle={t('admin.permissions.subtitle')} error={rolesError} />
   }
 
   return (

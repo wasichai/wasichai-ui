@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { PageHeader } from '../../shell/PageHeader'
+import { AdminForbidden, isForbidden } from './Forbidden'
 import { Button, CopyButton } from '@wasichai/ui'
 import { Card, CardBody, CardHeader, CardTitle } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
@@ -32,12 +33,15 @@ export function AuditPage() {
   const {
     data = [],
     isLoading,
-    isError
+    isError,
+    error
   } = useAuditLog({
     objectName: objectName === ANY ? undefined : objectName,
     operation: operation === ANY ? undefined : (operation as AuditOperation),
     limit
   })
+
+  if (isForbidden(error)) return <AdminForbidden title={t('nav.audit')} subtitle={t('history.subtitle')} error={error} />
 
   return (
     <>
