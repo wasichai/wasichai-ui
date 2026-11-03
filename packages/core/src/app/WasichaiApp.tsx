@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { BrowserRouter } from 'react-router'
+import { createBrowserRouter, RouterProvider } from 'react-router'
 import { createApiClient } from '../api/client'
 import { createWasichaiI18n } from '../i18n/createI18n'
 import type { WasichaiModule } from '../registry/contract'
@@ -23,14 +23,15 @@ export function WasichaiApp({ config, modules = [] }: WasichaiAppProps) {
     const apiClient = createApiClient({ baseUrl: resolved.apiBaseUrl, storagePrefix: resolved.storagePrefix })
     const i18n = createWasichaiI18n({ languages: resolved.languages, storageKey: apiClient.keys.lang, modules: registry.modules })
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } } })
-    return { config: resolved, registry, apiClient, i18n, queryClient }
+    // a data router, so a page can hold a navigation with useBlocker (#128). one splat route: WasichaiRoutes keeps
+    // the real ones, as descendant <Routes>
+    const router = createBrowserRouter([{ path: '*', element: <WasichaiRoutes /> }], { basename: resolved.basename })
+    return { config: resolved, registry, apiClient, i18n, queryClient, router }
   })
 
   return (
     <WasichaiProviders config={app.config} registry={app.registry} apiClient={app.apiClient} i18n={app.i18n} queryClient={app.queryClient}>
-      <BrowserRouter basename={app.config.basename}>
-        <WasichaiRoutes />
-      </BrowserRouter>
+      <RouterProvider router={app.router} />
     </WasichaiProviders>
   )
 }
