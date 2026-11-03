@@ -264,6 +264,47 @@ describe('AppShell on a wide screen', () => {
   })
 })
 
+describe('AppShell shellHome (#138)', () => {
+  const learning: WasichaiModule = {
+    id: 'learning',
+    basePath: 'learning',
+    routes: [{ id: 'mine', path: 'mine', component: Sheets }],
+    navGroups: [{ id: 'learning', labelKey: 'learning:nav.group', order: 5 }],
+    nav: [{ group: 'learning', labelKey: 'learning:nav.mine', order: 10, route: 'mine' }],
+    i18n: { es: { nav: { group: 'Aprender', mine: 'Mis cursos' } }, en: { nav: { group: 'Learn', mine: 'My courses' } } }
+  }
+
+  it('without shellHome, keeps «Inicio» first', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, learning] })
+    expect(within(screen.getByRole('navigation')).getAllByRole('link')[0]).toHaveAccessibleName('Inicio')
+  })
+
+  it('with false, leaves «Inicio» out, so only one entry is current on the start page', () => {
+    renderWithProviders(<AppShell />, {
+      modules: [coreModule, learning],
+      route: '/learning/mine',
+      config: { homeRoute: () => 'learning:mine', shellHome: false }
+    })
+    expect(screen.queryByRole('link', { name: 'Inicio' })).not.toBeInTheDocument()
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
+    expect(screen.getByRole('link', { name: 'Mis cursos' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('renames «Inicio» by its text per language or an i18n key', async () => {
+    fetch = mockFetch([])
+    renderWithProviders(<AppShell />, { modules: [coreModule, learning], config: { shellHome: { label: { es: 'Portada', en: 'Front page' } } } })
+    expect(screen.getByRole('link', { name: 'Portada' })).toHaveAttribute('data-slot', 'nav-item')
+    await userEvent.click(screen.getByRole('button', { name: 'EN' }))
+    expect(await screen.findByRole('link', { name: 'Front page' })).toBeInTheDocument()
+    await waitForSettled()
+  })
+
+  it('takes an i18n key as the label', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, learning], config: { shellHome: { label: 'learning:nav.group' } } })
+    expect(screen.getByRole('link', { name: 'Aprender' })).toHaveAttribute('href', '/')
+  })
+})
+
 describe('AppShell shellNav', () => {
   it('without shellNav, offers every group as before', () => {
     renderWithProviders(<AppShell />, { modules: [coreModule, plans] })

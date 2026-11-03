@@ -1,4 +1,14 @@
-export { DEFAULT_CONFIG, resolveConfig, storageKeys, type AppText, type HomeRoute, type ShellNav, type WasichaiConfig, type StorageKeys } from './app/config'
+export {
+  DEFAULT_CONFIG,
+  resolveConfig,
+  storageKeys,
+  type AppText,
+  type HomeRoute,
+  type ShellHome,
+  type ShellNav,
+  type WasichaiConfig,
+  type StorageKeys
+} from './app/config'
 export {
   ApiError,
   api,
