@@ -22,7 +22,14 @@ Six more carry the footers, dialogs, menus and small actions every list and reco
 `Alert` is a message in one of four tones (`success`, `warning`, `danger`, `notice`), with an optional bold `title` and,
 with `onDismiss`, a check that dismisses it. `danger` is a `role="alert"`, the others a `role="status"`. Light and dark
 draw it as text in its tone's colour; `className` adds the place's box or margins. Its dismiss label is
-`common.dismissAlert`.
+`common.dismissAlert`. `icon` (a `ReactNode`, sized by the caller) goes before the text, one line high and hidden from
+screen readers, so a tone is not told by colour alone; there is no icon per tone, each app picks its own:
+
+```tsx
+<Alert tone="warning" icon={<TriangleAlert className="size-4" />}>
+  {t('session.expiresSoon')}
+</Alert>
+```
 
 `ConfirmDialog` and `PdfDialog` are mounted open: they take no `open` prop, so the caller renders one only while it shows
 (`{target && <ConfirmDialog … onCancel={() => setTarget(null)} />}`) and unmounts it in `onCancel` or `onClose`. `PdfDialog`
@@ -177,6 +184,7 @@ The components carry `data-slot` attributes that a theme sheet can style:
 | `DropdownMenuContent` | `dropdown-menu`      | the menu box                                                                                 |
 | `DropdownMenuItem`    | `dropdown-menu-item` | `data-variant="danger"` on a destructive item                                                |
 | `Alert`               | `alert`              | `data-tone` (`success`, `warning`, `danger`, `notice`)                                       |
+|                       | `alert-icon`         | the `icon` prop's wrapper, before the text, `aria-hidden`                                    |
 |                       | `alert-text`         | the title and the text                                                                       |
 |                       | `alert-dismiss`      | the dismiss button                                                                           |
 | `Table`               | `table`              | on the `<table>`, not its scroll box                                                         |
