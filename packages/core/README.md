@@ -234,6 +234,9 @@ the permissions load, `/` shows the loading text and `links.home()` is `/`; if t
 is the dashboard. A key that is not registered, or a route that needs parameters, fails on `/` with the key in the
 message.
 
+The shell's first tab stop is a «Saltar al contenido» link (`common.skipToContent`, `data-slot="skip-link"`), hidden
+until it has focus; it moves focus to `main`, past the menu.
+
 ## Tree menu (`NavTree`)
 
 A foldable tree menu for an app's own shell (srtm-ui's and caja-ui's portals): a panel headed by the way home and a

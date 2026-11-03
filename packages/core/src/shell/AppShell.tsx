@@ -35,6 +35,8 @@ export function AppShell() {
   const [prefsError, setPrefsError] = useState<string | null>(null)
   const drawer = useDrawer(pathname)
   const drawerId = useId()
+  const mainId = useId()
+  const mainRef = useRef<HTMLElement>(null)
 
   // errors inline, like the admin pages: a failed save rolls back and says why
   const save = (action: Promise<void>) => {
@@ -55,6 +57,18 @@ export function AppShell() {
   return (
     // narrow: a column (menu bar over main), the aside fixed over both. md and up: the row it always was
     <div className="flex h-full flex-col md:flex-row">
+      {/* the first tab stop: past the menu to the screen (#132). focus by hand, a #hash would be a router change */}
+      <a
+        href={`#${mainId}`}
+        data-slot="skip-link"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[60] focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-sm focus:text-ink focus:shadow-lg"
+        onClick={(event) => {
+          event.preventDefault()
+          mainRef.current?.focus()
+        }}
+      >
+        {t('common.skipToContent')}
+      </a>
       <header inert={drawer.open} className="flex shrink-0 items-center gap-2 bg-shell px-2 py-2 text-shell-ink md:hidden">
         <Button
           ref={drawer.buttonRef}
@@ -184,7 +198,7 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main inert={drawer.open} className="min-h-0 flex-1 overflow-y-auto">
+      <main id={mainId} ref={mainRef} tabIndex={-1} inert={drawer.open} className="min-h-0 flex-1 overflow-y-auto focus:outline-none">
         {/* a lazy module page loads here while the sidebar stays, and fails here while it stays too */}
         <RouteErrorBoundary resetKey={pathname}>
           <Suspense fallback={<p className="p-8 text-sm text-ink-muted">{t('common.loading')}</p>}>
