@@ -212,7 +212,7 @@ The components carry `data-slot` attributes that a theme sheet can style:
 |                       | `tabs-trigger`       | each `role="tab"`, with `aria-selected`                                                      |
 |                       | `tabs-content`       | each `role="tabpanel"`                                                                       |
 
-Core's `NavTree` carries `nav-tree`, `nav-tree-group`, `nav-tree-leaf` and `nav-tree-caret` (see `@wasichai/core`'s README).
+Core's `PageHeader` carries `page-header` on its root. Core's `NavTree` carries `nav-tree`, `nav-tree-group`, `nav-tree-leaf` and `nav-tree-caret` (see `@wasichai/core`'s README).
 Core's `AppShell` carries `nav-item` on each link of its menu (Inicio too, with `aria-current="page"` on the current
 one, and an entry with no destination yet, with `aria-disabled="true"`), `nav-group` on each group's heading,
 `theme-select` on the theme `<select>` and `nav-close` on the narrow drawer's close button; with `appLogo`, its

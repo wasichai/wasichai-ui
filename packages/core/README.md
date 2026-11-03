@@ -323,6 +323,18 @@ const location = useLocation()
 <Link to={links.login({ returnTo: location.pathname + location.search })}>{t('courses.signInToEnroll')}</Link>
 ```
 
+Page header: `PageHeader` draws a screen's `h1` with an optional `subtitle` and `actions`, as core's own screens do.
+`breadcrumbs` goes before the title and `children` (section tabs, filters) after the title and the actions; core has no
+breadcrumb component, the app brings its own. `containerClassName` goes on an inner box, to line it up with a page body
+in a container (`mx-auto max-w-6xl`). It pads 16px below `md` and 32px from it, the actions wrap under the title on a
+narrow screen, and its root carries `data-slot="page-header"`.
+
+```tsx
+<PageHeader title={course.title} breadcrumbs={<Crumbs />} actions={<Button>{t('publish')}</Button>} containerClassName="mx-auto max-w-6xl">
+  <SectionTabs />
+</PageHeader>
+```
+
 Errors: `api()` rejects with an `ApiError` (`status`, `message`, `violations`). `describeError(cause)` gives
 the line every core screen shows for a refusal, `message — field: reason — …`, and `String(cause)` for anything
 else. `formError(cause)` splits it for a form instead: `{ message, violations }`, each violation drawn under its field.
