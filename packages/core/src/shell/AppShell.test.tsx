@@ -192,6 +192,28 @@ describe('AppShell on a narrow screen', () => {
     expect(screen.getByTestId('shell-backdrop')).toBeInTheDocument()
   })
 
+  it('is a named modal dialog while open, and a plain aside when closed (#133)', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(drawer()).not.toHaveAttribute('aria-modal')
+
+    await userEvent.click(menuButton())
+    const dialog = screen.getByRole('dialog', { name: 'Menú' })
+    expect(dialog).toBe(drawer())
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(dialog).toContainElement(document.activeElement as HTMLElement)
+
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(menuButton()).toHaveFocus()
+  })
+
+  it('names the open drawer in english too (#133)', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule], language: 'en' })
+    await userEvent.click(screen.getByRole('button', { name: 'Open the menu' }))
+    expect(screen.getByRole('dialog', { name: 'Menu' })).toBeInTheDocument()
+  })
+
   it('closes with Escape and gives focus back to the menu button', async () => {
     renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
     await userEvent.click(menuButton())

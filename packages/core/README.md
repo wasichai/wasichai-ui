@@ -227,6 +227,9 @@ const ADMIN_GROUPS = ['data', 'builder', 'automation', 'administration']
 while they load), on every route or permissions change. What it returns still goes through each entry's `visible`,
 and a group left empty is not drawn. «Inicio» is always there: it is the way back.
 
+Below `md` the sidebar is a drawer behind a menu button. Open, it is a modal dialog named «Menú» (`common.menu`):
+focus goes into it, Escape, the backdrop, its close button or a link close it, and focus returns to the button.
+
 `homeRoute` gets the server's permissions (`GET /auth/me/permissions`) and returns a registered route key, or
 `null` for the dashboard. `/` then redirects there (replacing the history entry) without mounting `DashboardPage`, and
 «Inicio», `links.home()`, unknown paths and a sign in without `returnTo` lead there too; a `returnTo` still wins. While
