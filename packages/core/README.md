@@ -50,6 +50,7 @@ createRoot(document.getElementById('root')!).render(
 | `systemThemes` | `{ light: 'light', dark: 'dark' }` | what `system` and an unknown id resolve to on a light / dark OS, see [Themes](#themes-and-preferences) |
 | `timeZone` | – (browser zone) | IANA zone (`America/Lima`) `DynamicForm` reads and writes `DATETIME` wall times in; a field's own `timeZone` wins; an unknown name throws |
 | `shellNav` | – (every group) | `(groups, { pathname, permissions }) => groups`: the sidebar groups `AppShell` offers, see [Menu and start page](#menu-and-start-page) |
+| `shellChrome` | – (`'full'`) | `({ pathname, search }) => 'full' \| 'compact'`: `compact` hides the sidebar at every width, the menu button opens the drawer, see [Menu and start page](#menu-and-start-page) |
 | `homeRoute` | – (the dashboard) | `(permissions, { permissionsFailed }) => routeKey \| null`: where `/`, «Inicio» and `links.home()` lead, see [Menu and start page](#menu-and-start-page) |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
@@ -246,6 +247,15 @@ picks: `(permissions) => (permissions.admin ? null : 'learning:myCourses')` send
 answers, `/` stays on the loading text: core sets no timeout of its own, the browser's or a proxy's ends it, and then
 it counts as failed. A key that is not registered, or a route that needs parameters, fails on `/` with the key in the
 message.
+
+`shellChrome({ pathname, search })` returns `'full'` (the default) or `'compact'`, during render, on every url change,
+`search` included, without mounting the page again. `compact` is the narrow shell at every width: no sidebar, `main`
+takes the width, and the menu bar's button opens the whole menu in the drawer, which a wide screen does not close. A
+lesson read without distractions, on the same route:
+
+```tsx
+shellChrome: ({ pathname, search }) => (pathname.startsWith('/learning/') && new URLSearchParams(search).has('leccion') ? 'compact' : 'full')
+```
 
 The shell's first tab stop is a «Saltar al contenido» link (`common.skipToContent`, `data-slot="skip-link"`), hidden
 until it has focus; it moves focus to `main`, past the menu.
