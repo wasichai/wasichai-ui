@@ -173,6 +173,11 @@ describe('AppShell on a narrow screen', () => {
     expect(menuButton()).toHaveFocus()
   })
 
+  it('carries data-slot on its close button, for a theme sheet (#122)', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule] })
+    expect(within(drawer()).getByRole('button', { name: 'Cerrar el menú' })).toHaveAttribute('data-slot', 'nav-close')
+  })
+
   it('closes when the user navigates', async () => {
     renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
     await userEvent.click(menuButton())
