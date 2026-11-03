@@ -142,6 +142,24 @@ describe('AppShell', () => {
     expect(document.querySelector('[data-slot="app-logo"]')).toBeNull()
   })
 
+  it('starts the tab order with a skip link that takes focus to the main content (#132)', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    await userEvent.tab()
+    const skip = screen.getByRole('link', { name: 'Saltar al contenido' })
+    expect(skip).toHaveFocus()
+    expect(skip).toHaveAttribute('data-slot', 'skip-link')
+    // hidden until focused
+    expect(skip).toHaveClass('sr-only', 'focus:not-sr-only')
+    await userEvent.keyboard('{Enter}')
+    expect(document.querySelector('main')).toHaveFocus()
+    expect(skip.getAttribute('href')).toBe(`#${document.querySelector('main')!.id}`)
+  })
+
+  it('names the skip link in english too (#132)', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule], language: 'en' })
+    expect(screen.getByRole('link', { name: 'Skip to content' })).toBeInTheDocument()
+  })
+
   it('names the app from config, or from the strings when config says nothing', () => {
     const { unmount } = renderWithProviders(<AppShell />, { modules: [coreModule], config: { appName: 'Catastro' } })
     expect(screen.getByText('Catastro')).toBeInTheDocument()
