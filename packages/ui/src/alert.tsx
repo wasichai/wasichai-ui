@@ -9,6 +9,9 @@ export interface AlertProps {
   tone: AlertTone
   // bold, at the start: "Atención.", "La sesión caducó."
   title?: ReactNode
+  // before the text, hidden from screen readers: the tone's role and the text say it. no default per tone, each app
+  // picks its own, so a tone is not told by colour alone (WCAG 1.4.1)
+  icon?: ReactNode
   children: ReactNode
   // shows a dismiss button (a check)
   onDismiss?: () => void
@@ -26,11 +29,22 @@ const TEXT: Record<AlertTone, string> = {
 }
 
 // a message with a tone: danger interrupts (alert), the rest is announced politely (status)
-export function Alert({ tone, title, children, onDismiss, className }: AlertProps) {
+export function Alert({ tone, title, icon, children, onDismiss, className }: AlertProps) {
   const { t } = useTranslation()
   return (
-    <div role={tone === 'danger' ? 'alert' : 'status'} data-slot="alert" data-tone={tone} className={cn('text-sm', TEXT[tone], className)}>
-      <span data-slot="alert-text">
+    <div
+      role={tone === 'danger' ? 'alert' : 'status'}
+      data-slot="alert"
+      data-tone={tone}
+      // with an icon a row: the icon one line high, the text wrapping beside it, not under it
+      className={cn('text-sm', TEXT[tone], icon != null && 'flex items-start gap-2', className)}
+    >
+      {icon != null && (
+        <span data-slot="alert-icon" aria-hidden className="inline-flex h-lh shrink-0 items-center">
+          {icon}
+        </span>
+      )}
+      <span data-slot="alert-text" className={icon != null ? 'min-w-0 flex-1' : undefined}>
         {title && <strong className="font-bold">{title}</strong>}
         {title && ' '}
         {children}

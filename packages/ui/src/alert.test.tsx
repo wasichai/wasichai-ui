@@ -69,4 +69,31 @@ describe('Alert', () => {
     await userEvent.click(button)
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
+
+  it('keeps its markup without an icon (#130)', () => {
+    render(<Alert tone="success">Hecho.</Alert>)
+    const alert = screen.getByRole('status')
+    expect(alert.className).toBe('text-sm text-success')
+    expect(alert.querySelector('[data-slot="alert-icon"]')).toBeNull()
+    expect(alert.querySelector('[data-slot="alert-text"]')).not.toHaveAttribute('class')
+  })
+
+  it.each<[AlertTone, string]>([
+    ['success', 'status'],
+    ['danger', 'alert']
+  ])('draws a %s icon before the text, hidden from screen readers, and keeps its %s role (#130)', (tone, role) => {
+    render(
+      <Alert tone={tone} icon={<svg data-testid="icon" />} title="Atención.">
+        Revisa los datos.
+      </Alert>
+    )
+    const alert = screen.getByRole(role)
+    const icon = alert.querySelector('[data-slot="alert-icon"]')!
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
+    expect(icon).toContainElement(screen.getByTestId('icon'))
+    expect(icon.nextElementSibling).toHaveAttribute('data-slot', 'alert-text')
+    expect(alert).toHaveClass('flex', 'items-start', 'gap-2')
+    expect(alert).toHaveAccessibleName('')
+    expect(alert).toHaveTextContent('Atención. Revisa los datos.')
+  })
 })
