@@ -31,9 +31,11 @@ export function AppShell() {
   const links = useWasichaiLinks()
   const { preference, themes, setPreference } = useTheme()
   const setLocale = useSetLocale()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const [prefsError, setPrefsError] = useState<string | null>(null)
-  const drawer = useDrawer(pathname)
+  // compact: the narrow shell at every width, so md: variants only apply in full (#123)
+  const wide = (config.shellChrome?.({ pathname, search }) ?? 'full') === 'full'
+  const drawer = useDrawer(pathname, wide)
   const drawerId = useId()
   const mainId = useId()
   const mainRef = useRef<HTMLElement>(null)
@@ -56,7 +58,7 @@ export function AppShell() {
 
   return (
     // narrow: a column (menu bar over main), the aside fixed over both. md and up: the row it always was
-    <div className="flex h-full flex-col md:flex-row">
+    <div className={cn('flex h-full flex-col', wide && 'md:flex-row')}>
       {/* the first tab stop: past the menu to the screen (#132). focus by hand, a #hash would be a router change */}
       <a
         href={`#${mainId}`}
@@ -69,7 +71,7 @@ export function AppShell() {
       >
         {t('common.skipToContent')}
       </a>
-      <header inert={drawer.open} className="flex shrink-0 items-center gap-2 bg-shell px-2 py-2 text-shell-ink md:hidden">
+      <header inert={drawer.open} className={cn('flex shrink-0 items-center gap-2 bg-shell px-2 py-2 text-shell-ink', wide && 'md:hidden')}>
         <Button
           ref={drawer.buttonRef}
           variant="ghost"
@@ -85,7 +87,9 @@ export function AppShell() {
         {/* no app name here: the drawer has it, and a second copy would break apps that find it by text */}
       </header>
 
-      {drawer.open ? <div data-testid="shell-backdrop" aria-hidden className="fixed inset-0 z-40 bg-overlay md:hidden" onClick={() => drawer.hide()} /> : null}
+      {drawer.open ? (
+        <div data-testid="shell-backdrop" aria-hidden className={cn('fixed inset-0 z-40 bg-overlay', wide && 'md:hidden')} onClick={() => drawer.hide()} />
+      ) : null}
 
       {/* open, the drawer is a modal dialog over the page, so a screen reader says it opened (#133). wide, a plain aside */}
       <aside
@@ -99,7 +103,7 @@ export function AppShell() {
           // closed: off screen and invisible, so its links leave the tab order too
           'fixed inset-y-0 left-0 z-50 max-w-[85vw] shadow-lg transition-transform duration-200 motion-reduce:transition-none',
           drawer.open ? 'visible translate-x-0' : 'invisible -translate-x-full',
-          'md:visible md:static md:z-auto md:max-w-none md:translate-x-0 md:shadow-none md:transition-none'
+          wide && 'md:visible md:static md:z-auto md:max-w-none md:translate-x-0 md:shadow-none md:transition-none'
         )}
       >
         <div className="flex items-start gap-2 px-5 py-5">
@@ -116,7 +120,10 @@ export function AppShell() {
             type="button"
             data-slot="nav-close"
             aria-label={t('common.closeMenu')}
-            className="-mr-2 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-shell-muted hover:bg-shell-ink/8 hover:text-shell-ink md:hidden"
+            className={cn(
+              '-mr-2 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-shell-muted hover:bg-shell-ink/8 hover:text-shell-ink',
+              wide && 'md:hidden'
+            )}
             onClick={() => drawer.hide()}
           >
             <X className="h-4 w-4" />
@@ -217,8 +224,9 @@ export function AppShell() {
 }
 
 // the narrow drawer: closed by default, closed again by Escape, the backdrop, a link, a route change or the
-// screen growing to md. focus goes into it on open and back to the menu button on close
-function useDrawer(pathname: string) {
+// screen growing to md (only in full chrome: compact keeps the drawer at every width). focus goes into it on open
+// and back to the menu button on close
+function useDrawer(pathname: string, closeWhenWide: boolean) {
   // the route it was opened on: another route means the user navigated, so it reads as closed
   const [openOn, setOpenOn] = useState<string | null>(null)
   const open = openOn === pathname
@@ -239,7 +247,7 @@ function useDrawer(pathname: string) {
     }
     document.addEventListener('keydown', onKey)
     // jsdom and old browsers have no matchMedia: then only the other ways close it
-    const wide = typeof window.matchMedia === 'function' ? window.matchMedia(WIDE_QUERY) : null
+    const wide = closeWhenWide && typeof window.matchMedia === 'function' ? window.matchMedia(WIDE_QUERY) : null
     const onWide = () => {
       if (wide?.matches) setOpenOn(null)
     }
@@ -248,7 +256,7 @@ function useDrawer(pathname: string) {
       document.removeEventListener('keydown', onKey)
       wide?.removeEventListener('change', onWide)
     }
-  }, [open])
+  }, [open, closeWhenWide])
 
   return {
     open,

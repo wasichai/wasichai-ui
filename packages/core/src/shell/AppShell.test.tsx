@@ -2,6 +2,7 @@ import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
+import { useNavigate } from 'react-router'
 import { coreModule } from '../app/coreModule'
 import type { WasichaiModule } from '../registry/contract'
 import { AppShell } from './AppShell'
@@ -261,6 +262,80 @@ describe('AppShell on a wide screen', () => {
     expect(aside.nextElementSibling?.tagName).toBe('MAIN')
     expect(screen.getByRole('button', { name: 'Abrir el menú' }).closest('header')).toHaveClass('md:hidden')
     expect(within(aside).getByRole('button', { name: 'Cerrar el menú' })).toHaveClass('md:hidden')
+  })
+})
+
+describe('AppShell shellChrome (#123)', () => {
+  const aside = () => document.querySelector('aside')!
+  const menuButton = () => screen.getByRole('button', { name: 'Abrir el menú' })
+  const lessonOpen = ({ search }: { search: string }) => (new URLSearchParams(search).has('leccion') ? ('compact' as const) : ('full' as const))
+  const OpenLesson = () => {
+    const navigate = useNavigate()
+    return (
+      <button type="button" onClick={() => void navigate('?leccion=7')}>
+        abrir lección
+      </button>
+    )
+  }
+
+  it('without it, or with full, the shell is the one of always', () => {
+    const { container, unmount } = renderWithProviders(<AppShell />, { modules: [coreModule] })
+    // useId differs per mount
+    const html = (node: Element) => node.innerHTML.replace(/_r_\w+_/g, 'ID')
+    const before = html(container)
+    unmount()
+    const full = renderWithProviders(<AppShell />, { modules: [coreModule], config: { shellChrome: () => 'full' } })
+    expect(html(full.container)).toBe(before)
+  })
+
+  it('compact: no sidebar from md, main takes the width and the menu button opens the drawer', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans], route: '/?leccion=7', config: { shellChrome: lessonOpen } })
+    expect(aside()).not.toHaveClass('md:static')
+    expect(aside()).not.toHaveClass('md:visible')
+    expect(aside()).toHaveClass('fixed', 'invisible', '-translate-x-full')
+    expect(aside().parentElement).not.toHaveClass('md:flex-row')
+    expect(menuButton().closest('header')).not.toHaveClass('md:hidden')
+    expect(within(aside()).getByRole('button', { name: 'Cerrar el menú' })).not.toHaveClass('md:hidden')
+
+    await userEvent.click(menuButton())
+    expect(aside()).toHaveClass('translate-x-0')
+    expect(aside()).toContainElement(document.activeElement as HTMLElement)
+    expect(screen.getByTestId('shell-backdrop')).not.toHaveClass('md:hidden')
+    await userEvent.keyboard('{Escape}')
+    expect(menuButton()).toHaveFocus()
+  })
+
+  it('compact: a wide screen does not close the drawer', async () => {
+    const listeners: (() => void)[] = []
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
+      addEventListener: (_: string, listener: () => void) => listeners.push(listener),
+      removeEventListener: () => {}
+    }))
+    renderWithProviders(<AppShell />, { modules: [coreModule], route: '/?leccion=7', config: { shellChrome: lessonOpen } })
+    await userEvent.click(menuButton())
+    act(() => listeners.forEach((listener) => listener()))
+    expect(menuButton()).toHaveAttribute('aria-expanded', 'true')
+    vi.unstubAllGlobals()
+  })
+
+  it('asks again when the search changes on the same route, without mounting the page again', async () => {
+    const shellChrome = vi.fn(lessonOpen)
+    renderWithProviders(
+      <>
+        <AppShell />
+        <OpenLesson />
+      </>,
+      { modules: [coreModule], route: '/learning/course/1', config: { shellChrome } }
+    )
+    const main = document.querySelector('main')
+    expect(aside()).toHaveClass('md:static')
+    expect(shellChrome).toHaveBeenLastCalledWith({ pathname: '/learning/course/1', search: '' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'abrir lección' }))
+    expect(shellChrome).toHaveBeenLastCalledWith({ pathname: '/learning/course/1', search: '?leccion=7' })
+    expect(aside()).not.toHaveClass('md:static')
+    expect(document.querySelector('main')).toBe(main)
   })
 })
 

@@ -15,6 +15,8 @@ export type ShellNav = (
   context: { pathname: string; permissions: CallerPermissions | null }
 ) => readonly ResolvedNavGroup[]
 
+export type ShellChrome = (context: { pathname: string; search: string }) => 'full' | 'compact'
+
 // where '/' and «Inicio» lead, by the server's permissions: a registered route key ('learning:mine').
 // null = the dashboard. never called while permissions load. after they fail it gets none (no admin, no object,
 // no capability, as can() reads them) and permissionsFailed, so the app still picks (#136)
@@ -59,6 +61,9 @@ export interface WasichaiConfig {
   shellNav?: ShellNav
   // the app picks the start page. unset = the dashboard. a courtesy: the route still answers to the server
   homeRoute?: HomeRoute
+  // per url, during render: 'compact' is the narrow shell at every width (no sidebar, the menu button opens the
+  // drawer), e.g. a lesson read without distractions (#123). unset = 'full'
+  shellChrome?: ShellChrome
   // «Inicio» in the shell menu. false leaves it out (a menu entry already leads home, #138); a label renames it, an
   // i18n key or the text per language. unset = «Inicio»
   shellHome?: ShellHome

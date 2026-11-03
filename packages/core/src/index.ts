@@ -5,6 +5,7 @@ export {
   type AppText,
   type HomeRoute,
   type HomeRouteContext,
+  type ShellChrome,
   type ShellHome,
   type ShellNav,
   type WasichaiConfig,
