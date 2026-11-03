@@ -87,9 +87,13 @@ export function AppShell() {
 
       {drawer.open ? <div data-testid="shell-backdrop" aria-hidden className="fixed inset-0 z-40 bg-overlay md:hidden" onClick={() => drawer.hide()} /> : null}
 
+      {/* open, the drawer is a modal dialog over the page, so a screen reader says it opened (#133). wide, a plain aside */}
       <aside
         id={drawerId}
         ref={drawer.panelRef}
+        role={drawer.open ? 'dialog' : undefined}
+        aria-modal={drawer.open ? true : undefined}
+        aria-label={drawer.open ? t('common.menu') : undefined}
         className={cn(
           'flex w-60 shrink-0 flex-col bg-shell text-shell-ink',
           // closed: off screen and invisible, so its links leave the tab order too
