@@ -72,7 +72,7 @@ export {
 export { usePreferences, useUpdatePreferences, useSetLocale, type UserPreferences } from './preferences/preferences'
 export { useObjectFlags } from './registry/hooks'
 export * from './queries'
-export { PageHeader } from './shell/PageHeader'
+export { PageHeader, type PageHeaderProps } from './shell/PageHeader'
 export { AppShell } from './shell/AppShell'
 export { currentNavTreeLeaf, isNavTreeGroup, navTreeLeaves, type NavTreeGroup, type NavTreeLeaf, type NavTreeNode } from './shell/navTreeNodes'
 export { NavTree, type NavTreeProps } from './shell/NavTree'
