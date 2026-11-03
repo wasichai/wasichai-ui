@@ -124,7 +124,7 @@ describe('home route', () => {
     const homeRoute = vi.fn(studentsToTheirCourses)
     mount('/', { config: { homeRoute }, permissions: ADMIN })
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
-    expect(homeRoute).toHaveBeenCalledWith(ADMIN)
+    expect(homeRoute).toHaveBeenCalledWith(ADMIN, { permissionsFailed: false })
     expect(screen.getByLabelText('url')).toHaveTextContent(/^\/$/)
   })
 
@@ -136,11 +136,25 @@ describe('home route', () => {
     expect(screen.getByLabelText('home')).toHaveTextContent(/^\/$/)
   })
 
-  it('falls back to the dashboard when the permissions fail', async () => {
+  it('lets the app pick when the permissions fail, from none (#136)', async () => {
     const homeRoute = vi.fn(studentsToTheirCourses)
     mount('/', { config: { homeRoute }, permissions: { status: 500 } })
+    expect(await screen.findByText('mis cursos')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Inicio' })).not.toBeInTheDocument()
+    expect(homeRoute).toHaveBeenLastCalledWith({ admin: false, objects: {}, capabilities: [] }, { permissionsFailed: true })
+    expect(calls).not.toContain('/objects')
+  })
+
+  it('keeps the dashboard when the permissions fail and the app says so (#136)', async () => {
+    mount('/', { config: { homeRoute: (_, { permissionsFailed }) => (permissionsFailed ? null : 'learning:mine') }, permissions: { status: 500 } })
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
-    expect(homeRoute).not.toHaveBeenCalled()
+  })
+
+  it('tells the app the permissions are the caller own when they load (#136)', async () => {
+    const homeRoute = vi.fn(studentsToTheirCourses)
+    mount('/', { config: { homeRoute }, permissions: STUDENT })
+    expect(await screen.findByText('mis cursos')).toBeInTheDocument()
+    expect(homeRoute).toHaveBeenLastCalledWith(STUDENT, { permissionsFailed: false })
   })
 
   it('says which key is wrong when the chosen route is not registered', async () => {

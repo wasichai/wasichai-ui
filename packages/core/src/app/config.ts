@@ -16,8 +16,14 @@ export type ShellNav = (
 ) => readonly ResolvedNavGroup[]
 
 // where '/' and «Inicio» lead, by the server's permissions: a registered route key ('learning:mine').
-// null = the dashboard. never called while permissions load or after they fail
-export type HomeRoute = (permissions: CallerPermissions) => string | null | undefined
+// null = the dashboard. never called while permissions load. after they fail it gets none (no admin, no object,
+// no capability, as can() reads them) and permissionsFailed, so the app still picks (#136)
+export type HomeRoute = (permissions: CallerPermissions, context: HomeRouteContext) => string | null | undefined
+
+export interface HomeRouteContext {
+  // GET /auth/me/permissions failed: permissions is the fail-closed empty set, not the caller's
+  permissionsFailed: boolean
+}
 
 export interface WasichaiConfig {
   // where the REST api lives: '/api', 'https://host/api'. a trailing slash is dropped

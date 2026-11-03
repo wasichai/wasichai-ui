@@ -4,6 +4,7 @@ export {
   storageKeys,
   type AppText,
   type HomeRoute,
+  type HomeRouteContext,
   type ShellHome,
   type ShellNav,
   type WasichaiConfig,
