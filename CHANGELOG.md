@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.7.0](https://github.com/wasichai/wasichai-ui/compare/v1.6.0...v1.7.0) (2026-11-03)
+
+
+### Features
+
+* **core,ui:** data-slot on the close buttons of the shell drawer and of Dialog ([#141](https://github.com/wasichai/wasichai-ui/issues/141)) ([ea50e6e](https://github.com/wasichai/wasichai-ui/commit/ea50e6ee44ee5a0e365f408e65ea07a4f1be207b)), closes [#122](https://github.com/wasichai/wasichai-ui/issues/122)
+* **core:** a data router in WasichaiApp, so a page can warn before leaving ([#158](https://github.com/wasichai/wasichai-ui/issues/158)) ([daeede4](https://github.com/wasichai/wasichai-ui/commit/daeede4bc38d5a39d41930f0733b52e16cbdca53)), closes [#128](https://github.com/wasichai/wasichai-ui/issues/128)
+* **core:** an icon on the Auditoría menu entry ([#144](https://github.com/wasichai/wasichai-ui/issues/144)) ([f891524](https://github.com/wasichai/wasichai-ui/commit/f89152436929fc8db8240862da55baed17eb7eb5)), closes [#135](https://github.com/wasichai/wasichai-ui/issues/135)
+* **core:** appLogo in the shell and login brand ([#149](https://github.com/wasichai/wasichai-ui/issues/149)) ([ab88236](https://github.com/wasichai/wasichai-ui/commit/ab88236c069fe9bb54da1669899c01d3300281ae)), closes [#126](https://github.com/wasichai/wasichai-ui/issues/126)
+* **core:** EmptyState with a description and its title as a heading ([#146](https://github.com/wasichai/wasichai-ui/issues/146)) ([5f3eea6](https://github.com/wasichai/wasichai-ui/commit/5f3eea66f57e8331329e1f1cb26be2f3c919109b)), closes [#125](https://github.com/wasichai/wasichai-ui/issues/125)
+* **core:** homeRoute also decides when the permissions fail ([#155](https://github.com/wasichai/wasichai-ui/issues/155)) ([3b96783](https://github.com/wasichai/wasichai-ui/commit/3b967832d941d21570a31feda4597564b4347ce9)), closes [#136](https://github.com/wasichai/wasichai-ui/issues/136)
+* **core:** PageHeader with responsive padding, breadcrumbs and a container width ([#150](https://github.com/wasichai/wasichai-ui/issues/150)) ([72d45f4](https://github.com/wasichai/wasichai-ui/commit/72d45f490336eee48194bc8e03f884d1c0c31258)), closes [#124](https://github.com/wasichai/wasichai-ui/issues/124)
+* **core:** ReasonDialog with its own label and limit ([#145](https://github.com/wasichai/wasichai-ui/issues/145)) ([73935c0](https://github.com/wasichai/wasichai-ui/commit/73935c058d686a66717e200315b3c8c6f6091b3d)), closes [#129](https://github.com/wasichai/wasichai-ui/issues/129)
+* **core:** shellChrome, so a screen can drop the sidebar by its url ([#157](https://github.com/wasichai/wasichai-ui/issues/157)) ([1e5094d](https://github.com/wasichai/wasichai-ui/commit/1e5094d42822f0c967f6ebe30c0064f928849c55)), closes [#123](https://github.com/wasichai/wasichai-ui/issues/123)
+* **core:** shellHome hides or renames Inicio in the shell ([#154](https://github.com/wasichai/wasichai-ui/issues/154)) ([d43b625](https://github.com/wasichai/wasichai-ui/commit/d43b62578465ee9c86e505bbc39600c268122d2b)), closes [#138](https://github.com/wasichai/wasichai-ui/issues/138)
+* **core:** show metadata labels and enum options in the user's language ([#159](https://github.com/wasichai/wasichai-ui/issues/159)) ([be91017](https://github.com/wasichai/wasichai-ui/commit/be9101772dece01230d4298788909382c2e60aba)), closes [#140](https://github.com/wasichai/wasichai-ui/issues/140)
+* **core:** skip to content link in the shell ([#152](https://github.com/wasichai/wasichai-ui/issues/152)) ([36d62c8](https://github.com/wasichai/wasichai-ui/commit/36d62c87591a4f1ea4257bd0ab59280b7b7f7304)), closes [#132](https://github.com/wasichai/wasichai-ui/issues/132)
+* **ui:** Alert with an optional icon ([#147](https://github.com/wasichai/wasichai-ui/issues/147)) ([87339ab](https://github.com/wasichai/wasichai-ui/commit/87339ab5903946188f1849914a3d32d83feb069a)), closes [#130](https://github.com/wasichai/wasichai-ui/issues/130)
+* **ui:** extendCn, so cn knows the text sizes an app declares ([#148](https://github.com/wasichai/wasichai-ui/issues/148)) ([d760e6b](https://github.com/wasichai/wasichai-ui/commit/d760e6b5aee769591874a97da681b3cef22aa461)), closes [#127](https://github.com/wasichai/wasichai-ui/issues/127)
+
+
+### Bug Fixes
+
+* **core:** admin screens tell a 403 from an empty list ([#151](https://github.com/wasichai/wasichai-ui/issues/151)) ([ccc784f](https://github.com/wasichai/wasichai-ui/commit/ccc784f41f6c7ef38adbcedb5accefcd90af5a0b)), closes [#139](https://github.com/wasichai/wasichai-ui/issues/139)
+* **core:** the menu entry with no destination is declared disabled ([#143](https://github.com/wasichai/wasichai-ui/issues/143)) ([e7db33b](https://github.com/wasichai/wasichai-ui/commit/e7db33b0b5c4a7bb7baebabe63fb332791af9888)), closes [#131](https://github.com/wasichai/wasichai-ui/issues/131)
+* **core:** the shell's narrow drawer is a named dialog ([#153](https://github.com/wasichai/wasichai-ui/issues/153)) ([2483484](https://github.com/wasichai/wasichai-ui/commit/24834849bd15b30db6288d56571dba3becdd24a6)), closes [#133](https://github.com/wasichai/wasichai-ui/issues/133)
+* **ui:** ConfirmDialog and ReasonDialog give focus back on close ([#156](https://github.com/wasichai/wasichai-ui/issues/156)) ([7cc7143](https://github.com/wasichai/wasichai-ui/commit/7cc7143f6427ba60d39c25e0656f405808052ba1)), closes [#134](https://github.com/wasichai/wasichai-ui/issues/134)
+
 ## [1.6.0](https://github.com/wasichai/wasichai-ui/compare/v1.5.0...v1.6.0) (2026-11-02)
 
 
