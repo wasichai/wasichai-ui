@@ -91,6 +91,7 @@ export function AppShell() {
           </div>
           <button
             type="button"
+            data-slot="nav-close"
             aria-label={t('common.closeMenu')}
             className="-mr-2 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-shell-muted hover:bg-shell-ink/8 hover:text-shell-ink md:hidden"
             onClick={() => drawer.hide()}

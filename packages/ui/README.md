@@ -170,6 +170,7 @@ The components carry `data-slot` attributes that a theme sheet can style:
 | `PageSizePagination`  | `pagination`         | `data-mode="range"`: the rows picker and the "1–10 of 47 records" range                      |
 |                       | `native-select`      | its rows-per-page `<select>`                                                                 |
 | `Dialog`              | `dialog-overlay`     | the veil behind every modal dialog                                                           |
+|                       | `dialog-close`       | the X in the content box's corner                                                            |
 | `ConfirmDialog`       | `confirm-dialog`     | the dialog's content box (the overlay and the X are `Dialog`'s)                              |
 | `PdfDialog`           | `pdf-dialog`         | the dialog's content box                                                                     |
 | `CopyButton`          | `copy-button`        | in place of `button`; keeps `data-variant="ghost"` and `data-size="icon"`                    |
@@ -189,7 +190,8 @@ The components carry `data-slot` attributes that a theme sheet can style:
 
 Core's `NavTree` carries `nav-tree`, `nav-tree-group`, `nav-tree-leaf` and `nav-tree-caret` (see `@wasichai/core`'s README).
 Core's `AppShell` carries `nav-item` on each link of its menu (Inicio too, with `aria-current="page"` on the current
-one), `nav-group` on each group's heading and `theme-select` on the theme `<select>`.
+one), `nav-group` on each group's heading, `theme-select` on the theme `<select>` and `nav-close` on the narrow drawer's close
+button.
 
 They never change `light` or `dark`: `theme.css` does not style them. A theme sheet targets them in its own scope
 (`@scope ([data-theme='<id>'])`). An unlayered rule wins over the Tailwind utilities whatever their specificity, so it

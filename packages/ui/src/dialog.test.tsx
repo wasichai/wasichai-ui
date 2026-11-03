@@ -65,6 +65,13 @@ describe('Dialog', () => {
     expect(root().style.overflow).toBe('')
   })
 
+  it('carries data-slot on its close button, for a theme sheet (#122)', async () => {
+    render(<Modal title="Predio" />)
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir Predio' }))
+
+    expect(screen.getByRole('button', { name: 'common.close' })).toHaveAttribute('data-slot', 'dialog-close')
+  })
+
   it('closes on a click on its overlay', async () => {
     render(<Modal title="Predio" />)
     await userEvent.click(screen.getByRole('button', { name: 'Abrir Predio' }))
