@@ -7,7 +7,8 @@ import { Button, Input, Label, Textarea } from '@wasichai/ui'
 import type { FieldViolation } from '../../api/client'
 import { useRegistry, useWasichaiConfig } from '../../app/context'
 import { CHANGE_REASON_MAX_LENGTH, normalizeReason, reasonProblem, type ReasonProblem } from '../../lib/changeReason'
-import { buildRecordSchema, toAttributes, toFormValues } from '../../lib/metadata-to-zod'
+import { useLocalizedDefinition } from '../../lib/localizedMetadata'
+import { buildRecordSchema, toAttributes, toFormValues, type ValidationMessages } from '../../lib/metadata-to-zod'
 import { browserTimeZone } from '../../lib/timeZone'
 import type { FieldRenderer } from '../../registry/contract'
 import { CORE_FIELD_TYPES, recordSection, type FieldMeta, type Form, type ObjectDefinition, type RecordItem, type RecordPayload } from '../../types/metadata'
@@ -47,8 +48,11 @@ function initialSections(renderers: Readonly<Record<string, FieldRenderer>>, rec
 }
 
 // metadata in, working form out. adding a field to an object changes this form for free.
-export function DynamicForm({ definition, form, record, submitting, error, violations = [], onSubmit, onCancel, readOnly, timeZone }: DynamicFormProps) {
+export function DynamicForm({ definition: given, form, record, submitting, error, violations = [], onSubmit, onCancel, readOnly, timeZone }: DynamicFormProps) {
   const { t } = useTranslation()
+  // labels, descriptions and the messages below in the user's language, again when it changes (#140)
+  const definition = useLocalizedDefinition(given)
+  const messages: ValidationMessages = (problem, label) => t(`validation.${problem}`, { label })
   const { fieldRenderers } = useRegistry()
   const config = useWasichaiConfig()
   const zone = { timeZone: timeZone ?? config.timeZone }
@@ -79,7 +83,7 @@ export function DynamicForm({ definition, form, record, submitting, error, viola
     handleSubmit,
     formState: { errors }
   } = useForm<Record<string, unknown>>({
-    resolver: zodResolver(buildRecordSchema(modelFields)),
+    resolver: zodResolver(buildRecordSchema(modelFields, messages)),
     defaultValues: toFormValues(modelFields, record?.attributes, zone)
   })
 

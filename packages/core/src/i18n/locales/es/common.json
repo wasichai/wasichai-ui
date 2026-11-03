@@ -177,7 +177,11 @@
                 "BUILT_IN": "Es una acción de la plataforma",
                 "DUPLICATE": "Ya está declarada"
             }
-        }
+        },
+        "translations": "Traducciones",
+        "translationsHint": "Una por idioma. Vacía, ese idioma muestra el texto de arriba.",
+        "enumOption": "Opción",
+        "saveTranslations": "Guardar traducciones"
     },
     "records": {
         "new": "Nuevo registro",
@@ -263,5 +267,15 @@
     "modelSource": {
         "title": "El modelo vive en el repositorio.",
         "inRepository": "La fuente de verdad de los objetos y los flujos de esta aplicación es su repositorio: lo que cambies aquí no queda en él y el próximo despliegue puede deshacerlo."
+    },
+    "validation": {
+        "required": "{{label}}: obligatorio",
+        "email": "{{label}}: correo no válido",
+        "url": "{{label}}: URL no válida",
+        "option": "{{label}}: opción no válida",
+        "integer": "{{label}}: debe ser un número entero",
+        "date": "{{label}}: fecha no válida",
+        "dateTime": "{{label}}: fecha y hora no válidas",
+        "reference": "{{label}}: referencia no válida"
     }
 }

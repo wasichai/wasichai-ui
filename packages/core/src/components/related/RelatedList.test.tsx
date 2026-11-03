@@ -115,4 +115,15 @@ describe('RelatedList', () => {
     expect(screen.queryByText('[object Object]')).toBeNull()
     expect(screen.getAllByText('—')).toHaveLength(1)
   })
+
+  it('titles the list by its side texts in the user language, and by its label without them (#140)', () => {
+    const { unmount } = renderWithProviders(<RelatedList objectName="predio" recordId="r1" side={{ ...side, labels: { en: 'Owner' } }} />, {
+      modules: [sketchModule, annotationModule],
+      language: 'en'
+    })
+    expect(screen.getByText('Owner')).toBeInTheDocument()
+    unmount()
+    renderWithProviders(<RelatedList objectName="predio" recordId="r1" side={side} />, { modules: [sketchModule, annotationModule], language: 'en' })
+    expect(screen.getAllByText('Titular').length).toBeGreaterThan(0)
+  })
 })

@@ -8,6 +8,7 @@ import { Card } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { DataTable } from '../../components/data-table/DataTable'
 import { effectiveSort, fallbackView, pickView, viewColumns, viewQueryParams } from './viewColumns'
+import { useLocalizedDefinition } from '../../lib/localizedMetadata'
 import { useDeleteRecord, useObjectDefinition, useRecords, useViews } from '../../queries'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import { describeError } from '../../api/client'
@@ -28,8 +29,9 @@ export function RecordListPage() {
   const [viewName, setViewName] = useState('')
 
   const definition = useObjectDefinition(object)
-  const loaded = definition.data
-  const fields = definition.data?.fields ?? []
+  // the object's and its fields' texts in the user's language (#140)
+  const loaded = useLocalizedDefinition(definition.data)
+  const fields = loaded?.fields ?? []
   const views = useViews(object)
   // no stored view (or no server yet): metadata still gives us a usable list
   const view = pickView(views.data ?? [], viewName) ?? fallbackView(object ?? '', fields)
@@ -51,8 +53,8 @@ export function RecordListPage() {
   return (
     <>
       <PageHeader
-        title={definition.data?.pluralLabel ?? object ?? ''}
-        subtitle={definition.data?.description ?? undefined}
+        title={loaded?.pluralLabel ?? object ?? ''}
+        subtitle={loaded?.description ?? undefined}
         actions={
           <>
             {(views.data ?? []).length > 0 ? (

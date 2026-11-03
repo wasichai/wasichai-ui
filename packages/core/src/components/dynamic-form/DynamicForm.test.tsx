@@ -84,7 +84,7 @@ describe('DynamicForm', () => {
 
     await user.click(screen.getByRole('button', { name: /Guardar|Save/ }))
 
-    await waitFor(() => expect(screen.getByText(/Código: required/)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/Código: obligatorio/)).toBeInTheDocument())
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
@@ -366,7 +366,7 @@ describe('DynamicForm', () => {
 
       await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
-      expect(await screen.findByText(/Código: required/)).toBeInTheDocument()
+      expect(await screen.findByText(/Código: obligatorio/)).toBeInTheDocument()
       expect(screen.getByText('Escribe el motivo del cambio')).toBeInTheDocument()
       expect(onSubmit).not.toHaveBeenCalled()
     })

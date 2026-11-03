@@ -9,6 +9,7 @@ import { PageRenderer } from '../../components/page-renderer/PageRenderer'
 import { ErrorState } from '../../components/query-state/QueryState'
 import { WritePolicyNotice } from '../../components/reason/WritePolicyNotice'
 import { writePolicy } from '../../lib/writePolicy'
+import { useLocalizedDefinition } from '../../lib/localizedMetadata'
 import { useObjectDefinition, useObjectRelationships, useRecord, useResolvedPage, useSaveRecord } from '../../queries'
 import { PageHeader } from '../../shell/PageHeader'
 
@@ -33,7 +34,8 @@ export function RecordDetailPage() {
   const pageError = page.error instanceof ApiError ? page.error : null
   const notFound = pageError?.status === 404
   const resolved = page.data ?? (notFound && object && !sides.isLoading ? fallbackPage(object, sides.data ?? []) : undefined)
-  const current = definition.data
+  // the object's and its fields' texts in the user's language (#140)
+  const current = useLocalizedDefinition(definition.data)
   const item = record.data
 
   // checked before the loading guard below: a real page-fetch failure never resolves definition/record/

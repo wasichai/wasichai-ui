@@ -5,6 +5,7 @@ import {
   type DeclaredAction,
   type FieldMeta,
   type FieldType,
+  type LocalizedTexts,
   type ObjectDefinition,
   type SystemField,
   type SystemFieldScope
@@ -103,6 +104,10 @@ export interface ObjectDetailsDraft {
   requiresReason: boolean
   indexes: string[][]
   uniqueConstraints: string[][]
+  // the texts per language beside label, pluralLabel and description (ADR-078)
+  labels: LocalizedTexts
+  pluralLabels: LocalizedTexts
+  descriptions: LocalizedTexts
 }
 
 // a server before 0.3.0 sends no flags and no lists: all off, none
@@ -116,12 +121,17 @@ export function detailsDraft(definition: ObjectDefinition): ObjectDetailsDraft {
     apiOnly: definition.apiOnly ?? false,
     requiresReason: definition.requiresReason ?? false,
     indexes: definition.indexes ?? [],
-    uniqueConstraints: definition.uniqueConstraints ?? []
+    uniqueConstraints: definition.uniqueConstraints ?? [],
+    // a server without them sends none: nothing to edit, nothing sent unless typed
+    labels: definition.labels ?? {},
+    pluralLabels: definition.pluralLabels ?? {},
+    descriptions: definition.descriptions ?? {}
   }
 }
 
 const FLAGS = ['appendOnly', 'apiOnly', 'requiresReason'] as const
-const LISTS = ['indexes', 'uniqueConstraints'] as const
+// the per-language maps go out like the lists: only when changed, and then whole (the server replaces them)
+const LISTS = ['indexes', 'uniqueConstraints', 'labels', 'pluralLabels', 'descriptions'] as const
 
 // the PUT keeps whatever it leaves out, so a rule or a list goes out only when the editor changed it:
 // saving the labels must never rewrite a rule someone else just set. enabled defaults to true when

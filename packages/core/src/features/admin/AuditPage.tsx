@@ -9,6 +9,7 @@ import { Label } from '@wasichai/ui'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@wasichai/ui'
 import { Table, Td, Th } from '@wasichai/ui'
 import { useAuditLog } from '../history/api'
+import { objectLabel } from '../../lib/localizedMetadata'
 import { absoluteTime, describeChanges, relativeTime } from '../history/changes'
 import { AuditActor } from '../history/AuditActor'
 import { ChangeList } from '../history/ChangeList'
@@ -24,7 +25,7 @@ const LIMITS = [25, 50, 100, 200]
 const ANY = '__any__'
 
 export function AuditPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [objectName, setObjectName] = useState(ANY)
   const [operation, setOperation] = useState(ANY)
   const [limit, setLimit] = useState(100)
@@ -63,7 +64,7 @@ export function AuditPage() {
                     <SelectItem value={ANY}>{t('history.allObjects')}</SelectItem>
                     {objects.map((object) => (
                       <SelectItem key={object.id} value={object.name}>
-                        {object.label}
+                        {objectLabel(object, i18n.language)}
                       </SelectItem>
                     ))}
                   </SelectContent>

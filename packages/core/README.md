@@ -503,6 +503,38 @@ case, a blank label is left out and the server uses the name) and removes one wi
 the server refuses it: not `^[A-Z][A-Z0-9_]{1,48}$`, one of the built-in actions (`READ`, `CREATE`, `UPDATE`,
 `DELETE`, `MANAGE_METADATA`, `MANAGE_ORGANIZATION`, `MANAGE_TENANTS`), or already declared.
 
+## Metadata in the user's language
+
+A server from wasichai 1.10 may send, beside each single-language text of the model, the text per language tag
+(ADR-078): an object's `labels`, `pluralLabels` and `descriptions`, a field's `labels` and `descriptions`, an `ENUM`
+field's `enumOptionLabels` (option → language → text), and a relationship's `labels` and `inverseLabels`. Core picks the
+text as for workflow labels (ADR-070): the active language, then its primary subtag (`pt` for `pt-BR`), then the single
+text. A server without them renders exactly as before.
+
+The record list, detail and form, related lists, the dashboard and the history follow it, and so do `DynamicForm` and
+`DataTable` for whatever definition an app gives them: labels, descriptions, an `ENUM` option's text in the select and
+in a stored value's display (the value itself is what is stored and sent; an option with no text shows the value),
+and the client validation messages (`validation.*`, `«Código: obligatorio»` / `«Code: required»`). Switching the
+language redraws them without a reload. The object editor (`/admin`) edits one text per language of
+`config.languages` for the object and, under «Traducciones», for each field and its options.
+
+An app's own screens resolve the same way:
+
+```tsx
+import { enumOptionLabel, fieldLabel, objectPluralLabel, useLocalizedDefinition } from '@wasichai/core'
+
+const { i18n } = useTranslation()
+const lesson = useLocalizedDefinition(definition.data) // label, pluralLabel, description and the fields' in the language
+const title = objectPluralLabel(course, i18n.language)
+const kind = enumOptionLabel(field, record.attributes.tipo as string, i18n.language)
+```
+
+`localizedText(text, texts, language)` is the rule itself; `fieldLabel`, `fieldDescription`, `objectLabel`,
+`objectDescription`, `relationshipLabel`, `relationshipInverseLabel`, `sideLabel` and `sideObjectLabel` apply it to one
+property, `localizeDefinition` / `localizeField` to a whole definition (never for an editor: it would save the
+resolved text), and `buildRecordSchema(fields, messages)` takes the validation messages (`englishValidationMessages`
+when none).
+
 ## Adding a language / overriding strings
 
 Every module ships `es` and `en` (core's own strings too). A module's `i18n` is just

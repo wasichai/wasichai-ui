@@ -27,8 +27,16 @@ export interface FieldMeta {
   indexed?: boolean
   // DATETIME only: IANA zone its wall times belong to. omitted when unset
   timeZone?: string
+  // text per language tag beside label and description, and an ENUM option's per option value.
+  // omitted when none are stored (ADR-078). read them through fieldLabel / enumOptionLabel
+  labels?: LocalizedTexts
+  descriptions?: LocalizedTexts
+  enumOptionLabels?: Record<string, LocalizedTexts>
   [extension: string]: unknown
 }
+
+// a text per language tag: { es: 'Código', en: 'Code' } (ADR-070, ADR-078)
+export type LocalizedTexts = Record<string, string>
 
 // where a system column lives: on every table, only once a workflow is attached, or nowhere yet
 // — reserved for later.
@@ -55,6 +63,10 @@ export interface ObjectSummary {
   // field-name sets (ADR-036, ADR-037), omitted when empty
   indexes?: string[][]
   uniqueConstraints?: string[][]
+  // per language tag, omitted when none are stored (ADR-078)
+  labels?: LocalizedTexts
+  pluralLabels?: LocalizedTexts
+  descriptions?: LocalizedTexts
   [extension: string]: unknown
 }
 
@@ -111,6 +123,9 @@ export interface Relationship {
   target: string
   fieldName: string | null
   joinTable: string | null
+  // per language tag, omitted when none are stored (ADR-078)
+  labels?: LocalizedTexts
+  inverseLabels?: LocalizedTexts
 }
 
 // a relationship as seen from one object: who is on the other end, and whether it is a list
@@ -121,6 +136,9 @@ export interface RelatedSide {
   objectName: string
   objectLabel: string
   many: boolean
+  // label's and objectLabel's texts per language, omitted when none are stored (ADR-078)
+  labels?: LocalizedTexts
+  objectLabels?: LocalizedTexts
 }
 
 export const CORE_PAGE_COMPONENT_TYPES = [

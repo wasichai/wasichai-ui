@@ -575,4 +575,81 @@ describe('ObjectEditorPage', () => {
       expect(within(actions()).queryByText(/aún no declara|declares no actions/)).not.toBeInTheDocument()
     })
   })
+
+  // one text per language of config.languages, as the workflow editor does (#140, ADR-078)
+  describe('texts per language', () => {
+    const details = () => screen.getByText(/^Datos del objeto$|^Object details$/).closest('form') as HTMLElement
+
+    it('sends the object maps only when they changed, and then whole', async () => {
+      const user = userEvent.setup()
+      current = { ...definition, labels: { en: 'Plot' } }
+      renderPage()
+      expect(screen.getByLabelText('Etiqueta (en)')).toHaveValue('Plot')
+
+      await user.type(screen.getByLabelText('Etiqueta plural (en)'), 'Plots')
+      await user.clear(screen.getByLabelText('Etiqueta (en)'))
+      await user.click(within(details()).getByRole('button', { name: /^Guardar$|^Save$/ }))
+
+      await waitFor(() =>
+        expect(updateObject).toHaveBeenCalledWith({
+          label: 'Predio',
+          pluralLabel: 'Predios',
+          description: null,
+          enabled: true,
+          labels: {},
+          pluralLabels: { en: 'Plots' }
+        })
+      )
+    })
+
+    it("saves a field's label, description and option texts per language", async () => {
+      const user = userEvent.setup()
+      current = {
+        ...definition,
+        fields: [
+          ...definition.fields,
+          {
+            ...definition.fields[0],
+            id: 'f-9',
+            name: 'tipo',
+            label: 'Tipo',
+            type: 'ENUM',
+            enumOptions: ['LECTURA', 'VIDEO'],
+            labels: { en: 'Type' },
+            enumOptionLabels: { LECTURA: { en: 'Reading' } }
+          }
+        ]
+      }
+      renderPage()
+      const toggles = screen.getAllByRole('button', { name: /^Traducciones$|^Translations$/ })
+      await user.click(toggles[toggles.length - 1])
+
+      expect(screen.getByLabelText('Etiqueta tipo (en)')).toHaveValue('Type')
+      expect(screen.getByLabelText('Opción LECTURA (en)')).toHaveValue('Reading')
+      await user.type(screen.getByLabelText('Opción VIDEO (en)'), 'Video')
+      await user.type(screen.getByLabelText('Etiqueta tipo (es)'), 'Tipo de lección')
+      await user.click(screen.getByRole('button', { name: /^Guardar traducciones$|^Save translations$/ }))
+
+      await waitFor(() =>
+        expect(updateField).toHaveBeenCalledWith({
+          field: 'tipo',
+          payload: {
+            labels: { en: 'Type', es: 'Tipo de lección' },
+            descriptions: {},
+            enumOptionLabels: { LECTURA: { en: 'Reading' }, VIDEO: { en: 'Video' } }
+          }
+        })
+      )
+    })
+
+    it('sends no option texts for a field that is not an ENUM', async () => {
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getAllByRole('button', { name: /^Traducciones$|^Translations$/ })[0])
+      await user.type(screen.getByLabelText('Etiqueta revisado (en)'), 'Reviewed')
+      await user.click(screen.getByRole('button', { name: /^Guardar traducciones$|^Save translations$/ }))
+
+      await waitFor(() => expect(updateField).toHaveBeenCalledWith({ field: 'revisado', payload: { labels: { en: 'Reviewed' }, descriptions: {} } }))
+    })
+  })
 })
