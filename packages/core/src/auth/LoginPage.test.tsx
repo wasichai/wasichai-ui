@@ -19,4 +19,17 @@ describe('LoginPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Invalid email or password')
   })
+
+  it('draws the app logo before the name, hidden from screen readers (#126)', () => {
+    renderWithProviders(<LoginPage />, { user: null, permissions: null, config: { appName: 'Quipu', appLogo: <svg data-testid="logo" /> } })
+    const logo = document.querySelector('[data-slot="app-logo"]')!
+    expect(logo).toHaveAttribute('aria-hidden', 'true')
+    expect(logo).toContainElement(screen.getByTestId('logo'))
+    expect(logo.nextElementSibling).toHaveTextContent('Quipu')
+  })
+
+  it('draws no logo wrapper without appLogo (#126)', () => {
+    renderWithProviders(<LoginPage />, { user: null, permissions: null })
+    expect(document.querySelector('[data-slot="app-logo"]')).toBeNull()
+  })
 })

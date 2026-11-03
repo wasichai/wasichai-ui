@@ -125,6 +125,23 @@ describe('AppShell', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('boom')
   })
 
+  it('draws the app logo before the name in the sidebar, hidden from screen readers (#126)', () => {
+    const before = document.title
+    renderWithProviders(<AppShell />, { modules: [coreModule], config: { appName: 'Quipu', appLogo: <svg data-testid="logo" /> } })
+    const aside = document.querySelector('aside')!
+    const logo = within(aside).getByTestId('logo').closest('[data-slot="app-logo"]')!
+    expect(logo).toHaveAttribute('aria-hidden', 'true')
+    expect(logo.nextElementSibling).toHaveTextContent('Quipu')
+    // the narrow menu bar stays without a brand
+    expect(within(document.querySelector('header')!).queryByTestId('logo')).toBeNull()
+    expect(document.title).toBe(before)
+  })
+
+  it('draws no logo wrapper without appLogo (#126)', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule] })
+    expect(document.querySelector('[data-slot="app-logo"]')).toBeNull()
+  })
+
   it('names the app from config, or from the strings when config says nothing', () => {
     const { unmount } = renderWithProviders(<AppShell />, { modules: [coreModule], config: { appName: 'Catastro' } })
     expect(screen.getByText('Catastro')).toBeInTheDocument()

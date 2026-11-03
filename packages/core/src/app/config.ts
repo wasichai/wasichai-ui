@@ -1,4 +1,5 @@
 import { isTimeZone } from '../lib/timeZone'
+import type { ReactNode } from 'react'
 import type { CurrentOrganization } from '../organization/currentOrganization'
 import type { ResolvedNavGroup } from '../registry/createRegistry'
 import type { CallerPermissions } from '../types/auth'
@@ -29,6 +30,9 @@ export interface WasichaiConfig {
   // gets the caller's organization, so one build can say «Catastro Ica» and «Catastro Perené»
   appName?: AppText
   appTagline?: AppText
+  // drawn before appName in the sidebar, the drawer and the login page, aria-hidden: the name stays the accessible
+  // text. sized by whoever gives it; core loads no image (#126)
+  appLogo?: ReactNode
   // a function appName also sets document.title. false leaves the title to the app. unset = true
   syncDocumentTitle?: boolean
   // router basename when the app is not served from '/'

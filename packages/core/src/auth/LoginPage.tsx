@@ -45,6 +45,11 @@ export function LoginPage() {
   return (
     <div className="flex h-full items-center justify-center bg-shell px-4">
       <form onSubmit={submit} className="w-full max-w-sm rounded-card bg-surface p-7 shadow-xl" noValidate>
+        {config.appLogo != null && (
+          <div data-slot="app-logo" aria-hidden className="mb-3">
+            {config.appLogo}
+          </div>
+        )}
         <p className="text-xl font-semibold tracking-tight text-ink">{title.appName}</p>
         <p className="mt-1 text-sm text-ink-muted">{title.appTagline}</p>
 
