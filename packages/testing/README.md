@@ -11,7 +11,8 @@ Peer dependencies: `@wasichai/core`, `@tanstack/react-query`, `@testing-library/
 ## renderWithProviders
 
 Mounts the same providers `WasichaiApp` does (registry, api client, i18n, react-query, auth) around
-a `MemoryRouter`. Defaults: signed in as `TEST_USER` with admin `TEST_PERMISSIONS`, spanish,
+a memory data router (`createMemoryRouter`), as `WasichaiApp`'s is a data router, so a page that calls `useBlocker`
+can be tested. `rerender` reaches the new ui through the same router. Defaults: signed in as `TEST_USER` with admin `TEST_PERMISSIONS`, spanish,
 `coreModule` alone, storage prefix `wasichai-test`.
 
 `coreModule` is registered automatically, the same way `WasichaiApp` registers it, so every module's

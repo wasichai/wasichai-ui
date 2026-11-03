@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { render, type RenderResult } from '@testing-library/react'
-import type { ReactElement, ReactNode } from 'react'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { createContext, useContext, useState, type ReactElement, type ReactNode } from 'react'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 import {
   WasichaiProviders,
   coreModule,
@@ -45,7 +45,10 @@ export interface WasichaiRenderResult extends RenderResult {
   queryClient: QueryClient
 }
 
-// the same providers WasichaiApp mounts, around a MemoryRouter
+const UiContext = createContext<ReactNode>(null)
+const CurrentUi = () => <>{useContext(UiContext)}</>
+
+// the same providers WasichaiApp mounts, around a memory data router
 export function renderWithProviders(ui: ReactElement, options: WasichaiRenderOptions = {}): WasichaiRenderResult {
   const config = resolveConfig({ storagePrefix: 'wasichai-test', ...options.config })
   // prepend coreModule unless the caller already listed it, so registering it twice never throws
@@ -59,28 +62,36 @@ export function renderWithProviders(ui: ReactElement, options: WasichaiRenderOpt
   const user = options.user === undefined ? TEST_USER : options.user
   const permissions = options.permissions === undefined ? TEST_PERMISSIONS : options.permissions
 
-  // one wrapper per call, so rerender keeps the same providers and cache
+  // one wrapper per call, so rerender keeps the same providers, cache and router. a data router, as WasichaiApp's,
+  // so a page with useBlocker can be tested (#128); its routes are fixed at creation, so the ui comes through context
+  // and a rerender still reaches it
   function Wrapper({ children }: { children: ReactNode }) {
+    const [router] = useState(() =>
+      createMemoryRouter(
+        options.path
+          ? // off the pattern nothing shows, as a <Routes> with one <Route> did
+            [
+              { path: options.path, element: <CurrentUi /> },
+              { path: '*', element: null }
+            ]
+          : [{ path: '*', element: <CurrentUi /> }],
+        { initialEntries: [options.route ?? '/'] }
+      )
+    )
     return (
-      <WasichaiProviders
-        config={config}
-        registry={registry}
-        apiClient={apiClient}
-        i18n={i18n}
-        queryClient={queryClient}
-        initialUser={user}
-        initialPermissions={permissions}
-      >
-        <MemoryRouter initialEntries={[options.route ?? '/']}>
-          {options.path ? (
-            <Routes>
-              <Route path={options.path} element={children} />
-            </Routes>
-          ) : (
-            children
-          )}
-        </MemoryRouter>
-      </WasichaiProviders>
+      <UiContext.Provider value={children}>
+        <WasichaiProviders
+          config={config}
+          registry={registry}
+          apiClient={apiClient}
+          i18n={i18n}
+          queryClient={queryClient}
+          initialUser={user}
+          initialPermissions={permissions}
+        >
+          <RouterProvider router={router} />
+        </WasichaiProviders>
+      </UiContext.Provider>
     )
   }
 

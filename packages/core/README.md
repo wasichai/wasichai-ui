@@ -349,6 +349,26 @@ const location = useLocation()
 <Link to={links.login({ returnTo: location.pathname + location.search })}>{t('courses.signInToEnroll')}</Link>
 ```
 
+Leaving with unsaved work: `WasichaiApp` runs on a data router (`createBrowserRouter`), so a page can hold a
+navigation with `react-router`'s `useBlocker`: the shell's links, `navigate()` and the browser's back and forward wait
+until the page calls `blocker.proceed()` or `blocker.reset()`. Closing or reloading the tab is the page's own
+`beforeunload`. `WasichaiRoutes` mounted in an app's own `BrowserRouter` has no `useBlocker`, as before.
+
+```tsx
+function GradingPage() {
+  const [dirty, setDirty] = useState(false)
+  const blocker = useBlocker(dirty)
+  return (
+    <>
+      <Editor onChange={() => setDirty(true)} />
+      {blocker.state === 'blocked' && (
+        <ConfirmDialog title={t('leave.title')} description={t('leave.lost')} onConfirm={() => blocker.proceed()} onCancel={() => blocker.reset()} />
+      )}
+    </>
+  )
+}
+```
+
 Page header: `PageHeader` draws a screen's `h1` with an optional `subtitle` and `actions`, as core's own screens do.
 `breadcrumbs` goes before the title and `children` (section tabs, filters) after the title and the actions; core has no
 breadcrumb component, the app brings its own. `containerClassName` goes on an inner box, to line it up with a page body
