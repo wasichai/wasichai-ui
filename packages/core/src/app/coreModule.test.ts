@@ -6,6 +6,11 @@ const entry = coreModule.nav?.find((item) => item.labelKey === 'nav.serviceAccou
 const visible = (permissions: CallerPermissions | null) => entry?.visible?.(permissions) ?? true
 
 describe('core nav', () => {
+  // an entry without one sits misaligned against the rest (#135)
+  it('gives every entry an icon', () => {
+    expect(coreModule.nav?.filter((item) => !item.icon).map((item) => item.labelKey)).toEqual([])
+  })
+
   it('points service accounts at its route under administration', () => {
     expect(entry).toMatchObject({ group: 'administration', route: 'serviceAccounts', order: 25 })
     expect(coreModule.routes?.find((route) => route.id === 'serviceAccounts')?.path).toBe('admin/service-accounts')

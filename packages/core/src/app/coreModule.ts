@@ -1,4 +1,4 @@
-import { Bot, Boxes, Database, FileStack, KeyRound, Shield, Users } from 'lucide-react'
+import { Bot, Boxes, Database, FileStack, KeyRound, ScrollText, Shield, Users } from 'lucide-react'
 import { LoginPage } from '../auth/LoginPage'
 import { AuditPage } from '../features/admin/AuditPage'
 import { PermissionsPage } from '../features/admin/PermissionsPage'
@@ -56,6 +56,6 @@ export const coreModule: WasichaiModule = {
     { group: 'administration', labelKey: 'nav.roles', order: 20, icon: Shield, route: 'roles' },
     { group: 'administration', labelKey: 'nav.serviceAccounts', order: 25, icon: Bot, route: 'serviceAccounts', visible: canManageOrganization },
     { group: 'administration', labelKey: 'nav.permissions', order: 30, icon: KeyRound, route: 'permissions' },
-    { group: 'administration', labelKey: 'nav.audit', order: 40, route: 'audit' }
+    { group: 'administration', labelKey: 'nav.audit', order: 40, icon: ScrollText, route: 'audit' }
   ]
 }
