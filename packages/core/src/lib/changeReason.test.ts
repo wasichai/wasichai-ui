@@ -53,6 +53,13 @@ describe('reasonProblem', () => {
     expect(reasonProblem('a'.repeat(501))).toBe('TOO_LONG')
   })
 
+  it('takes another limit, the header one by default (#129)', () => {
+    expect(reasonProblem('a'.repeat(501), 4000)).toBeNull()
+    expect(reasonProblem('a'.repeat(4001), 4000)).toBe('TOO_LONG')
+    expect(reasonProblem('😀'.repeat(4000), 4000)).toBeNull()
+    expect(reasonProblem('a\u0000b', 4000)).toBe('CONTROL')
+  })
+
   it('measures the trimmed reason', () => expect(reasonProblem(`  ${'a'.repeat(500)}  `)).toBeNull())
 
   it('refuses control characters but not tab or line breaks', () => {

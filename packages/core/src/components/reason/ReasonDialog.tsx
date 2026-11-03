@@ -7,6 +7,8 @@ export interface ReasonDialogProps {
   title?: ReactNode // default t('reason.title')
   description?: ReactNode // default t('reason.description')
   confirmLabel?: ReactNode // default t('reason.confirm')
+  label?: ReactNode // the field's label, default t('reason.label'): say who reads it
+  maxLength?: number // default CHANGE_REASON_MAX_LENGTH, the header's. a reason sent in a body has its own
   busy?: boolean // confirm disabled, textarea read-only
   error?: string | null // server message about the reason, under the textarea (role=alert)
   onConfirm: (reason: string) => void // trimmed, already valid
@@ -15,16 +17,26 @@ export interface ReasonDialogProps {
 
 // asks for the change reason of an object with requiresReason. mounted open, like ConfirmDialog:
 // the caller renders it only while asking. checks what the server would refuse before anything is sent.
-export function ReasonDialog({ title, description, confirmLabel, busy, error, onConfirm, onCancel }: ReasonDialogProps) {
+export function ReasonDialog({
+  title,
+  description,
+  confirmLabel,
+  label,
+  maxLength = CHANGE_REASON_MAX_LENGTH,
+  busy,
+  error,
+  onConfirm,
+  onCancel
+}: ReasonDialogProps) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [problem, setProblem] = useState<ReasonProblem | null>(null)
   const messageId = useId()
   // the local problem is the newer news: a server error is about the text sent before
-  const message = problem ? t(`reason.problems.${problem}`, { max: CHANGE_REASON_MAX_LENGTH }) : error
+  const message = problem ? t(`reason.problems.${problem}`, { max: maxLength }) : error
 
   const confirm = () => {
-    const found = reasonProblem(text)
+    const found = reasonProblem(text, maxLength)
     setProblem(found)
     if (!found) onConfirm(normalizeReason(text) ?? '')
   }
@@ -35,7 +47,7 @@ export function ReasonDialog({ title, description, confirmLabel, busy, error, on
         <DialogTitle className="text-lg font-semibold">{title ?? t('reason.title')}</DialogTitle>
         <DialogDescription className="mt-2 text-sm text-ink-muted">{description ?? t('reason.description')}</DialogDescription>
         <div className="mt-4 grid gap-1">
-          <Label htmlFor="change-reason-dialog">{t('reason.label')}</Label>
+          <Label htmlFor="change-reason-dialog">{label ?? t('reason.label')}</Label>
           <Textarea
             id="change-reason-dialog"
             value={text}
@@ -48,9 +60,9 @@ export function ReasonDialog({ title, description, confirmLabel, busy, error, on
             }}
           />
           <div className="flex justify-between gap-2 text-xs text-ink-muted">
-            <span>{t('reason.hint', { max: CHANGE_REASON_MAX_LENGTH })}</span>
+            <span>{t('reason.hint', { max: maxLength })}</span>
             {/* code points, like the server counts them */}
-            <span>{t('reason.count', { count: Array.from(text.trim()).length, max: CHANGE_REASON_MAX_LENGTH })}</span>
+            <span>{t('reason.count', { count: Array.from(text.trim()).length, max: maxLength })}</span>
           </div>
           {message && (
             <p id={messageId} role="alert" className="text-sm text-danger">
