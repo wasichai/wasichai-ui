@@ -8,6 +8,8 @@ import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Badge, Table, Td, Th } from '@wasichai/ui'
 import { describeError } from '../../api/client'
+import { ErrorState } from '../../components/query-state/QueryState'
+import { AdminForbidden, isForbidden } from './Forbidden'
 import { useCreateRole, useDeleteRole, useRoles, useUpdateRole } from './api'
 import { grantedCount } from './permissionMatrix'
 import { PROTECTED_ROLE, type Role } from './types'
@@ -16,7 +18,7 @@ const CHECKBOX = 'h-4 w-4 accent-brand'
 
 export function RolesPage() {
   const { t } = useTranslation()
-  const { data: roles = [], isLoading } = useRoles()
+  const { data: roles = [], isLoading, error, refetch } = useRoles()
   const create = useCreateRole()
   const update = useUpdateRole()
   const remove = useDeleteRole()
@@ -85,6 +87,8 @@ export function RolesPage() {
       remove.mutate(role.name, { onError: (cause) => setNotice(describeError(cause)) })
     }
   }
+
+  if (isForbidden(error)) return <AdminForbidden title={t('admin.roles.title')} subtitle={t('admin.roles.subtitle')} error={error} />
 
   return (
     <>
@@ -175,6 +179,8 @@ export function RolesPage() {
           ) : null}
           {isLoading ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('common.loading')}</p>
+          ) : error ? (
+            <ErrorState error={error} onRetry={() => void refetch()} />
           ) : roles.length === 0 ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('admin.roles.empty')}</p>
           ) : (

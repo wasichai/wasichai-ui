@@ -9,7 +9,9 @@ import { Input } from '@wasichai/ui'
 import { Label } from '@wasichai/ui'
 import { Table, Td, Th } from '@wasichai/ui'
 import { describeError } from '../../api/client'
+import { ErrorState } from '../../components/query-state/QueryState'
 import { useAdminUsers, useCreateUser, useDeleteUser, useRoles, useUpdateUser, useUpdateUserRoles } from './api'
+import { AdminForbidden, isForbidden } from './Forbidden'
 import { RoleBadges } from './RoleBadges'
 import type { AdminUser } from './types'
 
@@ -18,7 +20,7 @@ const CHECKBOX = 'h-4 w-4 accent-brand'
 export function UsersPage() {
   const { t } = useTranslation()
   const { user: signedIn } = useAuth()
-  const { data: users = [], isLoading } = useAdminUsers()
+  const { data: users = [], isLoading, error, refetch } = useAdminUsers()
   const { data: roles = [] } = useRoles()
 
   const create = useCreateUser()
@@ -89,6 +91,8 @@ export function UsersPage() {
       setEditError(describeError(cause))
     }
   }
+
+  if (isForbidden(error)) return <AdminForbidden title={t('admin.users.title')} subtitle={t('admin.users.subtitle')} error={error} />
 
   return (
     <>
@@ -228,6 +232,8 @@ export function UsersPage() {
           ) : null}
           {isLoading ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('common.loading')}</p>
+          ) : error ? (
+            <ErrorState error={error} onRetry={() => void refetch()} />
           ) : users.length === 0 ? (
             <p className="px-5 py-8 text-sm text-ink-muted">{t('admin.users.empty')}</p>
           ) : (

@@ -355,6 +355,9 @@ look, where the empty state stands for a section or a screen:
 Core mounts the tenant's admin screens under `/admin`, in the sidebar's `administration` group: users
 (`users()`), roles (`roles()`), service accounts (`serviceAccounts()`), permissions (`permissions()`) and audit
 (`audit()`). Each is also exported (`UsersPage`, `RolesPage`, `ServiceAccountsPage`, `PermissionsPage`, `AuditPage`).
+When the list a screen reads answers `403` (a student who types `/admin/users`), the screen shows its title and
+«No tienes permiso para ver esto», without its forms; another failure says the list failed and offers a retry. Neither
+reads as an empty list.
 
 `ServiceAccountsPage` administers the server-to-server callers of the tenant (ADR-043): create one with a name and
 roles (never `ADMIN`), change its roles, disable or enable it, rotate its secret, delete it. The secret is shown once,
