@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, Label, Textarea } from '@wasichai/ui'
+import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, Label, Textarea, useReturnFocus } from '@wasichai/ui'
 import { CHANGE_REASON_MAX_LENGTH, normalizeReason, reasonProblem, type ReasonProblem } from '../../lib/changeReason'
 
 export interface ReasonDialogProps {
@@ -13,6 +13,7 @@ export interface ReasonDialogProps {
   error?: string | null // server message about the reason, under the textarea (role=alert)
   onConfirm: (reason: string) => void // trimmed, already valid
   onCancel: () => void // Cancel, Escape, X, outside click
+  returnFocusTo?: () => HTMLElement | null | undefined // focus on close when what had it at open is gone (#134)
 }
 
 // asks for the change reason of an object with requiresReason. mounted open, like ConfirmDialog:
@@ -26,9 +27,11 @@ export function ReasonDialog({
   busy,
   error,
   onConfirm,
-  onCancel
+  onCancel,
+  returnFocusTo
 }: ReasonDialogProps) {
   const { t } = useTranslation()
+  const returnFocus = useReturnFocus(returnFocusTo)
   const [text, setText] = useState('')
   const [problem, setProblem] = useState<ReasonProblem | null>(null)
   const messageId = useId()
@@ -43,7 +46,7 @@ export function ReasonDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent data-slot="reason-dialog" className="max-w-md">
+      <DialogContent data-slot="reason-dialog" className="max-w-md" onCloseAutoFocus={returnFocus}>
         <DialogTitle className="text-lg font-semibold">{title ?? t('reason.title')}</DialogTitle>
         <DialogDescription className="mt-2 text-sm text-ink-muted">{description ?? t('reason.description')}</DialogDescription>
         <div className="mt-4 grid gap-1">

@@ -35,6 +35,11 @@ screen readers, so a tone is not told by colour alone; there is no icon per tone
 (`{target && <ConfirmDialog … onCancel={() => setTarget(null)} />}`) and unmounts it in `onCancel` or `onClose`. `PdfDialog`
 revokes its blob URL when it closes or is unmounted, so the URL does not outlive the dialog.
 
+With no trigger of its own, a dialog mounted open would drop focus to `<body>` on close. `ConfirmDialog` sends it back
+to what had it when it mounted (the button that asked), or, when that element is gone (the row it deleted), to
+`returnFocusTo()` if given. `useReturnFocus(returnFocusTo?)` gives the same as a `DialogContent` `onCloseAutoFocus`, for
+an app's own dialog mounted the same way.
+
 `ConfirmDialog`'s `description` renders inside the dialog's description paragraph (a `<p>`): give it inline text, not blocks.
 Its confirm button reads Delete (`common.delete`) whatever the `variant`: a confirmation that deletes nothing passes its own
 `confirmLabel` (and, usually, `variant="primary"`).

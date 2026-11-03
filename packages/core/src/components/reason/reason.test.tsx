@@ -98,6 +98,20 @@ describe('ReasonDialog', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('mínimo 10 caracteres')
   })
 
+  it('sends focus to the caller target when what had it at open is gone (#134)', async () => {
+    const target = document.createElement('button')
+    document.body.append(target)
+    const opener = document.createElement('button')
+    document.body.append(opener)
+    opener.focus()
+    const onCancel = vi.fn()
+    const { unmount } = renderWithProviders(<ReasonDialog onConfirm={vi.fn()} onCancel={onCancel} returnFocusTo={() => target} />, { language: 'es' })
+    opener.remove()
+    unmount()
+    await waitFor(() => expect(target).toHaveFocus())
+    target.remove()
+  })
+
   it('holds the confirm button while the write runs', () => {
     renderDialog({ busy: true })
     expect(screen.getByRole('button', { name: 'Continuar' })).toBeDisabled()
@@ -160,6 +174,22 @@ describe('useReasonPrompt', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(write).not.toHaveBeenCalled()
+  })
+
+  it('gives focus back to the button that asked, on cancel and after the write (#134)', async () => {
+    const write = vi.fn(async () => undefined)
+    renderWithProviders(<Harness required write={write} />, { language: 'es' })
+    const opener = screen.getByRole('button', { name: 'escribir' })
+
+    await userEvent.click(opener)
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(opener).toHaveFocus())
+
+    await userEvent.click(opener)
+    await userEvent.type(screen.getByLabelText('Motivo'), 'revisión')
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await waitFor(() => expect(opener).toHaveFocus())
   })
 
   it('sends nothing when the prompt is closed by a click outside', async () => {
