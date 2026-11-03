@@ -36,10 +36,13 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/')
   })
 
-  it('shows a placeholder entry as disabled text, not as a link', () => {
+  it('shows a placeholder entry as a disabled link with no destination (#131)', () => {
     renderWithProviders(<AppShell />, { modules: [coreModule] })
-    expect(screen.getByText('Registros')).toHaveAttribute('title', 'Registros')
-    expect(screen.queryByRole('link', { name: 'Registros' })).not.toBeInTheDocument()
+    const records = screen.getByRole('link', { name: 'Registros' })
+    expect(records).toHaveAttribute('title', 'Registros')
+    expect(records).toHaveAttribute('aria-disabled', 'true')
+    expect(records).toHaveAttribute('data-slot', 'nav-item')
+    expect(records).not.toHaveAttribute('href')
   })
 
   it('leaves out a group nobody put anything in', () => {
