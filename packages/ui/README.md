@@ -215,7 +215,8 @@ The components carry `data-slot` attributes that a theme sheet can style:
 Core's `NavTree` carries `nav-tree`, `nav-tree-group`, `nav-tree-leaf` and `nav-tree-caret` (see `@wasichai/core`'s README).
 Core's `AppShell` carries `nav-item` on each link of its menu (Inicio too, with `aria-current="page"` on the current
 one, and an entry with no destination yet, with `aria-disabled="true"`), `nav-group` on each group's heading,
-`theme-select` on the theme `<select>` and `nav-close` on the narrow drawer's close button.
+`theme-select` on the theme `<select>` and `nav-close` on the narrow drawer's close button; with `appLogo`, its
+`LoginPage` and sidebar wrap the logo in `app-logo`.
 
 They never change `light` or `dark`: `theme.css` does not style them. A theme sheet targets them in its own scope
 (`@scope ([data-theme='<id>'])`). An unlayered rule wins over the Tailwind utilities whatever their specificity, so it

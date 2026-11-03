@@ -85,6 +85,11 @@ export function AppShell() {
         )}
       >
         <div className="flex items-start gap-2 px-5 py-5">
+          {config.appLogo != null && (
+            <span data-slot="app-logo" aria-hidden className="shrink-0">
+              {config.appLogo}
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <p className="text-lg font-semibold tracking-tight">{title.appName}</p>
             <p className="mt-0.5 text-[11px] leading-tight text-shell-muted">{title.appTagline}</p>
