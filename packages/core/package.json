@@ -30,7 +30,7 @@
         "@wasichai/ui": "*",
         "@hookform/resolvers": "5.9.1",
         "lucide-react": "^1.61.0",
-        "react-hook-form": "^7.89.0",
+        "react-hook-form": "^7.91.0",
         "zod": "^4.6.7"
     },
     "peerDependencies": {
