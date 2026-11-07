@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.0](https://github.com/wasichai/wasichai-ui/compare/v1.7.0...v1.8.0) (2026-11-07)
+
+
+### Features
+
+* **core:** appLogo in the shell's narrow menu bar ([#173](https://github.com/wasichai/wasichai-ui/issues/173)) ([3dc7867](https://github.com/wasichai/wasichai-ui/commit/3dc7867ef6f0d6dc37ea920409fd5111688eb375)), closes [#171](https://github.com/wasichai/wasichai-ui/issues/171)
+
+
+### Bug Fixes
+
+* **core:** the dashboard subtitle follows appTagline ([#174](https://github.com/wasichai/wasichai-ui/issues/174)) ([80dd0f0](https://github.com/wasichai/wasichai-ui/commit/80dd0f000364ea247620324eb7ee3e95a188aaba)), closes [#172](https://github.com/wasichai/wasichai-ui/issues/172)
+
 ## [1.7.0](https://github.com/wasichai/wasichai-ui/compare/v1.6.0...v1.7.0) (2026-11-03)
 
 
