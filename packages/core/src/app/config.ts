@@ -36,6 +36,7 @@ export interface WasichaiConfig {
   languages: string[]
   // shell and login header. unset falls back to the `app.name` / `app.tagline` strings. a function
   // gets the caller's organization, so one build can say «Catastro Ica» and «Catastro Perené»
+  // appTagline is the dashboard subtitle too: '' for none, unset keeps `dashboard.welcome` (#172)
   appName?: AppText
   appTagline?: AppText
   // drawn before appName in the sidebar, the drawer and the login page, and in the narrow bar (#171), aria-hidden: the name stays the accessible
