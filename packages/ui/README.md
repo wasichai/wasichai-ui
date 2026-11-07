@@ -221,7 +221,7 @@ Core's `PageHeader` carries `page-header` on its root. Core's `NavTree` carries 
 Core's `AppShell` carries `nav-item` on each link of its menu (Inicio too, with `aria-current="page"` on the current
 one, and an entry with no destination yet, with `aria-disabled="true"`), `nav-group` on each group's heading,
 `theme-select` on the theme `<select>` and `nav-close` on the narrow drawer's close button; with `appLogo`, its
-`LoginPage` and sidebar wrap the logo in `app-logo`.
+`LoginPage`, sidebar and narrow menu bar wrap the logo in `app-logo`.
 
 They never change `light` or `dark`: `theme.css` does not style them. A theme sheet targets them in its own scope
 (`@scope ([data-theme='<id>'])`). An unlayered rule wins over the Tailwind utilities whatever their specificity, so it

@@ -133,9 +133,28 @@ describe('AppShell', () => {
     const logo = within(aside).getByTestId('logo').closest('[data-slot="app-logo"]')!
     expect(logo).toHaveAttribute('aria-hidden', 'true')
     expect(logo.nextElementSibling).toHaveTextContent('Quipu')
-    // the narrow menu bar stays without a brand
-    expect(within(document.querySelector('header')!).queryByTestId('logo')).toBeNull()
     expect(document.title).toBe(before)
+  })
+
+  it('draws the app logo after the menu button in the narrow bar, hidden from screen readers (#171)', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule], config: { appName: 'Quipu', appLogo: <svg data-testid="logo" /> } })
+    const header = document.querySelector('header')!
+    const logo = within(header).getByTestId('logo').closest('[data-slot="app-logo"]')!
+    expect(logo).toHaveAttribute('aria-hidden', 'true')
+    expect(logo.previousElementSibling).toBe(screen.getByRole('button', { name: 'Abrir el menú' }))
+    // hidden with the bar from md up: the wide sidebar keeps its single logo
+    expect(header).toHaveClass('md:hidden')
+    expect(within(document.querySelector('aside')!).getAllByTestId('logo')).toHaveLength(1)
+    // one name by text, the drawer's
+    expect(header).not.toHaveTextContent('Quipu')
+    expect(screen.getAllByText('Quipu')).toHaveLength(1)
+  })
+
+  it('keeps the narrow bar to its menu button without appLogo (#171)', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule], config: { appName: 'Quipu' } })
+    const header = document.querySelector('header')!
+    expect(header.children).toHaveLength(1)
+    expect(header.firstElementChild).toBe(screen.getByRole('button', { name: 'Abrir el menú' }))
   })
 
   it('draws no logo wrapper without appLogo (#126)', () => {
