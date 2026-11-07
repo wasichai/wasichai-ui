@@ -41,7 +41,7 @@ createRoot(document.getElementById('root')!).render(
 | `apiBaseUrl` | `/api` | REST base url (trailing slash ignored) |
 | `storagePrefix` | `wasichai` | localStorage keys `<prefix>.token/.user/.lang/.theme`; give each app on an origin its own |
 | `languages` | `['es', 'en']` | first is default and fallback; the shell toggle cycles through them |
-| `appName`, `appTagline` | the `app.name`/`app.tagline` strings | shell and login header: a string, or a function of the caller's organization, see [Per-tenant name](#per-tenant-name) |
+| `appName`, `appTagline` | the `app.name`/`app.tagline` strings | shell and login header: a string, or a function of the caller's organization, see [Per-tenant name](#per-tenant-name). `appTagline` is also the dashboard's subtitle (`''`: none; unset: the `dashboard.welcome` string) |
 | `appLogo` | none | a `ReactNode` drawn before the name in the sidebar, the narrow drawer and the login page, and after the menu button in the narrow bar, inside `data-slot="app-logo"` and `aria-hidden` (the name stays the accessible text); sized by the app, core loads no image |
 | `syncDocumentTitle` | `true` | a function `appName` also sets `document.title`; `false` leaves the title to the app |
 | `basename` | – | router basename when not served from `/` |

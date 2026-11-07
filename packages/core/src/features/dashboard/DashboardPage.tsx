@@ -2,8 +2,9 @@ import { Boxes } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Card, CardBody } from '@wasichai/ui'
-import { useWasichaiLinks, useRegistry } from '../../app/context'
+import { useWasichaiConfig, useWasichaiLinks, useRegistry } from '../../app/context'
 import { objectPluralLabel } from '../../lib/localizedMetadata'
+import { useAppTitle } from '../../organization/currentOrganization'
 import { useObjects } from '../../queries'
 import { PageHeader } from '../../shell/PageHeader'
 
@@ -12,10 +13,14 @@ export function DashboardPage() {
   const links = useWasichaiLinks()
   const { dashboardCards, objectTileDetails } = useRegistry()
   const { data: objects = [], isLoading } = useObjects()
+  const config = useWasichaiConfig()
+  const { appTagline } = useAppTitle()
+  // the app's tagline when it gives one, '' for none; core's geospatial line only as the default (#172)
+  const subtitle = config.appTagline === undefined ? t('dashboard.welcome') : appTagline
 
   return (
     <>
-      <PageHeader title={t('dashboard.title')} subtitle={t('dashboard.welcome')} />
+      <PageHeader title={t('dashboard.title')} subtitle={subtitle} />
       <div className="grid gap-4 p-8 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardBody>
