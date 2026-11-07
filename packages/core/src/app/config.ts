@@ -38,7 +38,7 @@ export interface WasichaiConfig {
   // gets the caller's organization, so one build can say «Catastro Ica» and «Catastro Perené»
   appName?: AppText
   appTagline?: AppText
-  // drawn before appName in the sidebar, the drawer and the login page, aria-hidden: the name stays the accessible
+  // drawn before appName in the sidebar, the drawer and the login page, and in the narrow bar (#171), aria-hidden: the name stays the accessible
   // text. sized by whoever gives it; core loads no image (#126)
   appLogo?: ReactNode
   // a function appName also sets document.title. false leaves the title to the app. unset = true

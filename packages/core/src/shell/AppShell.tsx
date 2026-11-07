@@ -84,7 +84,13 @@ export function AppShell() {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        {/* no app name here: the drawer has it, and a second copy would break apps that find it by text */}
+        {/* no app name here: the drawer has it, and a second copy would break apps that find it by text. the logo is
+            aria-hidden, so it says which product without a second name (#171) */}
+        {config.appLogo != null && (
+          <span data-slot="app-logo" aria-hidden className="shrink-0">
+            {config.appLogo}
+          </span>
+        )}
       </header>
 
       {drawer.open ? (
