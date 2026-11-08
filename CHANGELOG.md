@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/wasichai/wasichai-ui/compare/v1.8.0...v1.8.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* **core:** «Inicio» is not current when home is a menu entry ([#177](https://github.com/wasichai/wasichai-ui/issues/177)) ([f48e67b](https://github.com/wasichai/wasichai-ui/commit/f48e67bbb3c2f3d079364e2f17170973f39b3c91)), closes [#176](https://github.com/wasichai/wasichai-ui/issues/176)
+
 ## [1.8.0](https://github.com/wasichai/wasichai-ui/compare/v1.7.0...v1.8.0) (2026-11-07)
 
 
