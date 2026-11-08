@@ -384,6 +384,24 @@ describe('AppShell shellHome (#138)', () => {
     expect(screen.getByRole('link', { name: 'Mis cursos' })).toHaveAttribute('aria-current', 'page')
   })
 
+  it('when home is a menu entry, only that entry is current, «Inicio» stays as a plain link (#176)', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, learning], route: '/learning/mine', config: { homeRoute: () => 'learning:mine' } })
+    const home = screen.getByRole('link', { name: 'Inicio' })
+    expect(home).toHaveAttribute('href', '/learning/mine')
+    expect(home).not.toHaveAttribute('aria-current')
+    expect(home).not.toHaveClass('bg-shell-ink/12')
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
+    expect(screen.getByRole('link', { name: 'Mis cursos' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('when home is its own page, «Inicio» is current there as before', () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, learning], route: '/' })
+    const home = screen.getByRole('link', { name: 'Inicio' })
+    expect(home).toHaveAttribute('aria-current', 'page')
+    expect(home).toHaveClass('bg-shell-ink/12')
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
+  })
+
   it('renames «Inicio» by its text per language or an i18n key', async () => {
     fetch = mockFetch([])
     renderWithProviders(<AppShell />, { modules: [coreModule, learning], config: { shellHome: { label: { es: 'Portada', en: 'Front page' } } } })

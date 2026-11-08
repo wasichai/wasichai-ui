@@ -1,7 +1,7 @@
 import { Home, LogOut, Menu, X } from 'lucide-react'
 import { Suspense, useEffect, useId, useRef, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet, useLocation } from 'react-router'
+import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { Button, cn } from '@wasichai/ui'
 import { ApiError } from '../api/client'
 import { useWasichaiConfig, useWasichaiLinks, useRegistry } from '../app/context'
@@ -55,6 +55,10 @@ export function AppShell() {
   const groups = offered
     .map((group) => ({ ...group, items: group.items.filter((item) => item.visible?.(permissions) ?? true) }))
     .filter((group) => group.items.length > 0)
+  // home leads to a menu entry: that entry is the current one, two aria-current="page" would say two pages (#176)
+  const homeTo = links.home()
+  const homeShadowed = groups.some((group) => group.items.some((item) => item.to === homeTo && !item.disabled))
+  const homeLabel = config.shellHome ? themeLabel(config.shellHome.label, t, i18n.language, languages[0]) : t('nav.home')
 
   return (
     // narrow: a column (menu bar over main), the aside fixed over both. md and up: the row it always was
@@ -137,10 +141,15 @@ export function AppShell() {
         </div>
 
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4" onClick={drawer.hideOnLink}>
-          {config.shellHome === false ? null : (
-            <NavLink to={links.home()} end data-slot="nav-item" className={linkClass}>
+          {config.shellHome === false ? null : homeShadowed ? (
+            <Link to={homeTo} data-slot="nav-item" className={linkClass({ isActive: false })}>
               <Home className="h-4 w-4" />
-              {config.shellHome ? themeLabel(config.shellHome.label, t, i18n.language, languages[0]) : t('nav.home')}
+              {homeLabel}
+            </Link>
+          ) : (
+            <NavLink to={homeTo} end data-slot="nav-item" className={linkClass}>
+              <Home className="h-4 w-4" />
+              {homeLabel}
             </NavLink>
           )}
 
