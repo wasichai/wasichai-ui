@@ -64,8 +64,10 @@ export function AppShell() {
     // narrow: a column (menu bar over main), the aside fixed over both. md and up: the row it always was
     <div className={cn('flex h-full flex-col', wide && 'md:flex-row')}>
       {/* the first tab stop: past the menu to the screen (#132). focus by hand, a #hash would be a router change */}
+      {/* open drawer: out too, it leads to the inert main and would let Tab out of the dialog (#179) */}
       <a
         href={`#${mainId}`}
+        inert={drawer.open}
         data-slot="skip-link"
         className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[60] focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-sm focus:text-ink focus:shadow-lg"
         onClick={(event) => {
@@ -238,6 +240,21 @@ export function AppShell() {
   )
 }
 
+// Tab past either end of the open drawer wraps to the other: a modal dialog keeps focus (#179). the rest of the
+// page is inert, this covers the way out to the browser chrome too
+function trapTab(event: KeyboardEvent, panel: HTMLElement | null) {
+  if (!panel) return
+  const stops = [...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), select:not([disabled])')]
+  if (stops.length === 0) return
+  const first = stops[0]
+  const last = stops[stops.length - 1]
+  const inside = panel.contains(document.activeElement)
+  if (event.shiftKey ? !inside || document.activeElement === first : !inside || document.activeElement === last) {
+    event.preventDefault()
+    ;(event.shiftKey ? last : first).focus()
+  }
+}
+
 // the narrow drawer: closed by default, closed again by Escape, the backdrop, a link, a route change or the
 // screen growing to md (only in full chrome: compact keeps the drawer at every width). focus goes into it on open
 // and back to the menu button on close
@@ -259,6 +276,7 @@ function useDrawer(pathname: string, closeWhenWide: boolean) {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpenOn(null)
+      else if (event.key === 'Tab') trapTab(event, panelRef.current)
     }
     document.addEventListener('keydown', onKey)
     // jsdom and old browsers have no matchMedia: then only the other ways close it

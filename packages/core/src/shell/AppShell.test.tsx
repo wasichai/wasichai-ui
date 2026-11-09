@@ -266,6 +266,29 @@ describe('AppShell on a narrow screen', () => {
     expect(drawer()).toHaveClass('invisible')
   })
 
+  it('keeps Tab inside the open drawer, both ways (#179)', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
+    await userEvent.click(menuButton())
+    const close = within(drawer()).getByRole('button', { name: 'Cerrar el menú' })
+    const signOut = within(drawer()).getByRole('button', { name: 'Cerrar sesión' })
+    expect(close).toHaveFocus()
+
+    await userEvent.tab({ shift: true })
+    expect(signOut).toHaveFocus()
+    await userEvent.tab()
+    expect(close).toHaveFocus()
+  })
+
+  it('takes the skip link out while the drawer is open, it would lead to the inert page (#179)', async () => {
+    renderWithProviders(<AppShell />, { modules: [coreModule] })
+    const skip = screen.getByRole('link', { name: 'Saltar al contenido' })
+    expect(skip).not.toHaveAttribute('inert')
+    await userEvent.click(menuButton())
+    expect(skip).toHaveAttribute('inert')
+    await userEvent.keyboard('{Escape}')
+    expect(skip).not.toHaveAttribute('inert')
+  })
+
   it('names the menu button in english too', () => {
     renderWithProviders(<AppShell />, { modules: [coreModule], language: 'en' })
     expect(screen.getByRole('button', { name: 'Open the menu' })).toHaveAttribute('aria-expanded', 'false')
