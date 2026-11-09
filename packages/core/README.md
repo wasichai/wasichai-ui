@@ -235,7 +235,8 @@ its own page (the dashboard), «Inicio» is the current one there. `shellHome: f
 as a theme label.
 
 Below `md` the sidebar is a drawer behind a menu button. Open, it is a modal dialog named «Menú» (`common.menu`):
-focus goes into it, Escape, the backdrop, its close button or a link close it, and focus returns to the button.
+focus goes into it and Tab wraps inside it (the page and the skip link are inert), Escape, the backdrop, its close
+button or a link close it, and focus returns to the button.
 
 `homeRoute` gets the server's permissions (`GET /auth/me/permissions`) and returns a registered route key, or
 `null` for the dashboard. `/` then redirects there (replacing the history entry) without mounting `DashboardPage`, and
