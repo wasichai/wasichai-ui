@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/wasichai/wasichai-ui/compare/v1.8.1...v1.8.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **core:** the open narrow drawer keeps Tab inside it ([#180](https://github.com/wasichai/wasichai-ui/issues/180)) ([716e151](https://github.com/wasichai/wasichai-ui/commit/716e151a74229886fc853526bd3b9838f4f98da4)), closes [#179](https://github.com/wasichai/wasichai-ui/issues/179)
+
 ## [1.8.1](https://github.com/wasichai/wasichai-ui/compare/v1.8.0...v1.8.1) (2026-11-08)
 
 
