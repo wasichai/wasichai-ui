@@ -4,6 +4,7 @@ import { useLocation } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
 import type { WasichaiModule } from '../registry/contract'
+import type { WasichaiConfig } from './config'
 import { WasichaiRoutes } from './WasichaiRoutes'
 import { coreModule } from './coreModule'
 
@@ -38,7 +39,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-function mount(route: string, signedIn = true) {
+function mount(route: string, signedIn = true, config?: Partial<WasichaiConfig>) {
   fetch = mockFetch([
     { path: '/objects', body: [] },
     {
@@ -60,6 +61,7 @@ function mount(route: string, signedIn = true) {
     {
       modules: [coreModule, plans],
       route,
+      config,
       user: signedIn ? undefined : null,
       permissions: signedIn ? undefined : null
     }
@@ -108,6 +110,41 @@ describe('WasichaiRoutes', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
     expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
     expect(fetch?.calls.find((call) => call.path === '/auth/login')?.body).toEqual({ email: 'ana@wasichai.test', password: 'secret' })
+  })
+
+  describe('a public start page', () => {
+    const Landing = () => <h1>portada abierta</h1>
+
+    it('draws it at the root for a signed-out visitor, without the shell or a sign in', async () => {
+      mount('/', false, { publicHome: Landing })
+      expect(await screen.findByRole('heading', { name: 'portada abierta' })).toBeInTheDocument()
+      expect(screen.getByLabelText('url')).toHaveTextContent(/^\/$/)
+      expect(screen.queryByText('Datos')).not.toBeInTheDocument()
+    })
+
+    it('still sends a signed-out visitor of a shell route to the login page', async () => {
+      mount('/plans', false, { publicHome: Landing })
+      expect(await screen.findByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    })
+
+    it('sends a signed-out visitor of an unknown path to it', async () => {
+      mount('/nowhere', false, { publicHome: Landing })
+      expect(await screen.findByRole('heading', { name: 'portada abierta' })).toBeInTheDocument()
+    })
+
+    it('keeps the signed-in start page inside the shell', async () => {
+      mount('/', true, { publicHome: Landing })
+      expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+      expect(screen.getByText('Datos')).toBeInTheDocument()
+      expect(screen.queryByText('portada abierta')).not.toBeInTheDocument()
+    })
+
+    it('leads to the signed-in start page after signing in', async () => {
+      mount('/login', false, { publicHome: Landing })
+      await signIn()
+      expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
+      expect(screen.queryByText('portada abierta')).not.toBeInTheDocument()
+    })
   })
 
   describe('returning to the page that asked for a sign in', () => {
