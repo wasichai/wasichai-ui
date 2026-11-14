@@ -31,7 +31,7 @@
     },
     "dependencies": {
         "lucide-react": "^1.72.0",
-        "@tiptap/core": "3.32.0",
+        "@tiptap/core": "3.33.1",
         "@tiptap/react": "3.32.2",
         "@tiptap/starter-kit": "3.33.1"
     },
