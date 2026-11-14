@@ -52,6 +52,10 @@ and say why (an `apiOnly` object still moves). Both hold their buttons until the
 show the server's refusal. `useApplyTransition(object, id)` takes `{ name, reason }` beside the bare name it took
 before; the reason travels in `X-Change-Reason`.
 
+On a read-only record screen (core's record pages with `readOnly`, which hand it to the page component and the
+action) the WORKFLOW panel shows the record's state without its transitions, and a TRANSITION button draws nothing.
+Neither asks for the transitions.
+
 With `@wasichai/pages` installed, a freshly dropped ACTION defaults to TRANSITION, as it did in the original
 app. Without this module, the page builder offers NAVIGATE only, and a stored TRANSITION button draws nothing.
 

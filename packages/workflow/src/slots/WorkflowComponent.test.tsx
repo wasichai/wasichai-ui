@@ -59,6 +59,25 @@ describe('WORKFLOW page component', () => {
     expect(await screen.findByRole('button', { name: /Aprobar/ })).toBeEnabled()
   })
 
+  // an app shows the record read only (#182): where it is, not where it can go
+  it('shows the record state and no way out on a read-only page', async () => {
+    fetch = mockFetch([
+      { path: '/objects/predio/workflow', body: workflow },
+      {
+        path: '/objects/predio/records/r1/transitions',
+        body: [{ name: 'aprobar', label: 'Aprobar', to: 'approved', toLabel: 'Aprobado', allowed: true, reason: null }]
+      },
+      { path: '/objects/predio/records/r1', body: { ...record, state: 'review' } }
+    ])
+    renderWithProviders(<PageRenderer page={page} definition={definition} record={record} onSubmit={vi.fn()} readOnly />, {
+      modules: [coreModule, workflowModule()]
+    })
+
+    expect(await screen.findByTestId('workflow-state')).toHaveTextContent('En revisión')
+    expect(screen.queryByRole('button', { name: /Aprobar/ })).toBeNull()
+    expect(fetch.calls.some((call) => call.path === '/objects/predio/records/r1/transitions')).toBe(false)
+  })
+
   it('previews a state pill in the page builder without fetching anything', () => {
     fetch = mockFetch([])
     const Preview = createRegistry([coreModule, workflowModule()]).pageComponents.WORKFLOW.preview!

@@ -16,18 +16,21 @@ import type { IssuedDocument } from './types'
 interface RecordDocumentsProps {
   objectName: string
   recordId: string
+  // a read-only record screen: the issued documents read, none is issued
+  readOnly?: boolean
 }
 
 // the record's issued documents: history, not a form field. archived ones stay listed -- issuing
 // again never deletes the one before it.
-export function RecordDocuments({ objectName, recordId }: RecordDocumentsProps) {
+export function RecordDocuments({ objectName, recordId, readOnly = false }: RecordDocumentsProps) {
   const { t } = useTranslation(['documents', 'common'])
   const links = useWasichaiLinks()
   const [typeName, setTypeName] = useState('')
   const [viewing, setViewing] = useState<IssuedDocument | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const types = useDocumentTypes(objectName)
+  // read only: no type to pick, nothing to ask the server
+  const types = useDocumentTypes(readOnly ? undefined : objectName)
   const documents = useRecordDocuments(objectName, recordId)
   const issue = useIssueDocument(objectName, recordId)
 
@@ -47,7 +50,7 @@ export function RecordDocuments({ objectName, recordId }: RecordDocumentsProps) 
     <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-2">
         <CardTitle>{t('documents.record.title')}</CardTitle>
-        {(types.data ?? []).length > 0 ? (
+        {!readOnly && (types.data ?? []).length > 0 ? (
           <div className="flex items-center gap-2">
             <Select value={typeName} onValueChange={setTypeName}>
               <SelectTrigger className="h-8 w-auto min-w-40 text-xs">

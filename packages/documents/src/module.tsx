@@ -17,8 +17,8 @@ function IssueEntryBody({ entry }: HistoryEntryProps) {
 }
 
 // core hands the loaded record; the panel fetches its documents by id
-function RecordDocumentsPanel({ objectName, record }: RecordPanelProps) {
-  return <RecordDocuments objectName={objectName} recordId={record.id} />
+function RecordDocumentsPanel({ objectName, record, readOnly }: RecordPanelProps) {
+  return <RecordDocuments objectName={objectName} recordId={record.id} readOnly={readOnly} />
 }
 
 export function documentsModule(options: DocumentsModuleOptions = {}): WasichaiModule {

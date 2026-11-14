@@ -96,4 +96,17 @@ describe('TRANSITION action', () => {
     expect(button).toHaveAccessibleName('Aprobar')
     expect(button).toBeDisabled()
   })
+
+  // an app shows the record read only (#182): no transition, and none asked for
+  it('draws nothing on a read-only screen', async () => {
+    fetch = mockFetch([predio(), { path: TRANSITIONS, body: open }])
+    renderWithProviders(<ActionButton component={action({ action: 'TRANSITION', transition: 'aprobar' })} objectName="predio" recordId="r1" readOnly />, {
+      modules: [coreModule, workflowModule()]
+    })
+
+    // the object's rules are still read: by then the transitions would have been asked for
+    await waitFor(() => expect(fetch?.calls.some((call) => call.path === '/metadata/objects/predio')).toBe(true))
+    expect(screen.queryByRole('button')).toBeNull()
+    expect(fetch.calls.some((call) => call.path === TRANSITIONS)).toBe(false)
+  })
 })

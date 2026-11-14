@@ -458,7 +458,8 @@ app chose it, not the object's rules. The server still decides what a request ma
 - Form: an edit shows the record without a save, with **Volver**; a create draws no form, only «Aquí los registros
   son de solo lectura.» and **Volver**.
 - Module slots on these screens (`recordListActions`, `recordPanels`, page components and page actions) get
-  `readOnly: true` in their props, so a module holds its own writes back. A `NAVIGATE` action only moves: it stays.
+  `readOnly: true` in their props, so a module holds its own writes back: `@wasichai/workflow` offers no transition and
+  `@wasichai/documents` no issue. A `NAVIGATE` action only moves: it stays.
 
 `PageRenderer`, `RelatedList` and `ActionButton` take the same `readOnly`, for an app that draws them itself.
 
