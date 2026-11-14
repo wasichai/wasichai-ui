@@ -1,12 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../api/client'
+import { ApiError, api } from '../api/client'
 import type { View, ViewPayload } from '../types/metadata'
 
-// never empty: with nothing stored the server answers with one generated default view
+// with nothing stored the server answers one generated default view. a 404 is a server without the
+// views module (ADR-028): no views, and nothing a retry would change
 export function useViews(objectName: string | undefined) {
   return useQuery({
     queryKey: ['views', objectName],
-    queryFn: () => api<View[]>(`/objects/${objectName}/views`),
+    queryFn: async () => {
+      try {
+        return await api<View[]>(`/objects/${objectName}/views`)
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return []
+        throw cause
+      }
+    },
     enabled: Boolean(objectName)
   })
 }

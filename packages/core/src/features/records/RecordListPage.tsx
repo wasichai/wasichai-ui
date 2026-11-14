@@ -16,12 +16,16 @@ import { reasonRefusal, useReasonPrompt } from '../../components/reason/useReaso
 import { WritePolicyNotice } from '../../components/reason/WritePolicyNotice'
 import { writePolicy } from '../../lib/writePolicy'
 
+// @wasichai/views registers under this id. it comes with the backend views module; without that one
+// /views is a 404 (ADR-028), so the list does not ask
+const VIEWS_MODULE_ID = 'views'
+
 export function RecordListPage() {
   const { object } = useParams()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const links = useWasichaiLinks()
-  const { recordListActions } = useRegistry()
+  const { modules, recordListActions } = useRegistry()
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('')
   const [descending, setDescending] = useState(false)
@@ -32,7 +36,7 @@ export function RecordListPage() {
   // the object's and its fields' texts in the user's language (#140)
   const loaded = useLocalizedDefinition(definition.data)
   const fields = loaded?.fields ?? []
-  const views = useViews(object)
+  const views = useViews(modules.some((module) => module.id === VIEWS_MODULE_ID) ? object : undefined)
   // no stored view (or no server yet): metadata still gives us a usable list
   const view = pickView(views.data ?? [], viewName) ?? fallbackView(object ?? '', fields)
 

@@ -24,7 +24,6 @@ describe('RecordListPage', () => {
         path: '/metadata/objects/predio',
         body: { id: 'o1', name: 'predio', label: 'Predio', pluralLabel: 'Predios', description: null, enabled: true, fields: [] }
       },
-      { path: '/objects/predio/views', status: 404, body: { title: 'Not Found' } },
       { path: '/objects/predio/records', body: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } }
     ])
     renderWithProviders(<RecordListPage />, { route: '/data/objects/predio/records', path: 'data/objects/:object/records', modules: [mapButton] })
@@ -41,7 +40,6 @@ describe('RecordListPage', () => {
         path: '/metadata/objects/predio',
         body: { id: 'o1', name: 'predio', label: 'Predio', pluralLabel: 'Predios', description: null, enabled: true, fields: [] }
       },
-      { path: '/objects/predio/views', status: 404, body: { title: 'Not Found' } },
       {
         path: '/objects/predio/records',
         body: { content: [{ id: 'r1', createdAt: null, updatedAt: null, attributes: {} }], page: 0, size: 20, totalElements: 1, totalPages: 1 }
@@ -63,7 +61,6 @@ describe('RecordListPage', () => {
     fetch = mockFetch([
       { path: '/metadata/objects/predio', body: definition('predio') },
       { path: '/metadata/objects/titular', body: definition('titular') },
-      { path: /^\/objects\/\w+\/views/, status: 404, body: { title: 'Not Found' } },
       { path: '/objects/predio/records', body: one },
       { path: '/objects/titular/records', body: one },
       { method: 'DELETE', path: '/objects/predio/records/r1', status: 409, body: { title: 'Conflict', detail: 'Refused' } }
@@ -83,6 +80,56 @@ describe('RecordListPage', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
+  // a server without the views module answers /views with a 404: an app without @wasichai/views does not ask (#183)
+  describe('stored views', () => {
+    const predio = { id: 'o1', name: 'predio', label: 'Predio', pluralLabel: 'Predios', description: null, enabled: true, fields: [] }
+    const none = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }
+    const views = { id: 'views' }
+    const stored = {
+      id: 'v1',
+      name: 'activos',
+      label: 'Activos',
+      objectName: 'predio',
+      isDefault: true,
+      generated: false,
+      definition: { columns: [], filters: { estado: 'ACTIVO' }, sort: null, pageSize: 10 }
+    }
+    const mountList = (answers: MockRoute[], modules: WasichaiModule[] = []) => {
+      fetch = mockFetch([...answers, { path: '/metadata/objects/predio', body: predio }, { path: '/objects/predio/records', body: none }])
+      return renderWithProviders(<RecordListPage />, { route: '/data/objects/predio/records', path: 'data/objects/:object/records', modules })
+    }
+    // a call's path keeps its query string
+    const asked = (path: string) => fetch?.calls.some((call) => call.path.split('?')[0] === path) ?? false
+
+    it('asks for no views without the views module', async () => {
+      mountList([])
+
+      expect(await screen.findByRole('heading', { name: 'Predios' })).toBeInTheDocument()
+      await waitFor(() => expect(asked('/objects/predio/records')).toBe(true))
+      expect(asked('/objects/predio/views')).toBe(false)
+      expect(screen.queryByRole('combobox', { name: 'Vista' })).toBeNull()
+    })
+
+    it('lists on the stored view once the views module is registered', async () => {
+      mountList([{ path: '/objects/predio/views', body: [stored] }], [views])
+
+      expect(await screen.findByRole('combobox', { name: 'Vista' })).toHaveTextContent('Activos')
+      // the view's filter reaches the records query
+      await waitFor(() =>
+        expect(fetch?.calls.some((call) => call.path.startsWith('/objects/predio/records?') && call.path.includes('estado=ACTIVO'))).toBe(true)
+      )
+    })
+
+    it('reads a 404 as no views, not as a failure to retry', async () => {
+      const { queryClient } = mountList([{ path: '/objects/predio/views', status: 404, body: { title: 'Not Found' } }], [views])
+
+      await waitFor(() => expect(queryClient.getQueryState(['views', 'predio'])?.status).toBe('success'))
+      expect(queryClient.getQueryData(['views', 'predio'])).toEqual([])
+      expect(screen.queryByRole('combobox', { name: 'Vista' })).toBeNull()
+      expect(screen.getByRole('link', { name: /Nuevo registro/ })).toBeInTheDocument()
+    })
+  })
+
   describe('write rules', () => {
     const predio = { id: 'o1', name: 'predio', label: 'Predio', pluralLabel: 'Predios', description: null, enabled: true, fields: [] }
     const one = { content: [{ id: 'r1', createdAt: null, updatedAt: null, attributes: {} }], page: 0, size: 20, totalElements: 1, totalPages: 1 }
@@ -90,7 +137,6 @@ describe('RecordListPage', () => {
       fetch = mockFetch([
         ...answers,
         { path: '/metadata/objects/predio', body: { ...predio, ...rules } },
-        { path: '/objects/predio/views', status: 404, body: { title: 'Not Found' } },
         { path: '/objects/predio/records', body: one },
         { method: 'DELETE', path: '/objects/predio/records/r1', status: 204 }
       ])

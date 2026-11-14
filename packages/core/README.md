@@ -298,6 +298,11 @@ Core only needs the core backend. Without the pages module the record detail pag
 from metadata (form, related lists, history); without the views module lists use every visible
 field.
 
+The record list asks for stored views (`GET /objects/{object}/views`) only when `@wasichai/views` is registered
+(`viewsModule()`), so an app without it sends no request that can only answer `404`. With it registered and no views
+module on the server, `useViews` reads the `404` as no views, without a retry. Since 2.0.0 an app whose server has the
+views module registers `viewsModule()` to keep the saved views in its lists.
+
 ## Writing a module
 
 A module is a plain object; every slot is optional.
