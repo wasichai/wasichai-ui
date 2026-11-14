@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/gis",
-    "version": "1.8.2",
+    "version": "1.9.0",
     "description": "Wasichai GIS module: map and layers pages, the GEOMETRY field and the MAP page component",
     "type": "module",
     "files": [
@@ -28,7 +28,7 @@
     },
     "dependencies": {
         "lucide-react": "^1.72.0",
-        "maplibre-gl": "6.16.0",
+        "maplibre-gl": "6.17.0",
         "terra-draw": "1.39.0",
         "terra-draw-maplibre-gl-adapter": "1.5.0"
     },
@@ -47,7 +47,7 @@
         "@testing-library/dom": "10.4.2",
         "@testing-library/jest-dom": "7.0.1",
         "@testing-library/react": "16.3.3",
-        "@testing-library/user-event": "14.6.7",
+        "@testing-library/user-event": "14.6.9",
         "@types/node": "26.6.6",
         "@types/react": "19.3.0",
         "@types/react-dom": "19.3.0",

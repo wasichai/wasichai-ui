@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/testing",
-    "version": "1.8.2",
+    "version": "1.9.0",
     "description": "Test helpers for wasichai apps and modules: renderWithProviders and fetch mocks",
     "type": "module",
     "files": [
@@ -35,7 +35,7 @@
         "react-router": "^8.4.0"
     },
     "devDependencies": {
-        "@hookform/resolvers": "7.0.2",
+        "@hookform/resolvers": "7.0.5",
         "@tanstack/react-query": "5.107.1",
         "@testing-library/dom": "10.4.2",
         "@testing-library/jest-dom": "7.0.1",

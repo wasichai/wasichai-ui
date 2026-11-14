@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/documents",
-    "version": "1.8.2",
+    "version": "1.9.0",
     "description": "Wasichai documents module: document types, template editor, issued documents and print page",
     "type": "module",
     "files": [
@@ -31,7 +31,7 @@
     },
     "dependencies": {
         "lucide-react": "^1.72.0",
-        "@tiptap/core": "3.32.0",
+        "@tiptap/core": "3.33.1",
         "@tiptap/react": "3.32.2",
         "@tiptap/starter-kit": "3.33.1"
     },
@@ -50,7 +50,7 @@
         "@testing-library/dom": "10.4.2",
         "@testing-library/jest-dom": "7.0.1",
         "@testing-library/react": "16.3.3",
-        "@testing-library/user-event": "14.6.7",
+        "@testing-library/user-event": "14.6.9",
         "@types/node": "26.6.6",
         "@types/react": "19.3.0",
         "@types/react-dom": "19.3.0",

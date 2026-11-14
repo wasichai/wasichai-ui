@@ -52,6 +52,7 @@ createRoot(document.getElementById('root')!).render(
 | `shellNav` | – (every group) | `(groups, { pathname, permissions }) => groups`: the sidebar groups `AppShell` offers, see [Menu and start page](#menu-and-start-page) |
 | `shellChrome` | – (`'full'`) | `({ pathname, search }) => 'full' \| 'compact'`: `compact` hides the sidebar at every width, the menu button opens the drawer, see [Menu and start page](#menu-and-start-page) |
 | `homeRoute` | – (the dashboard) | `(permissions, { permissionsFailed }) => routeKey \| null`: where `/`, «Inicio» and `links.home()` lead, see [Menu and start page](#menu-and-start-page) |
+| `publicHome` | – (`/` asks for a sign in) | a component `/` draws for a signed-out visitor, without the shell: a landing page, see [Menu and start page](#menu-and-start-page) |
 
 Config and modules are read once, at mount. One `WasichaiApp` per page: plain `api()` calls use the
 client of the mounted app.
@@ -250,6 +251,11 @@ picks: `(permissions) => (permissions.admin ? null : 'learning:myCourses')` send
 answers, `/` stays on the loading text: core sets no timeout of its own, the browser's or a proxy's ends it, and then
 it counts as failed. A key that is not registered, or a route that needs parameters, fails on `/` with the key in the
 message.
+
+`publicHome` gives `/` to a signed-out visitor: the component is drawn there without the shell and without asking for a
+sign in, and unknown paths lead there too. Every other shell or bare route still sends to the login page, and a
+signed-in visitor of `/` gets `homeRoute` (or the dashboard) as before. The component draws its own header and its own
+way to sign in (`links.login()`); it reads `useAuth()`, `useAppTitle()` and `useWasichaiLinks()` like any public route.
 
 `shellChrome({ pathname, search })` returns `'full'` (the default) or `'compact'`, during render, on every url change,
 `search` included, without mounting the page again. `compact` is the narrow shell at every width: no sidebar, `main`
