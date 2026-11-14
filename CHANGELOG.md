@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/wasichai/wasichai-ui/compare/v1.9.0...v2.0.0) (2026-11-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** the record list no longer reads stored views unless the app registers the views frontend module. An app whose server runs the wasichai-views backend module must add viewsModule() from @wasichai/views to the modules it gives WasichaiApp (or to the registry it gives WasichaiProviders) to keep offering its saved views in the record lists.
+
+### Features
+
+* **core:** record screens by props with a read-only mode, stored views only with the views module ([#200](https://github.com/wasichai/wasichai-ui/issues/200)) ([ea76018](https://github.com/wasichai/wasichai-ui/commit/ea76018d3ea1e70d43ba1a2b92d3980b8d322acf))
+
 ## [1.9.0](https://github.com/wasichai/wasichai-ui/compare/v1.8.2...v1.9.0) (2026-11-14)
 
 
