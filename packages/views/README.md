@@ -3,8 +3,8 @@
 Module guide: [docs/modules/views.md](https://github.com/wasichai/wasichai/blob/main/docs/modules/views.md).
 
 The list view builder: pick an object, then save list configurations for it (columns, filters, sort and page
-size). Core's record list already reads stored views and falls back to a generated one, so this package only
-adds the screen that edits them.
+size). Core's record list reads the stored views while this package is registered, and falls back to a generated
+one; this package adds the screen that edits them.
 
 ## Install
 
@@ -38,6 +38,7 @@ Tailwind: the app's stylesheet already has `@import "@wasichai/ui/theme.css"` an
 | route `views:builder` | `/builder/views` → `ViewBuilderPage` (lazy) |
 | nav | "Vistas" / "Views" in core's builder group, order 40 |
 | i18n | namespace `views` (es, en) |
+| stored views in core's record list | the list asks `GET /objects/{object}/views` only with this module registered (2.0.0) |
 
 ## Options
 
@@ -52,4 +53,7 @@ mounts the API elsewhere changes the prefix, not these paths.
 
 It needs the wasichai views backend module (`GET/POST /objects/{object}/views`, `PUT/DELETE
 /objects/{object}/views/{name}`). Without it, the builder has nothing to edit, and core's record list keeps
-working on its generated view. An absent backend module must answer 404.
+working on its generated view. An absent backend module must answer 404, which core reads as no views.
+
+The other way round, a server with the views module and an app without this package: core's record list does not
+ask for views and lists on its generated view. Register `viewsModule()` to offer the stored ones.

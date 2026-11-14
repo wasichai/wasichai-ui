@@ -75,6 +75,41 @@ describe('RelatedList links', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Sin permiso para editar titular')
   })
 
+  // an app shows the record read only (#182): the list reads, nothing else
+  it('read only: lists the linked records with no link, unlink or way to edit them', async () => {
+    const nombre = {
+      id: 'f1',
+      name: 'nombre',
+      label: 'Nombre',
+      type: 'TEXT',
+      required: false,
+      unique: false,
+      defaultValue: null,
+      description: null,
+      position: 0,
+      enumOptions: null,
+      relationTarget: null,
+      visible: true,
+      editable: true
+    }
+    const linked = { ...page([]), content: [{ id: 't1', createdAt: null, updatedAt: null, attributes: { nombre: 'Ana' } }], totalElements: 1 }
+    fetch = mockFetch([
+      { path: '/metadata/objects/predio', body: predio },
+      { path: '/metadata/objects/titular', body: { ...titular, fields: [nombre] } },
+      { path: '/objects/predio/records/r1/related/predio_titular', body: linked },
+      { path: '/objects/titular/records', body: page(['t2']) }
+    ])
+    renderWithProviders(<RelatedList objectName="predio" recordId="r1" side={side} readOnly />)
+
+    expect(await screen.findByText('Ana')).toBeInTheDocument()
+    expect(screen.queryByRole('combobox')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Vincular' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Desvincular' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Editar' })).toBeNull()
+    // no picker: its candidates are never asked for
+    expect(fetch.calls.some((call) => call.path.startsWith('/objects/titular/records'))).toBe(false)
+  })
+
   describe('write rules', () => {
     // either end's rules hold for a link
     const mountLinks = (rules: { predio?: Record<string, boolean>; titular?: Record<string, boolean> }, linked: string[] = [], answers: MockRoute[] = []) => {

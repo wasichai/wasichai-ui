@@ -4,10 +4,11 @@ import { Button } from '@wasichai/ui'
 import { useApplyTransition, useAvailableTransitions } from '../api'
 
 // the one transition an admin placed as a button. WORKFLOW draws every transition at once; this
-// draws the one it was told to, and says why when that one is shut.
-export function TransitionAction({ component, objectName, recordId }: PageActionProps) {
+// draws the one it was told to, and says why when that one is shut. a read-only screen draws none.
+export function TransitionAction({ component, objectName, recordId, readOnly = false }: PageActionProps) {
   const { t } = useTranslation(['workflow', 'common'])
-  const transitions = useAvailableTransitions(objectName, recordId)
+  // read only: no button, nothing to ask the server
+  const transitions = useAvailableTransitions(objectName, readOnly ? '' : recordId)
   const apply = useApplyTransition(objectName, recordId)
   const policy = useWritePolicy(objectName)
   const prompt = useReasonPrompt()
@@ -17,6 +18,8 @@ export function TransitionAction({ component, objectName, recordId }: PageAction
   const appendOnly = policy.loaded && !policy.canTransition
   // a refused reason is said in the open dialog, once
   const refused = prompt.dialog && reasonRefusal(apply.error) !== undefined ? null : apply.error
+
+  if (readOnly) return null
 
   return (
     <span className="inline-flex flex-col items-start gap-1">

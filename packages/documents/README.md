@@ -50,6 +50,9 @@ plain, unlayered CSS on purpose: it must win over Tailwind's preflight without `
 Links to the print page are built with `useWasichaiLinks().to('documents:print', { id })`, so they
 follow whatever base path you pick.
 
+On a read-only record screen (core's record pages with `readOnly`, which hand it to the record panels) the panel
+lists and opens the issued documents but offers no issue, and does not ask for the document types.
+
 ## Options
 
 | Option | Default | Meaning |

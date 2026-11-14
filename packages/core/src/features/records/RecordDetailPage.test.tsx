@@ -4,7 +4,9 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock, type MockRoute } from '@wasichai/testing'
 import type { WasichaiModule } from '../../registry/contract'
 import type { ObjectDefinition, Page } from '../../types/metadata'
+import { Route, Routes } from 'react-router'
 import { RecordDetailPage } from './RecordDetailPage'
+import type { RecordRoutes } from './recordScreen'
 
 const predio: ObjectDefinition = {
   id: 'o1',
@@ -166,5 +168,56 @@ describe('RecordDetailPage', () => {
     expect(await screen.findByText('Los registros de este objeto solo se crean: no se editan ni se eliminan.')).toBeInTheDocument()
     expect(screen.getByLabelText('Código')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Guardar' })).toBeNull()
+  })
+
+  // an app shows one of its objects inside its own module, with core's detail (#182)
+  describe('by props', () => {
+    const Screen = () => null
+    const lms: WasichaiModule = {
+      id: 'lms',
+      basePath: 'lms',
+      routes: [
+        { id: 'lessons', path: 'lessons', component: Screen },
+        { id: 'lesson', path: 'lessons/:id', component: Screen }
+      ]
+    }
+    const routes: RecordRoutes = { records: 'lms:lessons', record: 'lms:lesson' }
+
+    it('draws the record of the route for the object it is given, and goes back to the app list', async () => {
+      fetch = mockFetch(base)
+      renderWithProviders(
+        <Routes>
+          <Route path="lms/lessons/:id" element={<RecordDetailPage objectName="predio" routes={routes} />} />
+          <Route path="lms/lessons" element={<p>lista de lecciones</p>} />
+        </Routes>,
+        { route: '/lms/lessons/r1', modules: [lms] }
+      )
+
+      expect(await screen.findByLabelText('Código')).toHaveValue('P-1')
+      await userEvent.click(screen.getByRole('button', { name: 'Volver' }))
+      expect(await screen.findByText('lista de lecciones')).toBeInTheDocument()
+    })
+
+    it('read only: every form reads along, related lists only read, panels are told, no notice', async () => {
+      const told: WasichaiModule = { id: 'told', recordPanels: [({ readOnly }) => <p>{readOnly ? 'panel sin escritura' : 'panel'}</p>] }
+      const titulares = { relationship: 'predio_titular', label: 'Titulares', type: 'MANY_TO_MANY', objectName: 'titular', objectLabel: 'Titular', many: true }
+      const none = { content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 }
+      fetch = mockFetch([
+        { path: '/metadata/objects/predio', body: { ...predio, appendOnly: true } },
+        { path: '/objects/predio/relationships', body: [titulares] },
+        { path: '/metadata/objects/titular', body: { ...predio, id: 'o2', name: 'titular', label: 'Titular', pluralLabel: 'Titulares' } },
+        { path: '/objects/predio/records/r1/related/predio_titular', body: none },
+        ...base
+      ])
+      renderWithProviders(<RecordDetailPage objectName="predio" recordId="r1" readOnly />, { modules: [told] })
+
+      expect(await screen.findByText('panel sin escritura')).toBeInTheDocument()
+      expect(await screen.findByRole('heading', { name: 'Titulares' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Código')).toBeDisabled()
+      expect(screen.queryByRole('button', { name: 'Guardar' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Vincular' })).toBeNull()
+      // the app chose read only: the object's rules are not why nothing is offered
+      expect(screen.queryByText('Los registros de este objeto solo se crean: no se editan ni se eliminan.')).toBeNull()
+    })
   })
 })

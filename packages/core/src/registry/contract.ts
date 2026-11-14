@@ -76,6 +76,8 @@ export interface PageComponentProps {
   component: PageComponent
   definition: ObjectDefinition
   record: RecordItem
+  // true on a read-only record screen (the record pages' readOnly): offer no write
+  readOnly?: boolean
 }
 
 export interface PageComponentSettingsProps {
@@ -108,6 +110,8 @@ export interface PageActionProps {
   component: PageComponent
   objectName: string
   recordId: string
+  // true on a read-only record screen (the record pages' readOnly): offer no write
+  readOnly?: boolean
 }
 
 // an ACTION kind a module adds (workflow: TRANSITION), on top of NAVIGATE. same shape a page
@@ -124,11 +128,15 @@ export interface RecordPanelProps {
   objectName: string
   definition: ObjectDefinition
   record: RecordItem
+  // true on a read-only record screen (the record pages' readOnly): offer no write
+  readOnly?: boolean
 }
 
 export interface RecordListActionProps {
   objectName: string
   definition: ObjectDefinition
+  // true on a read-only record screen (the record pages' readOnly): offer no write
+  readOnly?: boolean
 }
 
 export interface HistoryEntryProps {

@@ -10,18 +10,27 @@ import { DataTable } from '../../components/data-table/DataTable'
 import { effectiveSort, fallbackView, pickView, viewColumns, viewQueryParams } from './viewColumns'
 import { useLocalizedDefinition } from '../../lib/localizedMetadata'
 import { useDeleteRecord, useObjectDefinition, useRecords, useViews } from '../../queries'
-import { useWasichaiLinks, useRegistry } from '../../app/context'
+import { useRegistry } from '../../app/context'
 import { describeError } from '../../api/client'
 import { reasonRefusal, useReasonPrompt } from '../../components/reason/useReasonPrompt'
 import { WritePolicyNotice } from '../../components/reason/WritePolicyNotice'
 import { writePolicy } from '../../lib/writePolicy'
+import { useRecordLinks, type RecordScreenProps } from './recordScreen'
 
-export function RecordListPage() {
-  const { object } = useParams()
+// @wasichai/views registers under this id. it comes with the backend views module; without that one
+// /views is a 404 (ADR-028), so the list does not ask
+const VIEWS_MODULE_ID = 'views'
+
+export type RecordListPageProps = RecordScreenProps
+
+// no props: the object of the route, core's links, writes as the object's rules allow
+export function RecordListPage({ objectName, routes, readOnly = false }: RecordListPageProps) {
+  const params = useParams()
+  const object = objectName ?? params.object
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const links = useWasichaiLinks()
-  const { recordListActions } = useRegistry()
+  const links = useRecordLinks(routes)
+  const { modules, recordListActions } = useRegistry()
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('')
   const [descending, setDescending] = useState(false)
@@ -32,7 +41,7 @@ export function RecordListPage() {
   // the object's and its fields' texts in the user's language (#140)
   const loaded = useLocalizedDefinition(definition.data)
   const fields = loaded?.fields ?? []
-  const views = useViews(object)
+  const views = useViews(modules.some((module) => module.id === VIEWS_MODULE_ID) ? object : undefined)
   // no stored view (or no server yet): metadata still gives us a usable list
   const view = pickView(views.data ?? [], viewName) ?? fallbackView(object ?? '', fields)
 
@@ -49,6 +58,7 @@ export function RecordListPage() {
 
   const columns = viewColumns(view.definition, fields)
   const active = effectiveSort(view.definition, query)
+  const newRecord = !readOnly && policy.canCreate ? links.newRecord(object ?? '') : null
 
   return (
     <>
@@ -82,10 +92,12 @@ export function RecordListPage() {
                 </Select>
               </div>
             ) : null}
-            {loaded && object ? recordListActions.map((ListAction, index) => <ListAction key={index} objectName={object} definition={loaded} />) : null}
-            {policy.canCreate ? (
+            {loaded && object
+              ? recordListActions.map((ListAction, index) => <ListAction key={index} objectName={object} definition={loaded} readOnly={readOnly} />)
+              : null}
+            {newRecord ? (
               <Button asChild>
-                <Link to={links.newRecord(object ?? '')}>
+                <Link to={newRecord}>
                   <Plus className="h-4 w-4" />
                   {t('records.new')}
                 </Link>
@@ -96,8 +108,8 @@ export function RecordListPage() {
       />
 
       <div className="space-y-4 p-8">
-        {/* append-only or api-only: says why a button the server would refuse is missing */}
-        <WritePolicyNotice policy={policy} />
+        {/* append-only or api-only: says why a button the server would refuse is missing. read only, none is offered */}
+        {readOnly ? null : <WritePolicyNotice policy={policy} />}
         <Card>
           {/* a refused delete (an append-only record points at it, no permission) says why */}
           {refused ? (
@@ -126,7 +138,7 @@ export function RecordListPage() {
             onPageChange={setPage}
             onOpen={(record) => void navigate(links.record(object ?? '', record.id))}
             onDelete={
-              policy.canDelete
+              !readOnly && policy.canDelete
                 ? (record) => {
                     // the reason dialog is the confirmation: no second question
                     if (policy.requiresReason)

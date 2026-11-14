@@ -16,14 +16,16 @@ import { WritePolicyNotice } from '../reason/WritePolicyNotice'
 import { useLinkRelated, useObjectDefinition, useRecords, useRelatedRecords } from '../../queries'
 import type { RelatedSide } from '../../types/metadata'
 
-interface RelatedListProps {
+export interface RelatedListProps {
   objectName: string
   recordId: string
   side: RelatedSide
+  // a read-only record screen: no link, no unlink, no way to the other record's edit
+  readOnly?: boolean
 }
 
 // one related list per relationship the object takes part in, columns from the other object.
-export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
+export function RelatedList({ objectName, recordId, side, readOnly = false }: RelatedListProps) {
   const { t, i18n } = useTranslation()
   const links = useWasichaiLinks()
   const { fieldRenderers } = useRegistry()
@@ -37,7 +39,7 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
   // a link writes both ends: either one's rules hold
   const policy = useWritePolicy(objectName, side.objectName)
   const prompt = useReasonPrompt()
-  const linkable = manyToMany && policy.canLink
+  const linkable = !readOnly && manyToMany && policy.canLink
   // the last link or unlink the server refused says why; the next attempt clears it.
   // a refused reason is said in the open dialog, once
   const lastError = link.error ?? unlink.error
@@ -70,7 +72,7 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
         ) : null}
       </CardHeader>
 
-      {manyToMany ? <WritePolicyNotice policy={policy} scope="link" className="border-b border-border px-5 py-3" /> : null}
+      {manyToMany && !readOnly ? <WritePolicyNotice policy={policy} scope="link" className="border-b border-border px-5 py-3" /> : null}
 
       {refused ? (
         <Alert
@@ -96,7 +98,7 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
               {columns.map((field) => (
                 <Th key={field.id}>{field.label}</Th>
               ))}
-              <Th className="w-px" />
+              {readOnly ? null : <Th className="w-px" />}
             </tr>
           </thead>
           <tbody>
@@ -107,27 +109,29 @@ export function RelatedList({ objectName, recordId, side }: RelatedListProps) {
                     <FieldCell field={field} record={record} fieldRenderers={fieldRenderers} />
                   </Td>
                 ))}
-                <Td>
-                  <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={links.record(side.objectName, record.id)}>{t('common.edit')}</Link>
-                    </Button>
-                    {linkable ? (
-                      <UnlinkButton
-                        disabled={unlink.isPending || !policy.loaded}
-                        onUnlink={() =>
-                          prompt.withReason(
-                            (reason) => {
-                              link.reset()
-                              return unlink.mutateAsync({ otherId: record.id, reason })
-                            },
-                            { required: policy.requiresReason, title: t('relationships.unlink'), confirmLabel: t('relationships.unlink') }
-                          )
-                        }
-                      />
-                    ) : null}
-                  </div>
-                </Td>
+                {readOnly ? null : (
+                  <Td>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link to={links.record(side.objectName, record.id)}>{t('common.edit')}</Link>
+                      </Button>
+                      {linkable ? (
+                        <UnlinkButton
+                          disabled={unlink.isPending || !policy.loaded}
+                          onUnlink={() =>
+                            prompt.withReason(
+                              (reason) => {
+                                link.reset()
+                                return unlink.mutateAsync({ otherId: record.id, reason })
+                              },
+                              { required: policy.requiresReason, title: t('relationships.unlink'), confirmLabel: t('relationships.unlink') }
+                            )
+                          }
+                        />
+                      ) : null}
+                    </div>
+                  </Td>
+                )}
               </tr>
             ))}
           </tbody>
