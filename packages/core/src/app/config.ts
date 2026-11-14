@@ -1,5 +1,5 @@
 import { isTimeZone } from '../lib/timeZone'
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import type { CurrentOrganization } from '../organization/currentOrganization'
 import type { ResolvedNavGroup } from '../registry/createRegistry'
 import type { CallerPermissions } from '../types/auth'
@@ -62,6 +62,9 @@ export interface WasichaiConfig {
   shellNav?: ShellNav
   // the app picks the start page. unset = the dashboard. a courtesy: the route still answers to the server
   homeRoute?: HomeRoute
+  // what '/' draws for a signed-out visitor, without the shell: a landing page. every other route still asks for a
+  // sign in, and a signed-in visitor still gets homeRoute. unset = '/' sends to the login page
+  publicHome?: ComponentType
   // per url, during render: 'compact' is the narrow shell at every width (no sidebar, the menu button opens the
   // drawer), e.g. a lesson read without distractions (#123). unset = 'full'
   shellChrome?: ShellChrome
