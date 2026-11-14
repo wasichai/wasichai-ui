@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/testing",
-    "version": "1.8.2",
+    "version": "1.9.0",
     "description": "Test helpers for wasichai apps and modules: renderWithProviders and fetch mocks",
     "type": "module",
     "files": [

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/wasichai/wasichai-ui/compare/v1.8.2...v1.9.0) (2026-11-14)
+
+
+### Features
+
+* **core:** publicHome, a start page for signed-out visitors ([#185](https://github.com/wasichai/wasichai-ui/issues/185)) ([3e7f8ae](https://github.com/wasichai/wasichai-ui/commit/3e7f8aec4d619f2b239f52c6fdf10bca006ee1cd)), closes [#184](https://github.com/wasichai/wasichai-ui/issues/184)
+
 ## [1.8.2](https://github.com/wasichai/wasichai-ui/compare/v1.8.1...v1.8.2) (2026-11-09)
 
 
