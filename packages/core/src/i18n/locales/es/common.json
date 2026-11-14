@@ -185,6 +185,8 @@
     },
     "records": {
         "new": "Nuevo registro",
+        "edit": "Editar registro",
+        "readOnly": "Aquí los registros son de solo lectura.",
         "detail": "Detalle",
         "typeUnavailable": "El tipo de este campo no está disponible. Instala el módulo que lo provee.",
         "timeZone": "Hora de {{zone}}"

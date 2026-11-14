@@ -182,6 +182,8 @@
     },
     "records": {
         "new": "New record",
+        "edit": "Edit record",
+        "readOnly": "Records are read-only here.",
         "detail": "Detail",
         "typeUnavailable": "This field's type is not available. Install the module that provides it.",
         "timeZone": "Time in {{zone}}"

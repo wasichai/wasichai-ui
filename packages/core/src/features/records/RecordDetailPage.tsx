@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@wasichai/ui'
 import { ApiError, formError, type FieldViolation } from '../../api/client'
-import { useWasichaiLinks, useRegistry } from '../../app/context'
+import { useRegistry } from '../../app/context'
 import { fallbackPage } from '../../components/page-renderer/fallbackPage'
 import { PageRenderer } from '../../components/page-renderer/PageRenderer'
 import { ErrorState } from '../../components/query-state/QueryState'
@@ -12,14 +12,22 @@ import { writePolicy } from '../../lib/writePolicy'
 import { useLocalizedDefinition } from '../../lib/localizedMetadata'
 import { useObjectDefinition, useObjectRelationships, useRecord, useResolvedPage, useSaveRecord } from '../../queries'
 import { PageHeader } from '../../shell/PageHeader'
+import { useRecordLinks, type RecordScreenProps } from './recordScreen'
+
+export interface RecordDetailPageProps extends RecordScreenProps {
+  // absent = the route's :id
+  recordId?: string
+}
 
 // the detail page is metadata too: the server resolves which components go where, this only
 // supplies the record and the save wiring. modules add panels under it.
-export function RecordDetailPage() {
-  const { object, id } = useParams()
+export function RecordDetailPage({ objectName, recordId, routes, readOnly = false }: RecordDetailPageProps) {
+  const params = useParams()
+  const object = objectName ?? params.object
+  const id = recordId ?? params.id
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const links = useWasichaiLinks()
+  const links = useRecordLinks(routes)
   const { recordPanels } = useRegistry()
   const definition = useObjectDefinition(object)
   const record = useRecord(object, id)
@@ -80,8 +88,8 @@ export function RecordDetailPage() {
           </Button>
         }
       />
-      {/* append-only or api-only: the forms read along, this says why */}
-      <WritePolicyNotice policy={writePolicy(current)} className="mx-8 mt-4" />
+      {/* append-only or api-only: the forms read along, this says why. read only, they always do */}
+      {readOnly ? null : <WritePolicyNotice policy={writePolicy(current)} className="mx-8 mt-4" />}
 
       <PageRenderer
         page={resolved}
@@ -90,6 +98,7 @@ export function RecordDetailPage() {
         submitting={save.isPending}
         error={error}
         violations={violations}
+        readOnly={readOnly}
         onSubmit={async (payload, reason) => {
           setError(null)
           setViolations([])
@@ -104,7 +113,7 @@ export function RecordDetailPage() {
       />
 
       {recordPanels.map((Panel, index) => (
-        <Panel key={index} objectName={current.name} definition={current} record={item} />
+        <Panel key={index} objectName={current.name} definition={current} record={item} readOnly={readOnly} />
       ))}
     </>
   )

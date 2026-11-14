@@ -3,20 +3,22 @@ import { Button } from '@wasichai/ui'
 import { useWasichaiLinks, useRegistry } from '../../app/context'
 import type { PageComponent } from '../../types/metadata'
 
-interface ActionButtonProps {
+export interface ActionButtonProps {
   component: PageComponent
   objectName: string
   recordId: string
+  // a read-only record screen: a module's action is told so. NAVIGATE only moves, it stays
+  readOnly?: boolean
 }
 
 // one button an admin placed where they wanted it. NAVIGATE is core's; any other kind (workflow:
 // TRANSITION) is drawn by the module that registered it, and nothing is drawn when none did.
-export function ActionButton({ component, objectName, recordId }: ActionButtonProps) {
+export function ActionButton({ component, objectName, recordId, readOnly = false }: ActionButtonProps) {
   const { pageActions } = useRegistry()
   if (component.action === 'NAVIGATE') return <NavigateAction component={component} />
   const definition = component.action ? pageActions[component.action] : undefined
   const ModuleAction = definition?.render
-  return ModuleAction ? <ModuleAction component={component} objectName={objectName} recordId={recordId} /> : null
+  return ModuleAction ? <ModuleAction component={component} objectName={objectName} recordId={recordId} readOnly={readOnly} /> : null
 }
 
 // a Link when it stays inside the app, a plain anchor when it leaves it

@@ -2,8 +2,12 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { mockFetch, renderWithProviders, type FetchMock } from '@wasichai/testing'
+import type { ReactElement } from 'react'
+import { Route, Routes, useParams } from 'react-router'
+import type { WasichaiModule } from '../../registry/contract'
 import type { ObjectDefinition } from '../../types/metadata'
 import { RecordFormPage } from './RecordFormPage'
+import type { RecordRoutes } from './recordScreen'
 
 const predio: ObjectDefinition = {
   id: 'o1',
@@ -91,5 +95,112 @@ describe('RecordFormPage', () => {
     expect(screen.queryByRole('button', { name: 'Guardar' })).toBeNull()
     expect(screen.queryByLabelText('Código')).toBeNull()
     expect(screen.getByRole('button', { name: 'Volver' })).toBeInTheDocument()
+  })
+
+  // an app shows one of its objects inside its own module, with core's form (#182)
+  describe('by props', () => {
+    const Screen = () => null
+    const lms: WasichaiModule = {
+      id: 'lms',
+      basePath: 'lms',
+      routes: [
+        { id: 'lessons', path: 'lessons', component: Screen },
+        { id: 'newLesson', path: 'lessons/new', component: Screen },
+        { id: 'lesson', path: 'lessons/:id', component: Screen },
+        { id: 'editLesson', path: 'lessons/:id/edit', component: Screen }
+      ]
+    }
+    const routes: RecordRoutes = { records: 'lms:lessons', record: 'lms:lesson', newRecord: 'lms:newLesson' }
+    const stored = { id: 'r1', createdAt: null, updatedAt: null, attributes: { codigo: 'P-1' } }
+    const Opened = () => <p>{`abierta ${useParams().id}`}</p>
+    const inLms = (form: ReactElement, route: string) =>
+      renderWithProviders(
+        <Routes>
+          <Route path="lms/lessons/new" element={form} />
+          <Route path="lms/lessons/:id/edit" element={form} />
+          <Route path="lms/lessons/:id" element={<Opened />} />
+        </Routes>,
+        { route, modules: [lms] }
+      )
+
+    it('creates the object it is given and opens the new record inside the app module', async () => {
+      fetch = mockFetch([
+        { path: '/metadata/objects/predio', body: predio },
+        { method: 'POST', path: '/objects/predio/records', body: { ...stored, id: 'n1' } }
+      ])
+      inLms(<RecordFormPage objectName="predio" routes={routes} />, '/lms/lessons/new')
+
+      expect(await screen.findByRole('heading', { name: 'Nuevo registro · Predio' })).toBeInTheDocument()
+      await userEvent.type(screen.getByLabelText('Código'), 'P-1')
+      await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+      expect(await screen.findByText('abierta n1')).toBeInTheDocument()
+    })
+
+    it('edits the record of the route and lands on the app record route', async () => {
+      fetch = mockFetch([
+        { path: '/metadata/objects/predio', body: predio },
+        { path: '/objects/predio/records/r1', body: stored },
+        { method: 'PUT', path: '/objects/predio/records/r1', body: { ...stored, attributes: { codigo: 'P-2' } } }
+      ])
+      inLms(<RecordFormPage objectName="predio" routes={routes} />, '/lms/lessons/r1/edit')
+
+      expect(await screen.findByRole('heading', { name: 'Editar registro · Predio' })).toBeInTheDocument()
+      const input = screen.getByLabelText('Código')
+      expect(input).toHaveValue('P-1')
+      await userEvent.clear(input)
+      await userEvent.type(input, 'P-2')
+      await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+      expect(await screen.findByText('abierta r1')).toBeInTheDocument()
+      expect(fetch.calls.find((call) => call.method === 'PUT')?.body).toEqual({ attributes: { codigo: 'P-2' } })
+    })
+
+    it('says the record to edit could not be loaded instead of loading for ever', async () => {
+      fetch = mockFetch([
+        { path: '/metadata/objects/predio', body: predio },
+        { path: '/objects/predio/records/r1', status: 404, body: { title: 'Not Found', detail: 'Record not found' } }
+      ])
+      renderWithProviders(<RecordFormPage objectName="predio" recordId="r1" />)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('No se encontró el registro')
+      expect(screen.queryByLabelText('Código')).toBeNull()
+    })
+
+    it('reads an edit the object rules refuse along, and says why', async () => {
+      fetch = mockFetch([
+        { path: '/metadata/objects/predio', body: { ...predio, appendOnly: true } },
+        { path: '/objects/predio/records/r1', body: stored }
+      ])
+      renderWithProviders(<RecordFormPage objectName="predio" recordId="r1" />)
+
+      expect(await screen.findByText('Los registros de este objeto solo se crean: no se editan ni se eliminan.')).toBeInTheDocument()
+      expect(screen.getByLabelText('Código')).toBeDisabled()
+      expect(screen.queryByRole('button', { name: 'Guardar' })).toBeNull()
+      expect(screen.getByRole('button', { name: 'Volver' })).toBeInTheDocument()
+    })
+
+    it('read only: shows the record it is given without a save', async () => {
+      fetch = mockFetch([
+        { path: '/metadata/objects/predio', body: predio },
+        { path: '/objects/predio/records/r1', body: stored }
+      ])
+      renderWithProviders(<RecordFormPage objectName="predio" recordId="r1" readOnly />)
+
+      expect(await screen.findByLabelText('Código')).toHaveValue('P-1')
+      expect(screen.getByLabelText('Código')).toBeDisabled()
+      expect(screen.queryByRole('button', { name: 'Guardar' })).toBeNull()
+      expect(screen.getByRole('button', { name: 'Volver' })).toBeInTheDocument()
+      expect(fetch.calls.some((call) => call.method !== 'GET')).toBe(false)
+    })
+
+    it('read only: draws no create form', async () => {
+      fetch = mockFetch([{ path: '/metadata/objects/predio', body: predio }])
+      renderWithProviders(<RecordFormPage objectName="predio" readOnly />)
+
+      expect(await screen.findByText('Aquí los registros son de solo lectura.')).toBeInTheDocument()
+      expect(screen.queryByLabelText('Código')).toBeNull()
+      expect(screen.getByRole('button', { name: 'Volver' })).toBeInTheDocument()
+    })
   })
 })

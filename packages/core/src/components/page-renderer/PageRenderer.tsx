@@ -38,20 +38,23 @@ export interface PageRendererProps {
   error?: string | null
   // the last save's refusal by field, for the form that saves
   violations?: FieldViolation[]
+  // a read-only record screen: no form saves, related lists neither link nor unlink, module
+  // components and actions are told so
+  readOnly?: boolean
 }
 
 // the detail page an admin configured, drawn for one record. no component is hardcoded here:
 // what shows up and where comes from the page definition tree, and module types from the registry.
-export function PageRenderer({ page, definition, record, onSubmit, submitting, error, violations }: PageRendererProps) {
+export function PageRenderer({ page, definition, record, onSubmit, submitting, error, violations, readOnly = false }: PageRendererProps) {
   const { t } = useTranslation()
   const { pageActions, pageComponents } = useRegistry()
   const relationships = useObjectRelationships(definition.name)
   const known = (relationships.data ?? []).map((side) => side.relationship)
   // one record, one save button: the first form in document order owns submission, the rest are
   // read-along field groups whose submit does nothing. an object the server will not let this ui
-  // update (append-only, api-only) has no owner: every form reads along.
+  // update (append-only, api-only) has no owner, nor has a read-only screen: every form reads along.
   const first = firstForm(page.definition.page)
-  const owner = writePolicy(definition).canUpdate ? first : null
+  const owner = !readOnly && writePolicy(definition).canUpdate ? first : null
   // a leaf draws when core or some module knows its type
   const drawable = (type: string) => CORE_TYPES.includes(type) || Object.hasOwn(pageComponents, type)
   // an ACTION leaf draws only when its own kind resolves: NAVIGATE is core's, any other kind needs
@@ -150,7 +153,7 @@ export function PageRenderer({ page, definition, record, onSubmit, submitting, e
         )
 
       case 'ACTION':
-        return <ActionButton key={key} component={component} objectName={definition.name} recordId={record.id} />
+        return <ActionButton key={key} component={component} objectName={definition.name} recordId={record.id} readOnly={readOnly} />
 
       case 'DYNAMIC_FORM': {
         const isOwner = component === owner
@@ -220,7 +223,7 @@ export function PageRenderer({ page, definition, record, onSubmit, submitting, e
         const side = (relationships.data ?? []).find((candidate) => candidate.relationship === component.relationship)
         // relationship gone or renamed: skip it rather than blow up the whole page
         if (!side) return null
-        return <RelatedList key={key} objectName={definition.name} recordId={record.id} side={side} />
+        return <RelatedList key={key} objectName={definition.name} recordId={record.id} side={side} readOnly={readOnly} />
       }
 
       case 'HISTORY':
@@ -251,7 +254,7 @@ export function PageRenderer({ page, definition, record, onSubmit, submitting, e
             </p>
           )
         const ModuleComponent = moduleComponent.render
-        return <ModuleComponent key={key} component={component} definition={definition} record={record} />
+        return <ModuleComponent key={key} component={component} definition={definition} record={record} readOnly={readOnly} />
       }
     }
   }

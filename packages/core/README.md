@@ -404,6 +404,64 @@ look, where the empty state stands for a section or a screen:
 </EmptyState>
 ```
 
+## Record screens in a module
+
+`RecordListPage`, `RecordDetailPage` and `RecordFormPage` are the screens core mounts at `links.records(object)`,
+`links.record(object, id)` and `links.newRecord(object)`. An app shows the records of one of its objects inside its own
+module by mounting them on its own routes with props. Every prop is optional; without them a screen reads `:object`
+and `:id` from its route and links to core's routes, as before.
+
+| prop | screens | meaning |
+|---|---|---|
+| `objectName` | all three | the object, in place of the route's `:object` |
+| `recordId` | detail, form | the record, in place of the route's `:id`; with one the form edits it, without it creates |
+| `routes` | all three | `RecordRoutes`: route keys of the app's module the screens link to |
+| `readOnly` | all three | offers no create, edit, delete, link or unlink, whatever the user may do |
+
+```tsx
+import { RecordDetailPage, RecordFormPage, RecordListPage, type RecordRoutes, type WasichaiModule } from '@wasichai/core'
+
+const routes: RecordRoutes = { records: 'lms:lessons', record: 'lms:lesson', newRecord: 'lms:newLesson' }
+
+const Lessons = () => <RecordListPage objectName="leccion" routes={routes} />
+const NewLesson = () => <RecordFormPage objectName="leccion" routes={routes} />
+const Lesson = () => <RecordDetailPage objectName="leccion" routes={routes} />
+
+export const lmsModule: WasichaiModule = {
+  id: 'lms',
+  basePath: 'lms',
+  routes: [
+    { id: 'lessons', path: 'lessons', component: Lessons },
+    { id: 'newLesson', path: 'lessons/new', component: NewLesson },
+    { id: 'lesson', path: 'lessons/:id', component: Lesson }
+  ]
+}
+```
+
+`routes` names registered route keys, never urls: `records` is where the detail's **Volver** goes, `record` where a
+row opens and a saved form lands, and `newRecord` (optional) the create form; without it the list offers no create.
+Each link is built with `links.to(key, params)` from the current route's params plus the object as `:object` and the
+record as `:id`, so a nested route (`courses/:course/lessons/:id`) keeps its course; in these routes `:id` always
+names the record. An unregistered key throws when its link is built, naming the key. Links to other objects stay
+core's: a related list's **Editar** and a `NAVIGATE` action open `/data/objects/...`.
+
+`RecordFormPage` with a record loads it, saves it with `PUT` and lands on its `record` link (core's
+`links.record(object, id)` without `routes`); its title is «Editar registro». An edit the object's rules refuse
+(append-only, api-only) shows the record read-only, with the notice that says why and **Volver**. Without a record it
+creates, as before.
+
+`readOnly` takes away every write the screen offers, to an administrator too, and draws no write-policy notice: the
+app chose it, not the object's rules. The server still decides what a request may do.
+
+- List: no **Nuevo registro** and no row delete; a row still opens its record.
+- Detail: every form reads along (no **Guardar**); related lists show their rows without link, unlink or **Editar**.
+- Form: an edit shows the record without a save, with **Volver**; a create draws no form, only «Aquí los registros
+  son de solo lectura.» and **Volver**.
+- Module slots on these screens (`recordListActions`, `recordPanels`, page components and page actions) get
+  `readOnly: true` in their props, so a module holds its own writes back. A `NAVIGATE` action only moves: it stays.
+
+`PageRenderer`, `RelatedList` and `ActionButton` take the same `readOnly`, for an app that draws them itself.
+
 ## Administration
 
 Core mounts the tenant's admin screens under `/admin`, in the sidebar's `administration` group: users

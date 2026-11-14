@@ -6,6 +6,7 @@ import { PageRenderer } from './PageRenderer'
 import type { ReactElement } from 'react'
 import { renderWithProviders as renderBase } from '@wasichai/testing'
 import { noteModule, sketchModule } from '../../test/fakeModules'
+import type { WasichaiModule } from '../../registry/contract'
 import type { FieldMeta, ObjectDefinition, Page, PageComponent, PageLayout, PageTemplate, RecordItem } from '../../types/metadata'
 
 // every page here may hold module fields and components
@@ -27,7 +28,11 @@ const { sides, mounts } = vi.hoisted(() => ({
 }))
 
 vi.mock('../related/RelatedList', () => ({
-  RelatedList: ({ side }: { side: { relationship: string } }) => <div data-testid="related-list">{side.relationship}</div>
+  RelatedList: ({ side, readOnly }: { side: { relationship: string }; readOnly?: boolean }) => (
+    <div data-testid="related-list" data-read-only={String(Boolean(readOnly))}>
+      {side.relationship}
+    </div>
+  )
 }))
 
 // the history panel fetches on mount; counting its mounts is how we check a tab stayed shut
@@ -539,5 +544,43 @@ describe('PageRenderer module components', () => {
     renderWithProviders(<PageRenderer page={page} definition={definition} record={record} onSubmit={vi.fn()} />)
     expect(screen.getByRole('tab', { name: 'Reconoce' })).toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Desconoce' })).not.toBeInTheDocument()
+  })
+})
+
+// an app shows the record read only (#182): nothing saves, and what a module draws is told so
+describe('PageRenderer read only', () => {
+  const told: WasichaiModule = {
+    id: 'told',
+    pageComponents: { TOLD: { render: ({ readOnly }) => <p>{readOnly ? 'componente sin escritura' : 'componente'}</p>, labelKey: 'told:component' } },
+    pageActions: { TOLD_ACTION: { render: ({ readOnly }) => <p>{readOnly ? 'acción sin escritura' : 'acción'}</p>, labelKey: 'told:action' } }
+  }
+
+  it('saves from no form and tells related lists, module components and module actions', () => {
+    const page = rootPage([
+      node('FORM'),
+      node('DYNAMIC_FORM', { children: [node('FIELD', { field: 'nombre' })] }),
+      node('RELATED_LIST', { relationship: 'predio_titular' }),
+      node('TOLD'),
+      node('ACTION', { action: 'TOLD_ACTION' }),
+      node('ACTION', { action: 'NAVIGATE', target: 'titular', title: 'Titulares' })
+    ])
+    renderBase(<PageRenderer page={page} definition={definition} record={record} onSubmit={vi.fn()} readOnly />, { modules: [sketchModule, noteModule, told] })
+
+    expect(screen.queryByRole('button', { name: /guardar/i })).toBeNull()
+    expect(screen.getAllByLabelText('Nombre').every((input) => (input as HTMLInputElement).disabled)).toBe(true)
+    expect(screen.getByTestId('related-list')).toHaveAttribute('data-read-only', 'true')
+    expect(screen.getByText('componente sin escritura')).toBeInTheDocument()
+    expect(screen.getByText('acción sin escritura')).toBeInTheDocument()
+    // a NAVIGATE only moves: it stays
+    expect(screen.getByRole('link', { name: 'Titulares' })).toHaveAttribute('href', '/data/objects/titular/records')
+  })
+
+  it('tells them nothing without the flag', () => {
+    const page = rootPage([node('RELATED_LIST', { relationship: 'predio_titular' }), node('TOLD'), node('ACTION', { action: 'TOLD_ACTION' })])
+    renderBase(<PageRenderer page={page} definition={definition} record={record} onSubmit={vi.fn()} />, { modules: [sketchModule, noteModule, told] })
+
+    expect(screen.getByTestId('related-list')).toHaveAttribute('data-read-only', 'false')
+    expect(screen.getByText('componente')).toBeInTheDocument()
+    expect(screen.getByText('acción')).toBeInTheDocument()
   })
 })
