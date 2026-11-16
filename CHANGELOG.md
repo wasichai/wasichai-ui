@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/wasichai/wasichai-ui/compare/v2.0.0...v2.1.0) (2026-11-16)
+
+
+### Features
+
+* **core:** sign in through the domain's Keycloak realm when the backend says oidc ([#217](https://github.com/wasichai/wasichai-ui/issues/217)) ([dddbe53](https://github.com/wasichai/wasichai-ui/commit/dddbe53b20b76371f726f48cd52d5abc0ec4fce0))
+
 ## [2.0.0](https://github.com/wasichai/wasichai-ui/compare/v1.9.0...v2.0.0) (2026-11-14)
 
 
