@@ -18,7 +18,8 @@ const users: AdminUser[] = [
     displayName: 'Ana Admin',
     enabled: true,
     roles: ['ADMIN'],
-    createdAt: '2026-01-10T10:00:00Z'
+    createdAt: '2026-01-10T10:00:00Z',
+    linked: false
   },
   {
     id: 'u-beto',
@@ -26,7 +27,8 @@ const users: AdminUser[] = [
     displayName: 'Beto Inspector',
     enabled: false,
     roles: ['INSPECTOR'],
-    createdAt: null
+    createdAt: null,
+    linked: false
   }
 ]
 

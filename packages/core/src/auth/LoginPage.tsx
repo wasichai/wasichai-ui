@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate, useSearchParams } from 'react-router'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAppTitle } from '../organization/currentOrganization'
 import { useAuth } from './AuthProvider'
@@ -9,11 +9,12 @@ import { Label } from '@wasichai/ui'
 import { ApiError } from '../api/client'
 import { useWasichaiConfig, useWasichaiLinks } from '../app/context'
 import { RETURN_TO_PARAM } from '../links/links'
+import type { SignInErrorState } from './AuthCallbackPage'
 import { safeReturnTo } from './returnTo'
 
 export function LoginPage() {
   const { t } = useTranslation()
-  const { user, signIn } = useAuth()
+  const { user, mode, signIn, signInWithRealm } = useAuth()
   const navigate = useNavigate()
   const config = useWasichaiConfig()
   const title = useAppTitle()
@@ -23,6 +24,8 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [search] = useSearchParams()
+  // a callback that did not finish says why through router state
+  const callbackError = (useLocation().state as Partial<SignInErrorState> | null)?.signInError ?? null
   // anything not provably ours goes home: no open redirect, no loop back to login
   const next = safeReturnTo(search.get(RETURN_TO_PARAM), links.login()) ?? links.home()
 
@@ -32,6 +35,16 @@ export function LoginPage() {
     event.preventDefault()
     setBusy(true)
     setError(null)
+    if (mode === 'oidc') {
+      try {
+        // the browser leaves for the realm: busy stays on
+        await signInWithRealm(next)
+      } catch {
+        setError(t('auth.realmUnreachable'))
+        setBusy(false)
+      }
+      return
+    }
     try {
       await signIn(email, password)
       void navigate(next)
@@ -41,6 +54,7 @@ export function LoginPage() {
       setBusy(false)
     }
   }
+  const shown = error ?? callbackError
 
   return (
     <div className="flex h-full items-center justify-center bg-shell px-4">
@@ -53,32 +67,35 @@ export function LoginPage() {
         <p className="text-xl font-semibold tracking-tight text-ink">{title.appName}</p>
         <p className="mt-1 text-sm text-ink-muted">{title.appTagline}</p>
 
-        <div className="mt-6 space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="email">{t('auth.email')}</Label>
-            <Input id="email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        {/* oidc: the realm asks for the password, never this page */}
+        {mode === 'local' && (
+          <div className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">{t('auth.email')}</Label>
+              <Input id="email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">{t('auth.password')}</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="password">{t('auth.password')}</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-            />
-          </div>
-        </div>
+        )}
 
-        {error ? (
+        {shown ? (
           <p role="alert" className="mt-4 text-sm text-danger">
-            {error}
+            {shown}
           </p>
         ) : null}
 
         <Button type="submit" className="mt-6 w-full" disabled={busy}>
-          {busy ? t('common.loading') : t('auth.signIn')}
+          {busy ? t('common.loading') : t(mode === 'oidc' ? 'auth.signInWithRealm' : 'auth.signIn')}
         </Button>
       </form>
     </div>

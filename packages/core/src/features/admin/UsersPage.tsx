@@ -19,7 +19,8 @@ const CHECKBOX = 'h-4 w-4 accent-brand'
 
 export function UsersPage() {
   const { t } = useTranslation()
-  const { user: signedIn } = useAuth()
+  const { user: signedIn, mode } = useAuth()
+  const oidc = mode === 'oidc'
   const { data: users = [], isLoading, error, refetch } = useAdminUsers()
   const { data: roles = [] } = useRoles()
 
@@ -61,7 +62,7 @@ export function UsersPage() {
       await create.mutateAsync({
         email: email.trim().toLowerCase(),
         displayName: displayName.trim() || email.trim(),
-        password,
+        ...(oidc ? {} : { password }),
         roles: newRoles
       })
       setEmail('')
@@ -70,6 +71,17 @@ export function UsersPage() {
       setNewRoles([])
     } catch (cause) {
       setCreateError(describeError(cause))
+    }
+  }
+
+  const unlink = async (item: AdminUser) => {
+    if (!window.confirm(t('admin.users.confirmUnlink'))) return
+    setEditError(null)
+    try {
+      await update.mutateAsync({ id: item.id, unlink: true })
+      setEditing({ ...item, linked: false })
+    } catch (cause) {
+      setEditError(describeError(cause))
     }
   }
 
@@ -83,7 +95,7 @@ export function UsersPage() {
         displayName: editName.trim(),
         // never let an admin lock themselves out
         enabled: isSelf(editing) ? true : editEnabled,
-        ...(editPassword ? { password: editPassword } : {})
+        ...(!oidc && editPassword ? { password: editPassword } : {})
       })
       await updateRoles.mutateAsync({ id: editing.id, roles: editRoles })
       setEditing(null)
@@ -120,10 +132,12 @@ export function UsersPage() {
                 <Label htmlFor="user-name">{t('admin.users.displayName')}</Label>
                 <Input id="user-name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="user-password">{t('admin.users.password')}</Label>
-                <Input id="user-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-              </div>
+              {oidc ? null : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="user-password">{t('admin.users.password')}</Label>
+                  <Input id="user-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+                </div>
+              )}
 
               <div className="space-y-1.5 sm:col-span-3">
                 <Label>{t('admin.users.roles')}</Label>
@@ -148,7 +162,7 @@ export function UsersPage() {
                     {createError}
                   </p>
                 ) : null}
-                <Button type="submit" disabled={!email || !password || create.isPending}>
+                <Button type="submit" disabled={!email || (!oidc && !password) || create.isPending}>
                   <Plus className="h-4 w-4" />
                   {t('common.create')}
                 </Button>
@@ -171,11 +185,25 @@ export function UsersPage() {
                   <Label htmlFor="edit-name">{t('admin.users.displayName')}</Label>
                   <Input id="edit-name" value={editName} onChange={(event) => setEditName(event.target.value)} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="edit-password">{t('admin.users.newPassword')}</Label>
-                  <Input id="edit-password" type="password" value={editPassword} onChange={(event) => setEditPassword(event.target.value)} />
-                  <p className="text-xs text-ink-muted">{t('admin.users.passwordHint')}</p>
-                </div>
+                {oidc ? (
+                  <div className="space-y-1.5">
+                    <Label>{t('admin.users.link')}</Label>
+                    <div className="flex h-9 items-center gap-3 text-sm text-ink">
+                      <span data-testid="edit-link-state">{editing.linked ? t('admin.users.linked') : t('admin.users.pending')}</span>
+                      {editing.linked ? (
+                        <Button type="button" variant="ghost" size="sm" disabled={update.isPending} onClick={() => void unlink(editing)}>
+                          {t('admin.users.unlink')}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-password">{t('admin.users.newPassword')}</Label>
+                    <Input id="edit-password" type="password" value={editPassword} onChange={(event) => setEditPassword(event.target.value)} />
+                    <p className="text-xs text-ink-muted">{t('admin.users.passwordHint')}</p>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label>{t('admin.users.status')}</Label>
                   <label className="flex h-9 items-center gap-2 text-sm text-ink">
@@ -244,6 +272,7 @@ export function UsersPage() {
                   <Th>{t('admin.users.email')}</Th>
                   <Th>{t('admin.users.roles')}</Th>
                   <Th>{t('admin.users.status')}</Th>
+                  {oidc ? <Th>{t('admin.users.link')}</Th> : null}
                   <Th>{t('admin.users.createdAt')}</Th>
                   <Th className="w-px" />
                 </tr>
@@ -264,6 +293,7 @@ export function UsersPage() {
                         {item.enabled ? t('admin.users.enabled') : t('admin.users.disabled')}
                       </span>
                     </Td>
+                    {oidc ? <Td>{item.linked ? t('admin.users.linked') : t('admin.users.pending')}</Td> : null}
                     <Td className="text-xs text-ink-muted">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}</Td>
                     <Td>
                       <span className="flex gap-1">

@@ -32,3 +32,10 @@ describe('core nav', () => {
     expect(visible(null)).toBe(false)
   })
 })
+
+describe('core routes', () => {
+  // the realm sends the browser back here, signed out still: no gate, no shell
+  it('mounts the realm callback as a public route', () => {
+    expect(coreModule.routes?.find((route) => route.id === 'authCallback')).toMatchObject({ path: 'auth/callback', chrome: 'public' })
+  })
+})

@@ -16,6 +16,8 @@ export interface AdminUser {
   enabled: boolean
   roles: string[]
   createdAt: string | null
+  // oidc: the account is tied to the realm. false while invited and in local
+  linked: boolean
 }
 
 // objectName null means every object
@@ -45,7 +47,8 @@ export interface Role {
 export interface CreateUserPayload {
   email: string
   displayName: string
-  password: string
+  // local only; oidc invites without one
+  password?: string
   roles: string[]
 }
 
@@ -53,6 +56,8 @@ export interface UpdateUserPayload {
   displayName?: string
   enabled?: boolean
   password?: string
+  // oidc only: forget the link, the next verified sign in links again
+  unlink?: boolean
 }
 
 export interface CreateRolePayload {

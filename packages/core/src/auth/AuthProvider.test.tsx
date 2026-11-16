@@ -33,7 +33,8 @@ function mount(children: ReactNode) {
   const i18n = createWasichaiI18n({ languages: config.languages, storageKey: apiClient.keys.lang, modules: [] })
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <WasichaiProviders config={config} registry={registry} apiClient={apiClient} i18n={i18n} queryClient={queryClient}>
+    // local mode said up front: these tests are about the local session, not about asking /auth/config
+    <WasichaiProviders config={config} registry={registry} apiClient={apiClient} i18n={i18n} queryClient={queryClient} authConfig={{ mode: 'local' }}>
       {children}
     </WasichaiProviders>
   )

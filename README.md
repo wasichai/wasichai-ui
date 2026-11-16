@@ -23,6 +23,41 @@ Install (`.npmrc`: `@wasichai:registry=https://npm.pkg.github.com` plus a token 
 `yarn add @wasichai/core @wasichai/ui`. Step by step:
 [build your app](https://github.com/wasichai/wasichai/blob/main/docs/guides/build-your-app.md).
 
+## Signing in
+
+The backend decides the mode: `@wasichai/core` asks `GET /api/auth/config` at start and the app has nothing to configure.
+The call is anonymous (a stored token is never sent).
+
+- `local` keeps the email and password login. An older backend without the route (404, or 401 where it is not public)
+  is treated as `local`.
+- `oidc` signs people in through the domain's Keycloak realm (Authorization Code + PKCE, scope `openid organization`).
+
+An app that mounts `WasichaiProviders` without `initialUser` or `authConfig` now issues that request before rendering.
+Test suites with strict fetch or MSW mocks need a handler for it, answering `{"mode":"local"}`.
+
+In `oidc`, the realm's client for the app needs, with `<origin><basename>` the app's root:
+
+- the redirect URI `<origin><basename>/auth/callback`;
+- the post-logout redirect URI `<origin><basename>/`;
+- the web origin `<origin>`.
+
+The wasichai platform creates them for its apps (`https://<host>/auth/callback`, `https://<host>/`, `https://<host>`);
+an app outside the platform registers them itself.
+
+«Cerrar sesión» ends the realm session (RP-initiated), and so the session of every app of the domain. An expired
+session (a refresh the realm refuses, or a final 401) ends only the tab's: the login page shows, and «Ingresar» comes
+back without a password while the realm session is alive. A refresh that fails on the network does not end it.
+
+The session lives per tab in `sessionStorage`; switching to `oidc` clears the token and user that `local` left in
+`localStorage`. The access token is renewed before it expires through one shared refresh; a 401 gets one refresh and
+one retry before signing out. A person signed in to the realm but not invited to the app sees a full-page "no access"
+screen with the reason from the backend.
+
+The users screen in `oidc` has no passwords, shows a «Vinculado»/«Pendiente» column, and offers «Desvincular» for an
+account that was recreated in Keycloak.
+
+Decisions: wasichai's ADR-084 and `docs/security/authentication.md`.
+
 ## Layout
 
 ```

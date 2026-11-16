@@ -23,7 +23,12 @@
         "email": "Correo",
         "password": "Contraseña",
         "signOut": "Cerrar sesión",
-        "invalid": "Credenciales inválidas"
+        "invalid": "Credenciales inválidas",
+        "signInWithRealm": "Ingresar",
+        "signingIn": "Ingresando…",
+        "realmUnreachable": "No se pudo contactar el servicio de ingreso. Vuelve a intentarlo.",
+        "callbackFailed": "No se pudo completar el ingreso. Vuelve a intentarlo.",
+        "accessDenied": "Sin acceso"
     },
     "theme": {
         "label": "Tema",

@@ -20,7 +20,12 @@ const es = {
       editing: 'Editando a {{name}}',
       self: 'Eres tú',
       selfHint: 'No puedes desactivarte ni eliminarte a ti mismo',
-      confirmDelete: '¿Eliminar a {{name}}? Esta acción no se puede deshacer.'
+      confirmDelete: '¿Eliminar a {{name}}? Esta acción no se puede deshacer.',
+      link: 'Cuenta',
+      linked: 'Vinculado',
+      pending: 'Pendiente',
+      unlink: 'Desvincular',
+      confirmUnlink: 'La persona deberá ingresar de nuevo; su próximo ingreso con el email verificado la vinculará otra vez.'
     },
     serviceAccounts: {
       title: 'Cuentas de servicio',
@@ -123,7 +128,12 @@ const en = {
       editing: 'Editing {{name}}',
       self: 'This is you',
       selfHint: 'You cannot disable or delete yourself',
-      confirmDelete: 'Delete {{name}}? This cannot be undone.'
+      confirmDelete: 'Delete {{name}}? This cannot be undone.',
+      link: 'Account',
+      linked: 'Linked',
+      pending: 'Pending',
+      unlink: 'Unlink',
+      confirmUnlink: 'The person will have to sign in again; their next sign-in with the verified email links them once more.'
     },
     serviceAccounts: {
       title: 'Service accounts',
