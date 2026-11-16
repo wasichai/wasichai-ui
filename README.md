@@ -23,6 +23,26 @@ Install (`.npmrc`: `@wasichai:registry=https://npm.pkg.github.com` plus a token 
 `yarn add @wasichai/core @wasichai/ui`. Step by step:
 [build your app](https://github.com/wasichai/wasichai/blob/main/docs/guides/build-your-app.md).
 
+## Signing in
+
+The backend decides the mode: `@wasichai/core` asks `GET /api/auth/config` at start and the app has nothing to configure.
+
+- `local` (or an older backend without the route) keeps the email and password login.
+- `oidc` signs people in through the domain's Keycloak realm (Authorization Code + PKCE, scope `openid organization`).
+
+In `oidc`, the route `/auth/callback` (under the app's basename) must be a valid redirect URI of the realm's client for
+the app; the wasichai platform creates it as `https://<host>/auth/callback`. Sign-out ends the realm session
+(RP-initiated), and so the session of every app of the domain.
+
+The session lives per tab in `sessionStorage`. The access token is renewed before it expires through one shared
+refresh; a 401 gets one refresh and one retry before signing out. A person signed in to the realm but not invited to
+the app sees a full-page "no access" screen with the reason from the backend.
+
+The users screen in `oidc` has no passwords, shows a «Vinculado»/«Pendiente» column, and offers «Desvincular» for an
+account that was recreated in Keycloak.
+
+Decisions: wasichai's ADR-084 and `docs/security/authentication.md`.
+
 ## Layout
 
 ```
