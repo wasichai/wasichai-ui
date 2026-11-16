@@ -168,3 +168,135 @@ describe('formError', () => {
     expect(formError(new Error('network down'))).toEqual({ message: 'Error: network down', violations: [] })
   })
 })
+
+describe('a token source', () => {
+  function source(token: string | null, refresh: () => Promise<boolean>) {
+    const state = { token }
+    return { state, get: vi.fn(() => state.token), refresh: vi.fn(refresh) }
+  }
+  const authorizationOf = (fetch: ReturnType<typeof answer>, call: number) =>
+    ((fetch.mock.calls[call] as unknown as [string, RequestInit])[1].headers as Headers).get('Authorization')
+
+  it('a token source replaces storage', async () => {
+    const fetch = answer(200, {})
+    vi.stubGlobal('fetch', fetch)
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    client.setToken('stored')
+    client.setTokenSource(source('from-source', async () => true))
+    expect(client.getToken()).toBe('from-source')
+    await client.request('/objects')
+    expect(authorizationOf(fetch, 0)).toBe('Bearer from-source')
+    // the source owns the token: storage is neither written nor cleared
+    client.setToken('other')
+    expect(localStorage.getItem('a.token')).toBe('stored')
+    client.setTokenSource(null)
+    expect(client.getToken()).toBe('stored')
+  })
+
+  it('a 401 refreshes once and retries', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response('{"ok":true}', { status: 200 }))
+    vi.stubGlobal('fetch', fetch)
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    const src = source('old', async () => {
+      src.state.token = 'new'
+      return true
+    })
+    client.setTokenSource(src)
+    await expect(client.request('/objects')).resolves.toEqual({ ok: true })
+    expect(src.refresh).toHaveBeenCalledTimes(1)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(authorizationOf(fetch as unknown as ReturnType<typeof answer>, 1)).toBe('Bearer new')
+  })
+
+  it('a retry that gets 401 again signs out without a second refresh', async () => {
+    const fetch = answer(401, { title: 'Unauthorized' })
+    vi.stubGlobal('fetch', fetch)
+    const onUnauthorized = vi.fn()
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    const src = source('old', async () => true)
+    client.setTokenSource(src)
+    client.setOnUnauthorized(onUnauthorized)
+    await expect(client.request('/objects')).rejects.toMatchObject({ status: 401 })
+    expect(src.refresh).toHaveBeenCalledTimes(1)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(onUnauthorized).toHaveBeenCalledTimes(1)
+  })
+
+  it('concurrent 401s share one refresh', async () => {
+    let release: (ok: boolean) => void = () => {}
+    const fetch = vi.fn(async (_url: string, init?: RequestInit) =>
+      (init?.headers as Headers).get('Authorization') === 'Bearer new' ? new Response('{}', { status: 200 }) : new Response(null, { status: 401 })
+    )
+    vi.stubGlobal('fetch', fetch)
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    const src = source(
+      'old',
+      () =>
+        new Promise<boolean>((resolve) => {
+          release = (ok) => {
+            src.state.token = 'new'
+            resolve(ok)
+          }
+        })
+    )
+    client.setTokenSource(src)
+    const all = Promise.all([client.request('/a'), client.request('/b'), client.request('/c')])
+    await vi.waitFor(() => expect(src.refresh).toHaveBeenCalledTimes(1))
+    release(true)
+    await all
+    expect(src.refresh).toHaveBeenCalledTimes(1)
+    expect(fetch).toHaveBeenCalledTimes(6)
+  })
+
+  it('a later 401 refreshes again once the first refresh settled', async () => {
+    vi.stubGlobal('fetch', answer(401))
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    const src = source('old', async () => false)
+    client.setTokenSource(src)
+    await expect(client.request('/a')).rejects.toMatchObject({ status: 401 })
+    await expect(client.request('/b')).rejects.toMatchObject({ status: 401 })
+    expect(src.refresh).toHaveBeenCalledTimes(2)
+  })
+
+  it('a failed refresh signs out as before', async () => {
+    const fetch = answer(401, { title: 'Unauthorized' })
+    vi.stubGlobal('fetch', fetch)
+    const onUnauthorized = vi.fn()
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    client.setTokenSource(source('old', async () => false))
+    client.setOnUnauthorized(onUnauthorized)
+    await expect(client.request('/objects')).rejects.toMatchObject({ status: 401 })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(onUnauthorized).toHaveBeenCalledTimes(1)
+  })
+
+  it('a refresh that throws counts as failed', async () => {
+    vi.stubGlobal('fetch', answer(401))
+    const onUnauthorized = vi.fn()
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    client.setTokenSource(
+      source('old', async () => {
+        throw new Error('network')
+      })
+    )
+    client.setOnUnauthorized(onUnauthorized)
+    await expect(client.request('/objects')).rejects.toMatchObject({ status: 401 })
+    expect(onUnauthorized).toHaveBeenCalledTimes(1)
+  })
+
+  it('without a source a 401 behaves as today', async () => {
+    const fetch = answer(401, { title: 'Unauthorized' })
+    vi.stubGlobal('fetch', fetch)
+    const onUnauthorized = vi.fn()
+    const client = createApiClient({ baseUrl: '/api', storagePrefix: 'a' })
+    client.setToken('t')
+    client.setOnUnauthorized(onUnauthorized)
+    await expect(client.request('/objects')).rejects.toMatchObject({ status: 401 })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(client.getToken()).toBeNull()
+    expect(onUnauthorized).toHaveBeenCalledTimes(1)
+  })
+})

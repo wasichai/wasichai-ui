@@ -22,8 +22,10 @@ export {
   setToken,
   type ApiClient,
   type ApiClientOptions,
-  type FieldViolation
+  type FieldViolation,
+  type TokenSource
 } from './api/client'
+export { fetchAuthConfig, type AuthConfig } from './auth/authConfig'
 export * from './types/metadata'
 export {
   buildRecordSchema,
