@@ -13,6 +13,7 @@ const fake = vi.hoisted(() => {
     signinCallback: vi.fn(),
     signinSilent: vi.fn(),
     signoutRedirect: vi.fn(),
+    removeUser: vi.fn(),
     fire(name: string, arg?: unknown) {
       for (const handler of state.handlers[name] ?? []) handler(arg)
     }
@@ -24,7 +25,6 @@ const fake = vi.hoisted(() => {
     events = {
       addUserLoaded: on('userLoaded'),
       addUserUnloaded: on('userUnloaded'),
-      addSilentRenewError: on('silentRenewError'),
       addAccessTokenExpiring: on('accessTokenExpiring'),
       addAccessTokenExpired: on('accessTokenExpired')
     }
@@ -36,14 +36,27 @@ const fake = vi.hoisted(() => {
     signinCallback = state.signinCallback
     signinSilent = state.signinSilent
     signoutRedirect = state.signoutRedirect
+    removeUser = state.removeUser
   }
   class WebStorageStateStore {
     constructor(public options: { store: Storage }) {}
   }
-  return { state, UserManager, WebStorageStateStore }
+  // what the realm answers (invalid_grant...) vs the network failing to reach it
+  class ErrorResponse extends Error {
+    constructor(public error: string) {
+      super(error)
+    }
+  }
+  class ErrorTimeout extends Error {}
+  return { state, UserManager, WebStorageStateStore, ErrorResponse, ErrorTimeout }
 })
 
-vi.mock('oidc-client-ts', () => ({ UserManager: fake.UserManager, WebStorageStateStore: fake.WebStorageStateStore }))
+vi.mock('oidc-client-ts', () => ({
+  UserManager: fake.UserManager,
+  WebStorageStateStore: fake.WebStorageStateStore,
+  ErrorResponse: fake.ErrorResponse,
+  ErrorTimeout: fake.ErrorTimeout
+}))
 
 const base = { issuer: 'https://id.test/realms/w', clientId: 'web' }
 const future = () => Math.floor(Date.now() / 1000) + 300
@@ -64,6 +77,7 @@ describe('createOidcSession', () => {
     fake.state.signinCallback.mockReset()
     fake.state.signinSilent.mockReset()
     fake.state.signoutRedirect.mockReset().mockResolvedValue(undefined)
+    fake.state.removeUser.mockReset().mockResolvedValue(undefined)
   })
 
   it('configures the code flow from the issuer, client and base path', () => {
@@ -163,21 +177,38 @@ describe('createOidcSession', () => {
     expect(expired).toHaveBeenCalledTimes(1)
   })
 
-  it('refresh is false and expires the session when the silent renew throws', async () => {
+  it('refresh is false and expires the session when the realm refuses the refresh (invalid_grant)', async () => {
     const session = createOidcSession({ ...base, basePath: '' })
     const expired = vi.fn()
     session.onExpired(expired)
-    fake.state.signinSilent.mockRejectedValue(new Error('invalid_grant'))
+    fake.state.signinSilent.mockRejectedValue(new fake.ErrorResponse('invalid_grant'))
     await expect(session.tokenSource.refresh()).resolves.toBe(false)
     expect(expired).toHaveBeenCalledTimes(1)
   })
 
-  it('fires onExpired on a failed silent renew event', () => {
+  it.each([
+    ['fetch failed', new TypeError('Failed to fetch')],
+    ['timed out', new fake.ErrorTimeout('Network timed out')]
+  ])('refresh is false but the session lives on when the network %s: the next try may reach the realm', async (_, failure) => {
+    fake.state.getUser.mockResolvedValue(user({ access_token: 'tok-8' }))
     const session = createOidcSession({ ...base, basePath: '' })
+    await flush()
     const expired = vi.fn()
     session.onExpired(expired)
-    fake.state.fire('silentRenewError', new Error('x'))
-    expect(expired).toHaveBeenCalledTimes(1)
+    fake.state.signinSilent.mockRejectedValueOnce(failure)
+    await expect(session.tokenSource.refresh()).resolves.toBe(false)
+    expect(expired).not.toHaveBeenCalled()
+    expect(session.tokenSource.get()).toBe('tok-8')
+    expect(fake.state.removeUser).not.toHaveBeenCalled()
+    // the next trigger tries again
+    fake.state.signinSilent.mockResolvedValueOnce(user({ access_token: 'tok-9' }))
+    await expect(session.tokenSource.refresh()).resolves.toBe(true)
+    expect(session.tokenSource.get()).toBe('tok-9')
+  })
+
+  it('does not listen to silent renew errors: renewal is ours', () => {
+    createOidcSession({ ...base, basePath: '' })
+    expect(fake.state.handlers.silentRenewError).toBeUndefined()
   })
 
   it('refreshes on accessTokenExpired and expires only when that fails', async () => {
@@ -189,7 +220,7 @@ describe('createOidcSession', () => {
     await flush()
     expect(expired).not.toHaveBeenCalled()
     expect(session.tokenSource.get()).toBe('tok-5')
-    fake.state.signinSilent.mockRejectedValueOnce(new Error('invalid_grant'))
+    fake.state.signinSilent.mockRejectedValueOnce(new fake.ErrorResponse('invalid_grant'))
     fake.state.fire('accessTokenExpired')
     await flush()
     expect(expired).toHaveBeenCalledTimes(1)
@@ -249,7 +280,6 @@ describe('createOidcSession', () => {
 
   it('does not throw on expiry without a handler', async () => {
     const session = createOidcSession({ ...base, basePath: '' })
-    expect(() => fake.state.fire('silentRenewError', new Error('x'))).not.toThrow()
     expect(() => fake.state.fire('accessTokenExpired')).not.toThrow()
     fake.state.signinSilent.mockResolvedValue(null)
     await expect(session.tokenSource.refresh()).resolves.toBe(false)
@@ -259,5 +289,26 @@ describe('createOidcSession', () => {
     const session = createOidcSession({ ...base, basePath: '' })
     await session.signOut()
     expect(fake.state.signoutRedirect).toHaveBeenCalledTimes(1)
+    expect(fake.state.removeUser).not.toHaveBeenCalled()
+  })
+
+  it("signOutLocally forgets the tab's user and leaves the realm session alone", async () => {
+    fake.state.getUser.mockResolvedValue(user())
+    const session = createOidcSession({ ...base, basePath: '' })
+    await flush()
+    expect(session.tokenSource.get()).toBe('tok-1')
+    await session.signOutLocally()
+    expect(fake.state.removeUser).toHaveBeenCalledTimes(1)
+    expect(fake.state.signoutRedirect).not.toHaveBeenCalled()
+    expect(session.tokenSource.get()).toBeNull()
+  })
+
+  it('signOutLocally forgets the cached token even when storage fails', async () => {
+    fake.state.getUser.mockResolvedValue(user())
+    const session = createOidcSession({ ...base, basePath: '' })
+    await flush()
+    fake.state.removeUser.mockRejectedValue(new Error('storage'))
+    await expect(session.signOutLocally()).resolves.toBeUndefined()
+    expect(session.tokenSource.get()).toBeNull()
   })
 })

@@ -1,4 +1,4 @@
-import { UserManager, WebStorageStateStore, type User } from 'oidc-client-ts'
+import { ErrorTimeout, UserManager, WebStorageStateStore, type User } from 'oidc-client-ts'
 import type { TokenSource } from '../api/client'
 
 export interface OidcSessionConfig {
@@ -12,10 +12,13 @@ export interface OidcSessionConfig {
 export interface OidcSession {
   signIn(returnTo: string): Promise<void>
   completeSignIn(): Promise<{ returnTo: string }>
+  // ends the realm session too (RP-initiated logout): every app of the domain signs out
   signOut(): Promise<void>
+  // forgets this tab's user only; the realm session, if alive, brings it back silently on the next sign in
+  signOutLocally(): Promise<void>
   current(): Promise<{ accessToken: string; name?: string } | null>
   tokenSource: TokenSource
-  // refresh failed or the session ended
+  // the realm refused the refresh (or there was none to try). a network failure is not an expiry
   onExpired(handler: () => void): void
 }
 
@@ -50,7 +53,6 @@ export function createOidcSession({ issuer, clientId, basePath, storage }: OidcS
   manager.events.addUserUnloaded(() => {
     cached = null
   })
-  manager.events.addSilentRenewError(expire)
   // expired (reload after sleep) may still have a valid refresh token: try it, expire only when it fails
   manager.events.addAccessTokenExpiring(() => void refresh())
   manager.events.addAccessTokenExpired(() => void refresh())
@@ -66,8 +68,10 @@ export function createOidcSession({ issuer, clientId, basePath, storage }: OidcS
         cached = user
         return true
       }
-    } catch {
-      // counts as failed
+    } catch (cause) {
+      // offline after sleep, realm unreachable: keep the user, the next timer or 401 tries again
+      if (cause instanceof TypeError || cause instanceof ErrorTimeout) return false
+      // ErrorResponse (invalid_grant...) and the rest: the session is over
     }
     expire()
     return false
@@ -90,6 +94,11 @@ export function createOidcSession({ issuer, clientId, basePath, storage }: OidcS
       return { returnTo: typeof user?.state === 'string' ? user.state : '/' }
     },
     signOut: () => manager.signoutRedirect(),
+    async signOutLocally() {
+      cached = null
+      // a storage failure still leaves the token forgotten in memory
+      await manager.removeUser().catch(() => undefined)
+    },
     async current() {
       const stored = await manager.getUser()
       let user = alive(stored)
