@@ -25,6 +25,7 @@ const fake = vi.hoisted(() => {
       addUserLoaded: on('userLoaded'),
       addUserUnloaded: on('userUnloaded'),
       addSilentRenewError: on('silentRenewError'),
+      addAccessTokenExpiring: on('accessTokenExpiring'),
       addAccessTokenExpired: on('accessTokenExpired')
     }
     constructor(settings: Record<string, unknown>) {
@@ -74,7 +75,7 @@ describe('createOidcSession', () => {
     expect(s.post_logout_redirect_uri).toBe(`${window.location.origin}/app/`)
     expect(s.response_type).toBe('code')
     expect(s.scope).toBe('openid organization')
-    expect(s.automaticSilentRenew).toBe(true)
+    expect(s.automaticSilentRenew).toBe(false)
     expect(s.userStore.options.store).toBe(sessionStorage)
     expect(s.stateStore.options.store).toBe(sessionStorage)
   })
@@ -171,13 +172,79 @@ describe('createOidcSession', () => {
     expect(expired).toHaveBeenCalledTimes(1)
   })
 
-  it('fires onExpired on a failed silent renew and on an expired access token', () => {
+  it('fires onExpired on a failed silent renew event', () => {
     const session = createOidcSession({ ...base, basePath: '' })
     const expired = vi.fn()
     session.onExpired(expired)
     fake.state.fire('silentRenewError', new Error('x'))
+    expect(expired).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshes on accessTokenExpired and expires only when that fails', async () => {
+    const session = createOidcSession({ ...base, basePath: '' })
+    const expired = vi.fn()
+    session.onExpired(expired)
+    fake.state.signinSilent.mockResolvedValueOnce(user({ access_token: 'tok-5' }))
     fake.state.fire('accessTokenExpired')
-    expect(expired).toHaveBeenCalledTimes(2)
+    await flush()
+    expect(expired).not.toHaveBeenCalled()
+    expect(session.tokenSource.get()).toBe('tok-5')
+    fake.state.signinSilent.mockRejectedValueOnce(new Error('invalid_grant'))
+    fake.state.fire('accessTokenExpired')
+    await flush()
+    expect(expired).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshes on accessTokenExpiring', async () => {
+    createOidcSession({ ...base, basePath: '' })
+    fake.state.signinSilent.mockResolvedValue(user())
+    fake.state.fire('accessTokenExpiring')
+    await flush()
+    expect(fake.state.signinSilent).toHaveBeenCalledTimes(1)
+  })
+
+  it('shares one signinSilent between concurrent callers', async () => {
+    fake.state.getUser.mockResolvedValue(user({ expires_at: 1, refresh_token: 'r' }))
+    const session = createOidcSession({ ...base, basePath: '' })
+    // the renewal stays open until every caller has joined
+    let finish: (u: unknown) => void = () => undefined
+    fake.state.signinSilent.mockReturnValue(new Promise((resolve) => (finish = resolve)))
+    const pending = Promise.all([session.tokenSource.refresh(), session.tokenSource.refresh(), session.current()])
+    fake.state.fire('accessTokenExpiring')
+    fake.state.fire('accessTokenExpired')
+    await flush()
+    finish(user({ access_token: 'tok-6' }))
+    const all = await pending
+    expect(all[0]).toBe(true)
+    expect(all[2]).toEqual({ accessToken: 'tok-6', name: 'Ana' })
+    expect(fake.state.signinSilent).toHaveBeenCalledTimes(1)
+  })
+
+  it('current renews an expired user that has a refresh token', async () => {
+    fake.state.getUser.mockResolvedValue(user({ expires_at: 1, refresh_token: 'r' }))
+    fake.state.signinSilent.mockResolvedValue(user({ access_token: 'tok-7' }))
+    const session = createOidcSession({ ...base, basePath: '' })
+    await expect(session.current()).resolves.toEqual({ accessToken: 'tok-7', name: 'Ana' })
+  })
+
+  it('current is null when the renewal of an expired user fails', async () => {
+    fake.state.getUser.mockResolvedValue(user({ expires_at: 1, refresh_token: 'r' }))
+    fake.state.signinSilent.mockRejectedValue(new Error('x'))
+    const session = createOidcSession({ ...base, basePath: '' })
+    await expect(session.current()).resolves.toBeNull()
+  })
+
+  it('get checks expiry at call time', () => {
+    vi.useFakeTimers()
+    try {
+      const session = createOidcSession({ ...base, basePath: '' })
+      fake.state.fire('userLoaded', user())
+      expect(session.tokenSource.get()).toBe('tok-1')
+      vi.advanceTimersByTime(301_000)
+      expect(session.tokenSource.get()).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('does not throw on expiry without a handler', async () => {

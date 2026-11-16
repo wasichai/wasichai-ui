@@ -31,7 +31,8 @@ export function createOidcSession({ issuer, clientId, basePath, storage }: OidcS
     post_logout_redirect_uri: `${root}/`,
     response_type: 'code',
     scope: 'openid organization',
-    automaticSilentRenew: true,
+    // renewal is ours: one refresh at a time, the realm rotates refresh tokens
+    automaticSilentRenew: false,
     userStore: store,
     stateStore: store
   })
@@ -50,11 +51,15 @@ export function createOidcSession({ issuer, clientId, basePath, storage }: OidcS
     cached = null
   })
   manager.events.addSilentRenewError(expire)
-  manager.events.addAccessTokenExpired(expire)
+  // expired (reload after sleep) may still have a valid refresh token: try it, expire only when it fails
+  manager.events.addAccessTokenExpiring(() => void refresh())
+  manager.events.addAccessTokenExpired(() => void refresh())
   // a storage failure here only means no session yet
   void manager.getUser().then(keep, () => undefined)
 
-  const refresh = async (): Promise<boolean> => {
+  // one in flight for every caller (expiring timer, 401, expired, current): a rotated refresh token works once
+  let inflight: Promise<boolean> | null = null
+  const renew = async (): Promise<boolean> => {
     try {
       const user = alive(await manager.signinSilent())
       if (user) {
@@ -67,6 +72,15 @@ export function createOidcSession({ issuer, clientId, basePath, storage }: OidcS
     expire()
     return false
   }
+  function refresh(): Promise<boolean> {
+    if (!inflight) {
+      const attempt = renew().finally(() => {
+        if (inflight === attempt) inflight = null
+      })
+      inflight = attempt
+    }
+    return inflight
+  }
 
   return {
     signIn: (returnTo) => manager.signinRedirect({ state: returnTo }),
@@ -77,11 +91,14 @@ export function createOidcSession({ issuer, clientId, basePath, storage }: OidcS
     },
     signOut: () => manager.signoutRedirect(),
     async current() {
-      const user = alive(await manager.getUser())
+      const stored = await manager.getUser()
+      let user = alive(stored)
+      // expired access token, live refresh token: renew before giving up
+      if (!user && stored?.refresh_token && (await refresh())) user = cached
       cached = user
       return user ? { accessToken: user.access_token, name: user.profile?.name } : null
     },
-    tokenSource: { get: () => cached?.access_token ?? null, refresh },
+    tokenSource: { get: () => alive(cached)?.access_token ?? null, refresh },
     onExpired(next) {
       handler = next
     }
