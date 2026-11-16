@@ -1,4 +1,5 @@
 import { Bot, Boxes, Database, FileStack, KeyRound, ScrollText, Shield, Users } from 'lucide-react'
+import { AuthCallbackPage } from '../auth/AuthCallbackPage'
 import { LoginPage } from '../auth/LoginPage'
 import { AuditPage } from '../features/admin/AuditPage'
 import { PermissionsPage } from '../features/admin/PermissionsPage'
@@ -34,6 +35,7 @@ export const coreModule: WasichaiModule = {
   ],
   routes: [
     { id: 'login', path: CORE_ROUTE_PATHS.login, component: LoginPage, chrome: 'public' },
+    { id: 'authCallback', path: CORE_ROUTE_PATHS.authCallback, component: AuthCallbackPage, chrome: 'public' },
     { id: 'home', path: CORE_ROUTE_PATHS.home, component: HomePage },
     { id: 'objects', path: CORE_ROUTE_PATHS.objects, component: ObjectsPage },
     { id: 'newObject', path: CORE_ROUTE_PATHS.newObject, component: ObjectBuilderPage },

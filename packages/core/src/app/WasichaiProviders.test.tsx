@@ -1,8 +1,11 @@
 import { QueryClient } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { mockFetch, type FetchMock } from '@wasichai/testing'
 import { createApiClient, getActiveApiClient } from '../api/client'
+import { useAuth } from '../auth/AuthProvider'
 import { createWasichaiI18n } from '../i18n/createI18n'
 import type { WasichaiModule } from '../registry/contract'
 import { createRegistry } from '../registry/createRegistry'
@@ -88,5 +91,62 @@ describe('WasichaiProviders', () => {
       return null
     }
     expect(() => render(<Screen />)).toThrow(/inside WasichaiApp/)
+  })
+})
+
+// without a user given, the sign-in mode comes from the backend before anything signs in
+describe('WasichaiProviders and /auth/config', () => {
+  function Mode() {
+    return <p>{`mode ${useAuth().mode}`}</p>
+  }
+
+  function boot() {
+    const config = resolveConfig({ storagePrefix: 'providers-config-test' })
+    const apiClient = createApiClient({ baseUrl: config.apiBaseUrl, storagePrefix: config.storagePrefix })
+    const i18n = createWasichaiI18n({ languages: config.languages, storageKey: apiClient.keys.lang, modules: [] })
+    return render(
+      <WasichaiProviders config={config} registry={createRegistry([])} apiClient={apiClient} i18n={i18n} queryClient={new QueryClient()}>
+        <Mode />
+      </WasichaiProviders>
+    )
+  }
+
+  let fetch: FetchMock | null = null
+  afterEach(() => {
+    fetch?.restore()
+    vi.unstubAllGlobals()
+  })
+
+  it('reads local from an older backend without the route', async () => {
+    fetch = mockFetch([])
+    boot()
+    expect(await screen.findByText('mode local')).toBeInTheDocument()
+  })
+
+  it('shows loading, then an error with Reintentar, never a sign-in of the wrong mode', async () => {
+    let answer: () => Response = () => new Response('<html>bad gateway</html>', { status: 502 })
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        await gate
+        return answer()
+      })
+    )
+    boot()
+
+    expect(screen.getByRole('status')).toHaveTextContent('Cargando…')
+    expect(screen.queryByText(/^mode/)).toBeNull()
+    release()
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText(/^mode/)).toBeNull()
+
+    answer = () => new Response(JSON.stringify({ mode: 'local' }), { status: 200 })
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('mode local')).toBeInTheDocument()
   })
 })

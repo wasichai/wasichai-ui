@@ -363,6 +363,14 @@ const location = useLocation()
 <Link to={links.login({ returnTo: location.pathname + location.search })}>{t('courses.signInToEnroll')}</Link>
 ```
 
+Sign-in mode: before anything signs in, `WasichaiProviders` asks `GET /auth/config` (a loading screen, then an error
+with «Reintentar» if it fails; a backend without the route is `local`). `local` is the email and password form.
+`oidc` signs in at the realm (Keycloak): `LoginPage` shows one «Ingresar» button (`useAuth().signInWithRealm(returnTo)`),
+the realm comes back to the public `auth/callback` route (`AuthCallbackPage`), which goes on to `returnTo`; a spent
+code (reload) lands on login with the reason. `useAuth().mode` says which. `signOut()` ends the realm session too, and
+a 403 on `GET /auth/me` (not invited, organization not in the app, disabled) shows `AccessDenied` with the backend's
+reason. Passing `initialUser` or `authConfig` to `WasichaiProviders` skips the request (tests, embedders).
+
 Leaving with unsaved work: `WasichaiApp` runs on a data router (`createBrowserRouter`), so a page can hold a
 navigation with `react-router`'s `useBlocker`: the shell's links, `navigate()` and the browser's back and forward wait
 until the page calls `blocker.proceed()` or `blocker.reset()`. Closing or reloading the tab is the page's own

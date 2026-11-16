@@ -7,6 +7,8 @@ export const CORE_MODULE_ID = 'core'
 export const CORE_ROUTE_PATHS = {
   home: '',
   login: 'login',
+  // the realm sends the browser back here (oidc). oidcSession builds its redirect_uri from the same path
+  authCallback: 'auth/callback',
   objects: 'data/objects',
   newObject: 'data/objects/new',
   editObject: 'data/objects/:object/edit',

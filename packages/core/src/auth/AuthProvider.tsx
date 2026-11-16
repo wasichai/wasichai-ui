@@ -1,14 +1,20 @@
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
-import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { type ApiError } from '../api/client'
-import { useApiClient } from '../app/context'
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { ApiError, type ApiClient } from '../api/client'
+import { useApiClient, useWasichaiConfig } from '../app/context'
+import { ErrorState, LoadingState } from '../components/query-state/QueryState'
 import type { AuthUser, CallerPermissions } from '../types/auth'
+import { AccessDenied } from './AccessDenied'
+import type { AuthConfig } from './authConfig'
+import { createOidcSession, type OidcSession } from './oidcSession'
 
 interface LoginResponse {
   token: string
   expiresAt: string
   user: AuthUser
 }
+
+export type AuthMode = AuthConfig['mode']
 
 export interface AuthContextValue {
   user: AuthUser | null
@@ -18,11 +24,21 @@ export interface AuthContextValue {
   permissionsError: ApiError | null
   isAdmin: boolean
   can: (objectName: string, action: string) => boolean
+  // local: email and password. oidc: the realm asks, use signInWithRealm
+  mode: AuthMode
   signIn: (email: string, password: string) => Promise<void>
+  // oidc: leaves for the realm; the callback comes back to returnTo (a router path)
+  signInWithRealm: (returnTo: string) => Promise<void>
+  // oidc: ends the realm session too
   signOut: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+// AuthCallbackPage's way in: finish the realm's sign in, load the user, answer returnTo. null outside oidc
+const RealmCallbackContext = createContext<(() => Promise<string>) | null>(null)
+
+const LOCAL: AuthConfig = { mode: 'local' }
 
 function storedUser(key: string): AuthUser | null {
   const raw = localStorage.getItem(key)
@@ -44,12 +60,24 @@ export interface AuthProviderProps {
   // tests and embedders: given means "use this", nothing is read from storage or fetched
   initialUser?: AuthUser | null
   initialPermissions?: CallerPermissions | null
+  // what /auth/config said. default local
+  authConfig?: AuthConfig
 }
 
-export function AuthProvider({ children, initialUser, initialPermissions }: AuthProviderProps) {
+export function AuthProvider({ authConfig = LOCAL, ...props }: AuthProviderProps) {
+  return authConfig.mode === 'oidc' ? <OidcAuthProvider realm={authConfig}>{props.children}</OidcAuthProvider> : <LocalAuthProvider {...props} />
+}
+
+interface Actions {
+  mode: AuthMode
+  signIn: AuthContextValue['signIn']
+  signInWithRealm: AuthContextValue['signInWithRealm']
+  signOut: AuthContextValue['signOut']
+}
+
+// both modes: permissions follow the user
+function useAuthValue(user: AuthUser | null, initialPermissions: CallerPermissions | null | undefined, actions: Actions): AuthContextValue {
   const client = useApiClient()
-  const queryClient = useOptionalQueryClient()
-  const [user, setUser] = useState<AuthUser | null>(() => (initialUser !== undefined ? initialUser : storedUser(client.keys.user)))
   const loaded = useQuery<CallerPermissions, ApiError>({
     queryKey: ['auth', 'permissions', user?.id ?? null],
     queryFn: () => client.request<CallerPermissions>('/auth/me/permissions'),
@@ -57,6 +85,30 @@ export function AuthProvider({ children, initialUser, initialPermissions }: Auth
   })
   const permissions = initialPermissions !== undefined ? initialPermissions : user ? (loaded.data ?? null) : null
   const permissionsError = initialPermissions !== undefined || !user ? null : (loaded.error ?? null)
+  const { mode, signIn, signInWithRealm, signOut } = actions
+
+  return useMemo<AuthContextValue>(() => {
+    const isAdmin = permissions?.admin === true
+    return {
+      user,
+      permissions,
+      permissionsError,
+      isAdmin,
+      can: (objectName, action) => isAdmin || (permissions?.objects[objectName] ?? []).includes(action),
+      mode,
+      signIn,
+      signInWithRealm,
+      signOut
+    }
+  }, [user, permissions, permissionsError, mode, signIn, signInWithRealm, signOut])
+}
+
+const noRealm = () => Promise.reject(new Error('wasichai: signInWithRealm needs oidc mode'))
+
+function LocalAuthProvider({ children, initialUser, initialPermissions }: Omit<AuthProviderProps, 'authConfig'>) {
+  const client = useApiClient()
+  const queryClient = useOptionalQueryClient()
+  const [user, setUser] = useState<AuthUser | null>(() => (initialUser !== undefined ? initialUser : storedUser(client.keys.user)))
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -86,20 +138,145 @@ export function AuthProvider({ children, initialUser, initialPermissions }: Auth
     return () => client.setOnUnauthorized(null)
   }, [client, signOut])
 
-  const value = useMemo<AuthContextValue>(() => {
-    const isAdmin = permissions?.admin === true
-    return {
-      user,
-      permissions,
-      permissionsError,
-      isAdmin,
-      can: (objectName, action) => isAdmin || (permissions?.objects[objectName] ?? []).includes(action),
-      signIn,
-      signOut
-    }
-  }, [user, permissions, permissionsError, signIn, signOut])
-
+  const value = useAuthValue(user, initialPermissions, { mode: 'local', signIn, signInWithRealm: noRealm, signOut })
   return <AuthContext value={value}>{children}</AuthContext>
+}
+
+// GET /auth/me: the app's user, not the realm's (no display name here, the realm has it)
+interface Me {
+  userId: string
+  organizationId: string
+  email: string
+  roles: string[]
+  serviceAccount?: boolean
+}
+
+type RealmState =
+  | { phase: 'loading' }
+  | { phase: 'ready'; user: AuthUser | null }
+  // the backend's 403: signed in at the realm, not let into the app
+  | { phase: 'denied'; detail: string }
+  | { phase: 'failed'; error: unknown }
+
+// one session per app, made outside render state: two would each renew against a refresh token the realm rotates.
+// keyed by the client because the client is the app (WasichaiApp makes one)
+const sessions = new WeakMap<ApiClient, OidcSession>()
+
+function realmSession(client: ApiClient, realm: Extract<AuthConfig, { mode: 'oidc' }>, basePath: string): OidcSession {
+  let session = sessions.get(client)
+  if (!session) {
+    session = createOidcSession({ issuer: realm.issuer, clientId: realm.clientId, basePath })
+    // before any child asks anything
+    client.setTokenSource(session.tokenSource)
+    sessions.set(client, session)
+  }
+  return session
+}
+
+const noPassword = () => Promise.reject(new Error('wasichai: oidc signs in through the realm, use signInWithRealm'))
+
+function OidcAuthProvider({ realm, children }: { realm: Extract<AuthConfig, { mode: 'oidc' }>; children: ReactNode }) {
+  const client = useApiClient()
+  const queryClient = useOptionalQueryClient()
+  const { basename } = useWasichaiConfig()
+  const session = realmSession(client, realm, basename ?? '')
+  const [state, setState] = useState<RealmState>({ phase: 'loading' })
+  const [attempt, setAttempt] = useState(0)
+
+  const load = useCallback(async (): Promise<RealmState> => {
+    try {
+      const signedIn = await session.current()
+      if (!signedIn) return { phase: 'ready', user: null }
+      const me = await client.request<Me>('/auth/me')
+      return {
+        phase: 'ready',
+        user: { id: me.userId, email: me.email, displayName: signedIn.name || me.email, organizationId: me.organizationId, roles: me.roles }
+      }
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 403) return { phase: 'denied', detail: cause.message }
+      // a 401 already went through refresh and sign out
+      if (cause instanceof ApiError && cause.status === 401) return { phase: 'ready', user: null }
+      return { phase: 'failed', error: cause }
+    }
+  }, [client, session])
+
+  useEffect(() => {
+    let live = true
+    void load().then((next) => {
+      if (live) setState(next)
+    })
+    return () => {
+      live = false
+    }
+  }, [load, attempt])
+
+  // the code works once: strict mode's second effect, or a second caller, gets the same answer
+  const completing = useRef<Promise<string> | null>(null)
+  const complete = useCallback(() => {
+    completing.current ??= (async () => {
+      const { returnTo } = await session.completeSignIn()
+      setState(await load())
+      return returnTo
+    })()
+    return completing.current
+  }, [load, session])
+
+  // onExpired and a 401 often say the same thing: leave once
+  const leaving = useRef(false)
+  const signOut = useCallback(() => {
+    if (leaving.current) return
+    leaving.current = true
+    queryClient?.clear()
+    session.signOut().catch(() => {
+      // realm unreachable: at least this tab forgets the user
+      leaving.current = false
+      setState({ phase: 'ready', user: null })
+    })
+  }, [queryClient, session])
+
+  useEffect(() => {
+    client.setOnUnauthorized(signOut)
+    session.onExpired(signOut)
+    return () => {
+      client.setOnUnauthorized(null)
+      session.onExpired(() => {})
+    }
+  }, [client, session, signOut])
+
+  const signInWithRealm = useCallback((returnTo: string) => session.signIn(returnTo), [session])
+  const user = state.phase === 'ready' ? state.user : null
+  const value = useAuthValue(user, undefined, { mode: 'oidc', signIn: noPassword, signInWithRealm, signOut })
+
+  let body: ReactNode = children
+  if (state.phase === 'loading') body = <BootScreen>{<LoadingState />}</BootScreen>
+  else if (state.phase === 'denied') body = <AccessDenied detail={state.detail} onSignOut={signOut} />
+  else if (state.phase === 'failed')
+    body = (
+      <BootScreen>
+        <ErrorState
+          error={state.error}
+          onRetry={() => {
+            setState({ phase: 'loading' })
+            setAttempt((count) => count + 1)
+          }}
+        />
+      </BootScreen>
+    )
+
+  return (
+    <AuthContext value={value}>
+      <RealmCallbackContext value={complete}>{body}</RealmCallbackContext>
+    </AuthContext>
+  )
+}
+
+// before the app: nothing else on the page yet
+export function BootScreen({ children }: { children: ReactNode }) {
+  return <div className="flex h-full items-center justify-center bg-surface px-4">{children}</div>
+}
+
+export function useRealmCallback(): (() => Promise<string>) | null {
+  return use(RealmCallbackContext)
 }
 
 // links read the session when there is one; a bare WasichaiContext (no AuthProvider) still gets links

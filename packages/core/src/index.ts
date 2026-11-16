@@ -92,7 +92,7 @@ export {
   type CurrentOrganization,
   type CurrentOrganizationOptions
 } from './organization/currentOrganization'
-export { AuthProvider, useAuth, type AuthContextValue, type AuthProviderProps } from './auth/AuthProvider'
+export { AuthProvider, useAuth, type AuthContextValue, type AuthMode, type AuthProviderProps } from './auth/AuthProvider'
 export { WasichaiProviders, type WasichaiProvidersProps } from './app/WasichaiProviders'
 export { ThemeProvider, useTheme, type ThemeContextValue } from './theme/ThemeProvider'
 export {
@@ -120,6 +120,8 @@ export { WasichaiRoutes } from './app/WasichaiRoutes'
 export { coreModule } from './app/coreModule'
 export { WasichaiApp, type WasichaiAppProps } from './app/WasichaiApp'
 export { LoginPage } from './auth/LoginPage'
+export { AuthCallbackPage } from './auth/AuthCallbackPage'
+export { AccessDenied, type AccessDeniedProps } from './auth/AccessDenied'
 export { DashboardPage } from './features/dashboard/DashboardPage'
 export { HomePage } from './app/HomePage'
 export { DataTable, type DataTableProps } from './components/data-table/DataTable'

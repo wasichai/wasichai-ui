@@ -23,7 +23,12 @@
         "email": "Email",
         "password": "Password",
         "signOut": "Sign out",
-        "invalid": "Invalid credentials"
+        "invalid": "Invalid credentials",
+        "signInWithRealm": "Sign in",
+        "signingIn": "Signing in…",
+        "realmUnreachable": "The sign-in service could not be reached. Try again.",
+        "callbackFailed": "Signing in could not be completed. Try again.",
+        "accessDenied": "No access"
     },
     "theme": {
         "label": "Theme",
