@@ -29,7 +29,7 @@ export interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>
   // oidc: leaves for the realm; the callback comes back to returnTo (a router path)
   signInWithRealm: (returnTo: string) => Promise<void>
-  // oidc: ends the realm session too
+  // oidc: ends the realm session too (every app of the domain). an expiry ends only this tab's
   signOut: () => void
 }
 
@@ -166,6 +166,9 @@ function realmSession(client: ApiClient, realm: Extract<AuthConfig, { mode: 'oid
   let session = sessions.get(client)
   if (!session) {
     session = createOidcSession({ issuer: realm.issuer, clientId: realm.clientId, basePath })
+    // left by local mode before the switch: never sent again, never shown as the user
+    localStorage.removeItem(client.keys.token)
+    localStorage.removeItem(client.keys.user)
     // before any child asks anything
     client.setTokenSource(session.tokenSource)
     sessions.set(client, session)
@@ -221,7 +224,21 @@ function OidcAuthProvider({ realm, children }: { realm: Extract<AuthConfig, { mo
     return completing.current
   }, [load, session])
 
-  // onExpired and a 401 often say the same thing: leave once
+  // expiry or a final 401: only this tab forgets the user. the realm session may be alive (a duplicated tab
+  // lost the rotation race, a short client idle): Ingresar then comes back without a password.
+  // onExpired and a 401 often say the same thing: once, until someone signs in again
+  const ending = useRef(false)
+  const endHere = useCallback(() => {
+    if (ending.current) return
+    ending.current = true
+    queryClient?.clear()
+    void session.signOutLocally().finally(() => setState({ phase: 'ready', user: null }))
+  }, [queryClient, session])
+  useEffect(() => {
+    if (state.phase === 'ready' && state.user) ending.current = false
+  }, [state])
+
+  // the button and AccessDenied: RP logout, every app of the domain. leave once
   const leaving = useRef(false)
   const signOut = useCallback(() => {
     if (leaving.current) return
@@ -235,13 +252,13 @@ function OidcAuthProvider({ realm, children }: { realm: Extract<AuthConfig, { mo
   }, [queryClient, session])
 
   useEffect(() => {
-    client.setOnUnauthorized(signOut)
-    session.onExpired(signOut)
+    client.setOnUnauthorized(endHere)
+    session.onExpired(endHere)
     return () => {
       client.setOnUnauthorized(null)
       session.onExpired(() => {})
     }
-  }, [client, session, signOut])
+  }, [client, session, endHere])
 
   const signInWithRealm = useCallback((returnTo: string) => session.signIn(returnTo), [session])
   const user = state.phase === 'ready' ? state.user : null

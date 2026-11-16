@@ -19,14 +19,15 @@ export interface FakeRealmSession extends OidcSession {
   signIn: ReturnType<typeof vi.fn<(returnTo: string) => Promise<void>>>
   completeSignIn: ReturnType<typeof vi.fn<() => Promise<{ returnTo: string }>>>
   signOut: ReturnType<typeof vi.fn<() => Promise<void>>>
+  signOutLocally: ReturnType<typeof vi.fn<() => Promise<void>>>
   current: ReturnType<typeof vi.fn<() => Promise<{ accessToken: string; name?: string } | null>>>
   // fires what the session's onExpired got
   expire(): void
 }
 
-export function fakeRealmSession(
-  signedIn: { accessToken: string; name?: string } | null = { accessToken: 'realm-token', name: 'Ana Pérez' }
-): FakeRealmSession {
+export function fakeRealmSession(given: { accessToken: string; name?: string } | null = { accessToken: 'realm-token', name: 'Ana Pérez' }): FakeRealmSession {
+  // like the real one: signing out locally forgets the user and its token
+  let signedIn = given
   let expired: (() => void) | null = null
   // like the real one: signIn keeps returnTo in the request's state, the callback hands it back
   let pending: string | null = null
@@ -41,6 +42,9 @@ export function fakeRealmSession(
       return { returnTo }
     }),
     signOut: vi.fn(async () => {}),
+    signOutLocally: vi.fn(async () => {
+      signedIn = null
+    }),
     current: vi.fn(async () => signedIn),
     tokenSource: { get: () => signedIn?.accessToken ?? null, refresh: vi.fn(async () => false) },
     onExpired: vi.fn((handler: () => void) => {

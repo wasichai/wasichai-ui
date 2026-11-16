@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeRealmSession, renderOidc, REALM, type FakeRealmSession, type RenderOidcResult } from '../test/oidc'
-import { useAuth } from './AuthProvider'
+import { useAuth, useRealmCallback } from './AuthProvider'
 import { createOidcSession } from './oidcSession'
 
 vi.mock('./oidcSession', () => ({ createOidcSession: vi.fn() }))
@@ -12,6 +12,7 @@ const permissions = { admin: false, objects: { predio: ['READ'] } }
 
 function Probe() {
   const auth = useAuth()
+  const complete = useRealmCallback()
   return (
     <div>
       <p data-testid="mode">{auth.mode}</p>
@@ -19,6 +20,7 @@ function Probe() {
       <p data-testid="rights">{`${auth.can('predio', 'READ')}`}</p>
       <button onClick={() => void auth.signInWithRealm('/plans/sheets')}>realm</button>
       <button onClick={auth.signOut}>out</button>
+      <button onClick={() => void complete?.()}>callback</button>
     </div>
   )
 }
@@ -79,7 +81,30 @@ describe('AuthProvider in oidc', () => {
     expect(session.signIn).toHaveBeenCalledWith('/plans/sheets')
   })
 
-  it('ends the realm session when the session expires, once even if a 401 says it too', async () => {
+  // a failed refresh (sleep, a duplicated tab, a short client idle) must not log out every app of the domain
+  it("ends only this tab's session when the session expires, once even if a 401 says it too", async () => {
+    view = renderOidc({
+      ui: <Probe />,
+      routes: [
+        { path: '/auth/me', body: me },
+        { path: '/gone', status: 401, body: { title: 'Unauthorized' } }
+      ]
+    })
+    await screen.findByText('app-user-7|Ana Pérez|ana@wasichai.test|o1')
+    const cleared = vi.spyOn(view.queryClient, 'clear')
+
+    session.expire()
+    await expect(view.apiClient.request('/gone')).rejects.toThrow()
+    session.expire()
+
+    expect(await screen.findByText('nobody')).toBeInTheDocument()
+    expect(session.signOutLocally).toHaveBeenCalledTimes(1)
+    expect(session.signOut).not.toHaveBeenCalled()
+    expect(cleared).toHaveBeenCalledTimes(1)
+    expect(session.tokenSource.refresh).toHaveBeenCalledTimes(1)
+  })
+
+  it("ends only this tab's session on a final 401", async () => {
     view = renderOidc({
       ui: <Probe />,
       routes: [
@@ -89,20 +114,50 @@ describe('AuthProvider in oidc', () => {
     })
     await screen.findByText('app-user-7|Ana Pérez|ana@wasichai.test|o1')
 
-    session.expire()
     await expect(view.apiClient.request('/gone')).rejects.toThrow()
-    session.expire()
 
-    await waitFor(() => expect(session.signOut).toHaveBeenCalledTimes(1))
-    expect(session.tokenSource.refresh).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText('nobody')).toBeInTheDocument()
+    expect(session.signOutLocally).toHaveBeenCalledTimes(1)
+    expect(session.signOut).not.toHaveBeenCalled()
   })
 
-  it('ends the realm session on sign out', async () => {
+  it('signs out locally again after signing back in', async () => {
+    view = renderOidc({ ui: <Probe />, routes: [{ path: '/auth/me', body: me }] })
+    await screen.findByText('app-user-7|Ana Pérez|ana@wasichai.test|o1')
+    session.expire()
+    expect(await screen.findByText('nobody')).toBeInTheDocument()
+
+    // the realm session was alive: the sign in comes back without a password
+    session.current.mockResolvedValue({ accessToken: 'realm-token-2', name: 'Ana Pérez' })
+    session.completeSignIn.mockResolvedValue({ returnTo: '/' })
+    await userEvent.click(screen.getByRole('button', { name: 'callback' }))
+    expect(await screen.findByText('app-user-7|Ana Pérez|ana@wasichai.test|o1')).toBeInTheDocument()
+
+    session.expire()
+    expect(await screen.findByText('nobody')).toBeInTheDocument()
+    expect(session.signOutLocally).toHaveBeenCalledTimes(2)
+  })
+
+  it('ends the realm session on sign out, once', async () => {
     view = renderOidc({ ui: <Probe />, routes: [{ path: '/auth/me', body: me }] })
     await userEvent.click(await screen.findByRole('button', { name: 'out' }))
     await userEvent.click(screen.getByRole('button', { name: 'out' }))
 
     expect(session.signOut).toHaveBeenCalledTimes(1)
+    expect(session.signOutLocally).not.toHaveBeenCalled()
+  })
+
+  it('clears the stale local-mode credentials when the realm session starts', async () => {
+    localStorage.setItem('oidc-test.token', 'old-local-token')
+    localStorage.setItem('oidc-test.user', JSON.stringify({ id: 'u1' }))
+    localStorage.setItem('oidc-test.lang', 'es')
+    view = renderOidc({ ui: <Probe />, routes: [{ path: '/auth/me', body: me }] })
+    await screen.findByText('app-user-7|Ana Pérez|ana@wasichai.test|o1')
+
+    expect(localStorage.getItem('oidc-test.token')).toBeNull()
+    expect(localStorage.getItem('oidc-test.user')).toBeNull()
+    expect(localStorage.getItem('oidc-test.lang')).toBe('es')
+    localStorage.removeItem('oidc-test.lang')
   })
 
   it('shows a denial on /auth/me with its reason and a way out', async () => {
