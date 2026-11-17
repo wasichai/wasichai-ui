@@ -21,13 +21,17 @@ export function useNotifications(filters: ListFilters) {
   return useQuery({ queryKey: notificationKeys.list(filters), queryFn: () => listNotifications(filters) })
 }
 
-// the stream confirms the new counts too; invalidating does not wait for it
+// the stream confirms the new counts too, but in polling mode it lags up to a minute: fetch the summary now.
+// the summary query is disabled, so invalidating alone would not refetch it
 function useNotificationMutation<T>(mutationFn: (variables: T) => Promise<void>) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn,
     onSuccess: () =>
-      Promise.all([queryClient.invalidateQueries({ queryKey: notificationKeys.summary }), queryClient.invalidateQueries({ queryKey: notificationKeys.lists })])
+      Promise.all([
+        queryClient.fetchQuery({ queryKey: notificationKeys.summary, queryFn: getSummary, staleTime: 0 }).catch(() => undefined),
+        queryClient.invalidateQueries({ queryKey: notificationKeys.lists })
+      ])
   })
 }
 

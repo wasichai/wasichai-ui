@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { useWasichaiLinks } from '@wasichai/core'
 import { useMarkRead, useNotificationLinks } from './hooks'
 import { defaultResolveLink } from './links'
-import type { NotificationLink } from './types'
+import type { NotificationLink, NotificationLinkResolver } from './types'
 
 export interface NotificationLinkViewProps {
   id: string
@@ -19,7 +19,7 @@ export function NotificationLinkView({ id, link, className, children, onNavigate
   const links = useWasichaiLinks()
   const { resolveLink } = useNotificationLinks()
   const markRead = useMarkRead()
-  const target = link ? (resolveLink ?? defaultResolveLink)(link, links) : null
+  const target = link ? safeResolve(resolveLink ?? defaultResolveLink, link, links) : null
   if (!target) return <span className={className}>{children}</span>
 
   const onClick = () => {
@@ -35,4 +35,13 @@ export function NotificationLinkView({ id, link, className, children, onNavigate
       {children}
     </Link>
   )
+}
+
+// a resolver of the app may throw on a shape it does not know: that alert simply has no link
+function safeResolve(resolve: NotificationLinkResolver, link: NotificationLink, links: ReturnType<typeof useWasichaiLinks>) {
+  try {
+    return resolve(link, links)
+  } catch {
+    return null
+  }
 }

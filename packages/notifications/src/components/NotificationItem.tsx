@@ -16,6 +16,12 @@ export function NotificationItem({ item }: { item: InboxItem }) {
   const busy = markRead.isPending || dismiss.isPending || snooze.isPending
   // a refusal (the snooze limit's 400, a 409) says why on the item itself
   const error = markRead.error ?? dismiss.error ?? snooze.error
+  // a new action starts clean: an old refusal must not outlive a later success
+  const resetAll = () => {
+    markRead.reset()
+    dismiss.reset()
+    snooze.reset()
+  }
 
   return (
     <article data-slot="notification-item" className="flex flex-col gap-2 border-b border-border px-4 py-3 md:px-8">
@@ -32,14 +38,36 @@ export function NotificationItem({ item }: { item: InboxItem }) {
         </div>
         <div className="flex flex-wrap items-center gap-1">
           {!item.read && (
-            <Button variant="ghost" size="sm" disabled={busy} onClick={() => markRead.mutate(item.id)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                resetAll()
+                markRead.mutate(item.id)
+              }}
+            >
               <Check className="size-4" aria-hidden />
               {t('notifications.inbox.markRead')}
             </Button>
           )}
-          <SnoozeMenu disabled={busy} onSnooze={(until) => snooze.mutate({ id: item.id, until })} />
+          <SnoozeMenu
+            disabled={busy}
+            onSnooze={(until) => {
+              resetAll()
+              snooze.mutate({ id: item.id, until })
+            }}
+          />
           {item.dismissible && (
-            <Button variant="ghost" size="sm" disabled={busy} onClick={() => dismiss.mutate(item.id)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                resetAll()
+                dismiss.mutate(item.id)
+              }}
+            >
               <X className="size-4" aria-hidden />
               {t('notifications.inbox.dismiss')}
             </Button>

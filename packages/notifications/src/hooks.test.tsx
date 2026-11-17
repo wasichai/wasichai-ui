@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import { useAuth } from '@wasichai/core'
 import { renderWithProviders, type WasichaiRenderOptions } from '@wasichai/testing'
-import { useMarkRead, useNotificationLinks, useNotifications, useNotificationSummary, useReadAll, useSnooze } from './hooks'
+import { useDismiss, useMarkRead, useNotificationLinks, useNotifications, useNotificationSummary, useReadAll, useSnooze } from './hooks'
 import { notificationsModule } from './module'
 import type { NotificationLinkResolver, NotificationSummary } from './types'
 
@@ -142,6 +142,27 @@ describe('notifications provider and hooks', () => {
       ['/auth/me/notifications/n1/snooze', { until: '2026-11-18T08:00:00Z' }],
       ['/auth/me/notifications/read-all', { kind: 'ACTION' }]
     ])
+  })
+
+  it.each(['read', 'dismiss', 'snooze', 'all'] as const)('refetches the summary after %s succeeds, so the bell does not wait for the poll', async (action) => {
+    const net = stubFetch(500, {
+      'GET /auth/me/notifications/summary': { status: 200, body: summary(1) },
+      'POST /auth/me/notifications/n1/read': { status: 204 },
+      'POST /auth/me/notifications/n1/dismiss': { status: 204 },
+      'POST /auth/me/notifications/n1/snooze': { status: 204 },
+      'POST /auth/me/notifications/read-all': { status: 204 }
+    })
+    const { result } = render(() => ({ read: useMarkRead(), dismiss: useDismiss(), snooze: useSnooze(), all: useReadAll(), summary: useNotificationSummary() }))
+    const summaries = () => net.calls.filter((call) => call.path === '/auth/me/notifications/summary').length
+    await waitFor(() => expect(net.streams()).toBeGreaterThan(0))
+    const before = summaries()
+    await act(async () => {
+      if (action === 'read') await result.current.read.mutateAsync('n1')
+      if (action === 'dismiss') await result.current.dismiss.mutateAsync('n1')
+      if (action === 'snooze') await result.current.snooze.mutateAsync({ id: 'n1', until: '2026-11-18T08:00:00Z' })
+      if (action === 'all') await result.current.all.mutateAsync({})
+    })
+    await waitFor(() => expect(summaries()).toBe(before + 1))
   })
 
   it('refreshes through the api client on a stream 401 and reopens it, without signing out', async () => {

@@ -11,10 +11,16 @@ export const NOTIFICATIONS_MODULE_ID = 'notifications'
 export interface NotificationsModuleOptions {
   // how a link of a notification becomes an href in this app. default: core's links
   resolveLink?: NotificationLinkResolver
+  // where the bell and the toasts link. default: the inbox route this module registers
+  inboxPath?: string
 }
 
 export function notificationsModule(options: NotificationsModuleOptions = {}): WasichaiModule {
-  const Provider = ({ children }: { children: ReactNode }) => <NotificationsProvider resolveLink={options.resolveLink}>{children}</NotificationsProvider>
+  const Provider = ({ children }: { children: ReactNode }) => (
+    <NotificationsProvider resolveLink={options.resolveLink} inboxPath={options.inboxPath}>
+      {children}
+    </NotificationsProvider>
+  )
   return {
     id: NOTIFICATIONS_MODULE_ID,
     basePath: 'notifications',

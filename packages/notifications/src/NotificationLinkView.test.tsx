@@ -63,4 +63,12 @@ describe('NotificationLinkView', () => {
     expect(screen.queryByRole('link')).toBeNull()
     expect(screen.getByText('Pagos')).toBeInTheDocument()
   })
+
+  it('falls back to plain text when the resolver throws', () => {
+    view({ type: 'RECORD', object: 'predio', recordId: 'r1' }, () => {
+      throw new Error('boom')
+    })
+    expect(screen.getByText('Pagos')).toBeInTheDocument()
+    expect(screen.queryByRole('link')).toBeNull()
+  })
 })

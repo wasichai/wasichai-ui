@@ -17,6 +17,8 @@ let calls: Call[]
 let items: InboxItem[]
 let snoozeAnswer: { status: number; body?: unknown }
 let readAllAnswer: { status: number; body?: unknown }
+let streamStatus: number
+let listStatus: number
 
 function item(over: Partial<InboxItem> & { id: string }): InboxItem {
   return {
@@ -41,14 +43,19 @@ beforeEach(() => {
   items = []
   snoozeAnswer = { status: 204 }
   readAllAnswer = { status: 204 }
+  // a refused stream with a retry reads as polling: the module is there
+  streamStatus = 500
+  listStatus = 200
   localStorage.setItem('wasichai-test.token', 'tok')
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
       const path = String(input).replace(/^\/api/, '')
       const method = (init.method ?? 'GET').toUpperCase()
-      if (path === '/auth/me/notifications/stream') return new Response(null, { status: 404 })
+      if (path === '/auth/me/notifications/stream') return new Response(null, { status: streamStatus })
       calls.push({ method, path, body: typeof init.body === 'string' ? JSON.parse(init.body) : null })
+      if (method === 'GET' && listStatus !== 200)
+        return new Response(JSON.stringify({ title: 'x' }), { status: listStatus, headers: { 'Content-Type': 'application/problem+json' } })
       if (method === 'GET') {
         const kind = new URLSearchParams(path.split('?')[1]).get('kind')
         const content = items.filter((i) => !kind || i.kind === kind)
@@ -80,6 +87,41 @@ function Search() {
 const listCalls = () => calls.filter((c) => c.method === 'GET')
 
 describe('InboxPage', () => {
+  it.each([404, 403])('shows a neutral empty page, no error and no retry, when the list answers %i', async (status) => {
+    listStatus = status
+    render()
+    expect(await screen.findByText('No hay alertas aquí')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.queryByRole('button', { name: /reintentar|retry/i })).toBeNull()
+  })
+
+  it('shows a neutral empty page when the module is unavailable', async () => {
+    streamStatus = 404
+    items = [item({ id: 'a' })]
+    render()
+    expect(await screen.findByText('No hay alertas aquí')).toBeInTheDocument()
+    expect(screen.queryByText('Título a')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('still shows the error for other failures', async () => {
+    listStatus = 500
+    render()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+  })
+
+  it('does not keep an old error after a later action succeeds', async () => {
+    items = [item({ id: 'a' })]
+    snoozeAnswer = { status: 400, body: { title: 'Bad Request', detail: 'until is too far ahead' } }
+    render()
+    const card = (await screen.findByText('Título a')).closest('article') as HTMLElement
+    await userEvent.click(within(card).getByRole('button', { name: 'Posponer' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Una semana' }))
+    expect(await within(card).findByRole('alert')).toHaveTextContent('until is too far ahead')
+    await userEvent.click(within(card).getByRole('button', { name: 'Marcar como leída' }))
+    await waitFor(() => expect(within(card).queryByRole('alert')).toBeNull())
+  })
+
   it('shows the tabs and filters the list by kind', async () => {
     items = [item({ id: 'a', kind: 'INFO' }), item({ id: 'b', kind: 'WARNING' })]
     render()

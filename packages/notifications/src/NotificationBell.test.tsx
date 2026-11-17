@@ -95,6 +95,22 @@ describe('NotificationBell', () => {
     expect(await screen.findByTestId('notification-overdue-dot')).toBeInTheDocument()
   })
 
+  it('links to the inboxPath the module was given', async () => {
+    const net = stubStream()
+    renderWithProviders(<NotificationBell />, { modules: [notificationsModule({ inboxPath: '/alertas' })] })
+    await waitFor(() => expect(net.ready()).toBe(true))
+    await net.push(summary(2))
+    expect(await screen.findByRole('link', { name: 'Alertas, 2 sin leer' })).toHaveAttribute('href', '/alertas')
+  })
+
+  it('adds the overdue text to the label when a to-do is overdue', async () => {
+    const net = stubStream()
+    renderBell()
+    await waitFor(() => expect(net.ready()).toBe(true))
+    await net.push(summary(1, { overdue: 1 }))
+    expect(await screen.findByRole('link', { name: /Alertas, 1 sin leer.*Hay pendientes vencidos/ })).toBeInTheDocument()
+  })
+
   it('is hidden when notifications are unavailable', async () => {
     stubStream(404)
     renderBell()
@@ -111,6 +127,15 @@ describe('NotificationBell', () => {
     const region = await screen.findByText('2 alertas sin leer')
     expect(region).toHaveAttribute('aria-live', 'polite')
     expect(region).toHaveClass('sr-only')
+  })
+
+  it('uses the singular in the announcement for one', async () => {
+    const net = stubStream()
+    renderBell()
+    await waitFor(() => expect(net.ready()).toBe(true))
+    await net.push(summary(0))
+    await net.push(summary(1))
+    expect(await screen.findByText('1 alerta sin leer', { selector: '[aria-live]' })).toBeInTheDocument()
   })
 })
 

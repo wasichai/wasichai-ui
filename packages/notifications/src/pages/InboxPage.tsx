@@ -1,7 +1,7 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
-import { describeError, EmptyState, PageHeader, QueryState } from '@wasichai/core'
+import { ApiError, describeError, EmptyState, PageHeader, QueryState } from '@wasichai/core'
 import { Button, cn, PageSizePagination } from '@wasichai/ui'
 import { NotificationItem } from '../components/NotificationItem'
 import { useNotifications, useNotificationSummary, useReadAll } from '../hooks'
@@ -24,7 +24,7 @@ export function InboxPage() {
   const [state, setState] = useState<NotificationState>('active')
   const [page, setPage] = useState(0)
   const [size, setSize] = useState(10)
-  const { summary } = useNotificationSummary()
+  const { summary, status } = useNotificationSummary()
   const readAll = useReadAll()
   const query = useNotifications({ kind, state, page, size })
 
@@ -42,6 +42,17 @@ export function InboxPage() {
   const pick = (next: NotificationKind) => {
     setKind(next)
     setPage(0)
+  }
+
+  // without the module (or without access) there is nothing to list: a neutral page, not an error with a retry
+  const absent = status === 'unavailable' || (query.error instanceof ApiError && (query.error.status === 404 || query.error.status === 403))
+  if (absent) {
+    return (
+      <>
+        <PageHeader title={t('notifications.title')} />
+        <EmptyState title={t('notifications.inbox.empty')} />
+      </>
+    )
   }
 
   return (

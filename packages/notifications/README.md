@@ -34,19 +34,25 @@ app's own resolver for the links inside alerts (see below).
 
 ## An app with its own shell
 
-Mount the pieces yourself. `NotificationsProvider` goes inside the app's providers and signed-in user; it opens one
-stream per browser (tabs share it).
+Register the module and mount the pieces yourself. `notificationsModule` brings the i18n namespace and the
+`NotificationsProvider` (core's `WasichaiProviders` mounts it), so the app only places the bell and a route.
+Do NOT mount a second `NotificationsProvider`: two would open two streams and the second would shadow the first.
 
 ```tsx
-import { InboxPage, NotificationBell, NotificationsProvider } from '@wasichai/notifications'
+import { InboxPage, NotificationBell, notificationsModule } from '@wasichai/notifications'
 
-<NotificationsProvider inboxPath="/alertas" resolveLink={resolveLink}>
-  <Header actions={<NotificationBell />} />
-  <Routes>
-    <Route path="/alertas" element={<InboxPage />} />
-  </Routes>
-</NotificationsProvider>
+// registry: the provider and the strings come with the module
+const modules = [notificationsModule({ resolveLink, inboxPath: '/alertas' })]
+
+// shell: `inboxPath` is where the bell and the toasts link
+<Header actions={<NotificationBell />} />
+<Routes>
+  <Route path="/alertas" element={<InboxPage />} />
+</Routes>
 ```
+
+An app that does not register the module (and so has no provider of its own from it) can load the strings with
+`notificationsMessages`, but it must then mount a `NotificationsProvider` itself.
 
 - `NotificationBell` also draws the toasts for new alerts; pass `toasts={false}` and mount `<NotificationToasts />`
   yourself to place them elsewhere.

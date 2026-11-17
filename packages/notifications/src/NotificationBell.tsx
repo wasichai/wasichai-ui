@@ -23,7 +23,8 @@ export function NotificationBell({ toasts = true }: NotificationBellProps) {
   const announcement = useGrowthAnnouncement(unread, summary !== undefined, (count) => t('notifications.bell.announce', { count }))
 
   if (status === 'unavailable') return null
-  const label = t('notifications.bell.label', { count: unread })
+  const unreadLabel = t('notifications.bell.label', { count: unread })
+  const label = overdue ? `${unreadLabel}. ${t('notifications.bell.overdue')}` : unreadLabel
   const content = (
     <>
       <Bell className="size-5" aria-hidden />
