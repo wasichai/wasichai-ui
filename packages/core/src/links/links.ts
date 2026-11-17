@@ -36,6 +36,8 @@ export interface WasichaiLinks {
   // any registered route by key (`gis:map`). params fill `:name` segments, search becomes ?a=b
   to<K extends RouteKey = RouteKey>(route: K, params?: Record<string, string>, search?: Record<string, string>): string
   has(route: RouteKey): boolean
+  // the `:name` segments of a registered route, in order. [] for an unknown one
+  routeParams(route: RouteKey): string[]
   home(): string
   // returnTo: router path to go back to after signing in (LoginPage checks it before using it)
   login(options?: LoginLinkOptions): string
@@ -81,6 +83,11 @@ export function createLinks(registry: WasichaiRegistry, options: CreateLinksOpti
       return withSearch(fillPath(pattern, params), search)
     },
     has: (route) => paths.has(route),
+    routeParams: (route) =>
+      (paths.get(route) ?? '')
+        .split('/')
+        .filter((segment) => segment.startsWith(':'))
+        .map((segment) => segment.slice(1)),
     home: () => options.home ?? core('home'),
     login: (options) => withSearch(core('login'), options?.returnTo ? { [RETURN_TO_PARAM]: options.returnTo } : undefined),
     objects: () => core('objects'),
