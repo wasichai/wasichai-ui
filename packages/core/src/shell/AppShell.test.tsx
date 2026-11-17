@@ -28,6 +28,25 @@ const plans: WasichaiModule = {
 }
 
 describe('AppShell', () => {
+  it('draws the shell actions of every module in order, and none when there are none', () => {
+    const First = () => <button>primera</button>
+    const Second = () => <button>segunda</button>
+    const a: WasichaiModule = { id: 'a', shellActions: [{ key: 'second', order: 20, component: Second }] }
+    const b: WasichaiModule = { id: 'b', shellActions: [{ key: 'first', order: 10, component: First }] }
+    renderWithProviders(<AppShell />, { modules: [coreModule, a, b] })
+    const first = screen.getByRole('button', { name: 'primera' })
+    const second = screen.getByRole('button', { name: 'segunda' })
+    expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // before the sign-out button
+    const signOut = screen.getByRole('button', { name: 'Cerrar sesión' })
+    expect(second.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('draws no action area when no module brings shell actions', () => {
+    const { container } = renderWithProviders(<AppShell />, { modules: [coreModule] })
+    expect(container.querySelector('[data-slot="shell-actions"]')).toBeNull()
+  })
+
   it('builds the sidebar from the registered modules, in group order', () => {
     renderWithProviders(<AppShell />, { modules: [coreModule, plans] })
 

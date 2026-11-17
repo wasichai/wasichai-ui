@@ -1,0 +1,34 @@
+import { Bell } from 'lucide-react'
+import type { ReactNode } from 'react'
+import type { WasichaiModule } from '@wasichai/core'
+import { notificationsMessages } from './i18n'
+import { NotificationBell } from './NotificationBell'
+import { NotificationsProvider } from './NotificationsProvider'
+import type { NotificationLinkResolver } from './types'
+
+export const NOTIFICATIONS_MODULE_ID = 'notifications'
+
+export interface NotificationsModuleOptions {
+  // how a link of a notification becomes an href in this app. default: core's links
+  resolveLink?: NotificationLinkResolver
+  // where the bell and the toasts link. default: the inbox route this module registers
+  inboxPath?: string
+}
+
+export function notificationsModule(options: NotificationsModuleOptions = {}): WasichaiModule {
+  const Provider = ({ children }: { children: ReactNode }) => (
+    <NotificationsProvider resolveLink={options.resolveLink} inboxPath={options.inboxPath}>
+      {children}
+    </NotificationsProvider>
+  )
+  return {
+    id: NOTIFICATIONS_MODULE_ID,
+    basePath: 'notifications',
+    routes: [{ id: 'inbox', path: '', lazy: () => import('./pages/InboxPage').then((m) => ({ default: m.InboxPage })) }],
+    nav: [{ group: 'data', labelKey: 'notifications:nav.inbox', order: 90, icon: Bell, route: 'inbox' }],
+    i18n: notificationsMessages,
+    providers: [Provider],
+    // the bell draws the toasts too
+    shellActions: [{ key: 'notifications', component: NotificationBell }]
+  }
+}

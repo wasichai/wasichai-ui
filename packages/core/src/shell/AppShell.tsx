@@ -214,6 +214,13 @@ export function AppShell() {
               {prefsError}
             </p>
           ) : null}
+          {registry.shellActions.length > 0 ? (
+            <div data-slot="shell-actions" className="mt-2 flex items-center gap-1">
+              {registry.shellActions.map(({ key, component: Action }) => (
+                <Action key={key} />
+              ))}
+            </div>
+          ) : null}
           <div className="mt-2 flex items-center gap-1">
             {languages.length > 1 ? (
               <Button variant="ghost" size="sm" className="text-shell-muted hover:text-shell-ink" onClick={() => save(setLocale(next))}>

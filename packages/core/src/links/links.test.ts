@@ -57,6 +57,21 @@ describe('module links', () => {
   })
 })
 
+describe('routeParams', () => {
+  const withParams = createLinks(
+    createRegistry([{ id: 'caja', basePath: 'caja', routes: [{ id: 'arqueo', path: 'turnos/:turnoId/lineas/:lineaId', component: Page }] }])
+  )
+
+  it('names the path params of a registered route, in order', () => {
+    expect(withParams.routeParams('caja:arqueo')).toEqual(['turnoId', 'lineaId'])
+    expect(links.routeParams('gis:map')).toEqual([])
+  })
+
+  it('answers [] for an unknown route', () => {
+    expect(links.routeParams('documents:print')).toEqual([])
+  })
+})
+
 describe('paths', () => {
   it('joins parts with single slashes and always starts at the root', () => {
     expect(joinPath('', '')).toBe('/')

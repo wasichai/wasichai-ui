@@ -14,6 +14,7 @@
                 { "type": "json", "path": "packages/documents/package.json", "jsonpath": "$.version" },
                 { "type": "json", "path": "packages/forms/package.json", "jsonpath": "$.version" },
                 { "type": "json", "path": "packages/gis/package.json", "jsonpath": "$.version" },
+                { "type": "json", "path": "packages/notifications/package.json", "jsonpath": "$.version" },
                 { "type": "json", "path": "packages/pages/package.json", "jsonpath": "$.version" },
                 { "type": "json", "path": "packages/testing/package.json", "jsonpath": "$.version" },
                 { "type": "json", "path": "packages/ui/package.json", "jsonpath": "$.version" },

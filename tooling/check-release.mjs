@@ -18,6 +18,7 @@ export const EXPECTED_PUBLIC = [
   '@wasichai/documents',
   '@wasichai/forms',
   '@wasichai/gis',
+  '@wasichai/notifications',
   '@wasichai/pages',
   '@wasichai/testing',
   '@wasichai/ui',
