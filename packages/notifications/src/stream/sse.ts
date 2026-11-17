@@ -41,7 +41,15 @@ export async function openSummaryStream(options: SummaryStreamOptions): Promise<
   let attempt = 0
 
   while (!signal?.aborted) {
-    const token = await getToken()
+    let token: string | null
+    try {
+      token = await getToken()
+    } catch {
+      // a token source that fails is a failed attempt like any other
+      onStatus('retrying')
+      await sleep(backoff(attempt++), signal)
+      continue
+    }
     if (!token || signal?.aborted) return
 
     const controller = new AbortController()
@@ -57,6 +65,16 @@ export async function openSummaryStream(options: SummaryStreamOptions): Promise<
     let received = false
     let completed = false
 
+    // armed before fetch too: a proxy that accepts the connection but never answers must not hang us
+    const arm = () => {
+      clearTimeout(watchdog)
+      watchdog = setTimeout(() => {
+        silent = true
+        abort()
+      }, WATCHDOG_MS)
+    }
+    arm()
+
     try {
       const response = await fetch(`${baseUrl}/auth/me/notifications/stream`, {
         headers: { Accept: 'text/event-stream', Authorization: `Bearer ${token}` },
@@ -69,13 +87,6 @@ export async function openSummaryStream(options: SummaryStreamOptions): Promise<
 
       onStatus('open')
       reader = response.body.getReader()
-      const arm = () => {
-        clearTimeout(watchdog)
-        watchdog = setTimeout(() => {
-          silent = true
-          abort()
-        }, WATCHDOG_MS)
-      }
       const decoder = new TextDecoder()
       let buffer = ''
       let event = ''

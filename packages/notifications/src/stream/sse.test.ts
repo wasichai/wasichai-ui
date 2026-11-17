@@ -222,4 +222,40 @@ describe('openSummaryStream', () => {
     await vi.advanceTimersByTimeAsync(60_000)
     expect(t.fetchMock).toHaveBeenCalledTimes(1)
   })
+
+  it('retries when the server never answers the request', async () => {
+    const t = setup()
+    t.fetchMock.mockImplementation(
+      (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))
+        })
+    )
+    const done = openSummaryStream(t.options)
+    await vi.advanceTimersByTimeAsync(59_000)
+    expect(t.onStatus).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(t.onStatus).toHaveBeenCalledWith('retrying')
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(t.fetchMock).toHaveBeenCalledTimes(2)
+
+    t.abort.abort()
+    await done
+  })
+
+  it('treats a failing getToken as a failed attempt', async () => {
+    const t = setup()
+    const getToken = vi.fn().mockRejectedValueOnce(new Error('refresh failed')).mockResolvedValue('tok')
+    const { response } = streamResponse()
+    t.fetchMock.mockResolvedValueOnce(response)
+    const done = openSummaryStream({ ...t.options, getToken })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(t.onStatus).toHaveBeenCalledWith('retrying')
+    expect(t.fetchMock).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(t.fetchMock).toHaveBeenCalledTimes(1)
+
+    t.abort.abort()
+    await done
+  })
 })
