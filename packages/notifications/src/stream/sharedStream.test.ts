@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NotificationSummary } from '../types'
 import { startSharedStream, type ChannelLike, type LockManagerLike, type SharedStreamOptions, type SummaryStatus } from './sharedStream'
 
-const NAME = 'wasichai-test.notifications'
+const PREFIX = 'wasichai-test'
 const TOKEN_KEY = 'wasichai-test.token'
 const encoder = new TextEncoder()
 
@@ -32,36 +32,37 @@ function streamResponse(signal?: AbortSignal | null): { response: Response; push
   }
 }
 
-// navigator.locks between tabs: one holder, the rest wait in order
-function fakeLocks(): LockManagerLike & { held: () => boolean } {
-  let holding = false
-  const queue: (() => void)[] = []
-  const next = () => {
-    holding = false
-    queue.shift()?.()
+// navigator.locks between tabs: per name, one holder and the rest wait in order
+function fakeLocks(): LockManagerLike & { held: () => string[] } {
+  const holders = new Set<string>()
+  const queues = new Map<string, (() => void)[]>()
+  const queue = (name: string) => queues.get(name) ?? queues.set(name, []).get(name)!
+  const next = (name: string) => {
+    holders.delete(name)
+    queue(name).shift()?.()
   }
   return {
-    held: () => holding,
-    request: (_name, options, callback) =>
+    held: () => [...holders],
+    request: (name, options, callback) =>
       new Promise((resolve, reject) => {
         const run = () => {
-          holding = true
+          holders.add(name)
           Promise.resolve(callback()).then(
             (value) => {
-              next()
+              next(name)
               resolve(value)
             },
             (error) => {
-              next()
+              next(name)
               reject(error)
             }
           )
         }
-        if (!holding) return run()
-        queue.push(run)
+        if (!holders.has(name)) return run()
+        queue(name).push(run)
         options.signal?.addEventListener('abort', () => {
-          const index = queue.indexOf(run)
-          if (index !== -1) queue.splice(index, 1)
+          const index = queue(name).indexOf(run)
+          if (index !== -1) queue(name).splice(index, 1)
           reject(new DOMException('aborted', 'AbortError'))
         })
       })
@@ -99,7 +100,7 @@ function openTab(overrides: Partial<SharedStreamOptions> = {}): Tab {
   const onStatus = vi.fn<(s: SummaryStatus) => void>()
   const fetchSummary = vi.fn<() => Promise<NotificationSummary>>().mockResolvedValue(summary(9))
   const stop = startSharedStream({
-    name: NAME,
+    prefix: PREFIX,
     userId: 'u1',
     baseUrl: '/api',
     getToken: () => 'tok',
@@ -131,6 +132,7 @@ describe('startSharedStream', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
   })
 
   it('opens one stream for two tabs, and the follower gets the leader summary', async () => {
@@ -184,7 +186,7 @@ describe('startSharedStream', () => {
     follower.stop()
   })
 
-  it("ignores another user's summary", async () => {
+  it("does not keep another user's tab waiting behind this user's leader", async () => {
     const locks = fakeLocks()
     const channel = fakeChannels()
     const leader = openTab({ locks, channel })
@@ -192,12 +194,37 @@ describe('startSharedStream', () => {
     const other = openTab({ locks, channel, userId: 'u2' })
     await settle()
 
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(locks.held()).toEqual(['wasichai-test.notifications.u1', 'wasichai-test.notifications.u2'])
     streams[0].push(summary(6))
     await settle()
     expect(leader.onSummary).toHaveBeenCalledWith(summary(6))
     expect(other.onSummary).not.toHaveBeenCalled()
     leader.stop()
     other.stop()
+  })
+
+  it('treats a missing token like a 401: refreshes through the api client and reopens', async () => {
+    const getToken = vi.fn<() => string | null>().mockReturnValueOnce(null).mockReturnValue('tok')
+    const locks = fakeLocks()
+    const tab = openTab({ locks, channel: fakeChannels(), getToken })
+    await settle()
+    expect(tab.fetchSummary).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(tab.onStatus).toHaveBeenLastCalledWith('live')
+    expect(locks.held()).toEqual(['wasichai-test.notifications.u1'])
+    tab.stop()
+  })
+
+  it('does not publish a refresh that lands after stop', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 401 }))
+    let answer!: (s: NotificationSummary) => void
+    const tab = openTab({ locks: null, channel: null, fetchSummary: () => new Promise((resolve) => (answer = resolve)) })
+    await settle()
+    tab.stop()
+    answer(summary(8))
+    await settle()
+    expect(tab.onSummary).not.toHaveBeenCalled()
   })
 
   it('polls the summary every 60 s while the stream retries, and stops once it is open again', async () => {
@@ -295,12 +322,12 @@ describe('startSharedStream', () => {
     const locks = fakeLocks()
     const tab = openTab({ locks, channel: fakeChannels() })
     await settle()
-    expect(locks.held()).toBe(true)
+    expect(locks.held()).toEqual(['wasichai-test.notifications.u1'])
 
     window.dispatchEvent(new StorageEvent('storage', { key: TOKEN_KEY, oldValue: 'tok', newValue: null }))
     await settle()
     expect(streams[0].signal?.aborted).toBe(true)
-    expect(locks.held()).toBe(false)
+    expect(locks.held()).toEqual([])
     tab.stop()
   })
 

@@ -18,8 +18,8 @@ export type ChannelMessage =
   { type: 'hello' } | { type: 'summary'; userId: string; summary: NotificationSummary } | { type: 'status'; userId: string; status: SummaryStatus }
 
 export interface SharedStreamOptions {
-  // lock and channel name, `<prefix>.notifications`
-  name: string
+  // config.storagePrefix: the lock and the channel are `<prefix>.notifications.<userId>`
+  prefix: string
   userId: string
   baseUrl: string
   getToken: () => string | null | Promise<string | null>
@@ -46,7 +46,9 @@ function browserChannel(): ((name: string) => ChannelLike) | null {
 
 // one stream per browser: the tab holding the lock streams and tells the others. returns stop()
 export function startSharedStream(options: SharedStreamOptions): () => void {
-  const { name, userId, tokenKey, onSummary, onStatus } = options
+  const { userId, tokenKey, onSummary, onStatus } = options
+  // per user: a tab of another session never waits behind this one's leader
+  const name = `${options.prefix}.notifications.${userId}`
   const locks = options.locks === undefined ? browserLocks() : options.locks
   const makeChannel = options.channel === undefined ? browserChannel() : options.channel
   // sharing needs both: without a lock tabs cannot pick one leader, without a channel a follower never hears
@@ -127,17 +129,18 @@ export function startSharedStream(options: SharedStreamOptions): () => void {
           }
         })
         if (!unauthorized || stopped.signal.aborted) break
-        // an access token lives minutes: a 401 is routine. core's client refreshes it on its own 401, or signs
+        // an access token lives minutes: a 401 (or no token at all) is routine. core's client refreshes it on its own 401, or signs
         // out when the realm refuses (and then the provider stops us). never sign out from here
         try {
-          publishSummary(await options.fetchSummary())
+          const summary = await options.fetchSummary()
+          if (!stopped.signal.aborted) publishSummary(summary)
         } catch {
           // a failed refresh: the backoff below keeps it from spinning
         }
-        // a second 401 right after a refresh must not loop tightly
+        // a second refusal right after a refresh must not loop tightly
         if (refused++ > 0) await sleep(backoff(refused - 2), stopped.signal)
       }
-      // ended for good (unavailable, signed out): keep the lock so the waiting tabs do not try again
+      // unavailable (no module, or not a person): keep the lock so the waiting tabs do not try again
       if (!stopped.signal.aborted) await new Promise((resolve) => stopped.signal.addEventListener('abort', resolve))
     } finally {
       stopPolling()

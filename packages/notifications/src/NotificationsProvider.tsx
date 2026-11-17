@@ -41,7 +41,7 @@ export function NotificationsProvider({ children, resolveLink, inboxPath }: Noti
   useEffect(() => {
     if (!userId) return
     return startSharedStream({
-      name: `${config.storagePrefix}.notifications`,
+      prefix: config.storagePrefix,
       userId,
       baseUrl: apiClient.baseUrl,
       getToken: () => apiClient.getToken(),

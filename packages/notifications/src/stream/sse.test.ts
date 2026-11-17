@@ -68,10 +68,19 @@ describe('openSummaryStream', () => {
     vi.restoreAllMocks()
   })
 
-  it('does not fetch without a token', async () => {
+  it('does not fetch without a token, and reports it like a 401', async () => {
     const t = setup(null)
     await openSummaryStream(t.options)
     expect(t.fetchMock).not.toHaveBeenCalled()
+    expect(t.onUnauthorized).toHaveBeenCalledTimes(1)
+  })
+
+  it('reports nothing when aborted', async () => {
+    const t = setup(null)
+    t.abort.abort()
+    await openSummaryStream(t.options)
+    expect(t.fetchMock).not.toHaveBeenCalled()
+    expect(t.onUnauthorized).not.toHaveBeenCalled()
   })
 
   it('sends the token in a header only and parses events split across chunks', async () => {

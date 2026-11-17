@@ -90,6 +90,7 @@ describe('notifications provider and hooks', () => {
   })
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
     localStorage.clear()
   })
 

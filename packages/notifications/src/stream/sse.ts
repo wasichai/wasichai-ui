@@ -50,7 +50,9 @@ export async function openSummaryStream(options: SummaryStreamOptions): Promise<
       await sleep(backoff(attempt++), signal)
       continue
     }
-    if (!token || signal?.aborted) return
+    if (signal?.aborted) return
+    // an expired realm token reads as none (a laptop waking up): the caller refreshes, like after a 401
+    if (!token) return onUnauthorized()
 
     const controller = new AbortController()
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
