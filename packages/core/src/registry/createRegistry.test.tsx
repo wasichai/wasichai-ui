@@ -224,4 +224,28 @@ describe('createRegistry', () => {
     const registry = createRegistry([{ id: 'documents', historyRenderers: { ISSUE: { body: Body, labelKey: 'documents:operations.ISSUE', tone: 'info' } } }])
     expect(registry.historyRenderers.ISSUE).toEqual({ body: Body, labelKey: 'documents:operations.ISSUE', tone: 'info' })
   })
+
+  it('merges shell actions of every module, by order then key', () => {
+    const A = () => <div />
+    const B = () => <div />
+    const C = () => <div />
+    const registry = createRegistry([
+      {
+        id: 'a',
+        shellActions: [
+          { key: 'b-late', order: 20, component: A },
+          { key: 'z-default', component: B }
+        ]
+      },
+      { id: 'b', shellActions: [{ key: 'a-early', order: 10, component: C }] }
+    ])
+    expect(registry.shellActions.map((action) => action.key)).toEqual(['a-early', 'b-late', 'z-default'])
+  })
+
+  it('refuses a shell action key used twice, naming both modules', () => {
+    const a: WasichaiModule = { id: 'a', shellActions: [{ key: 'bell', component: Page }] }
+    const b: WasichaiModule = { id: 'b', shellActions: [{ key: 'bell', component: Page }] }
+    expect(() => createRegistry([a, b])).toThrow(/shell action 'bell' is declared by both 'a' and 'b'/)
+    expect(() => createRegistry([a, b])).toThrow(RegistryError)
+  })
 })

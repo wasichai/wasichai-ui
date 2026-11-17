@@ -38,6 +38,14 @@ export interface NavContribution {
   visible?: (permissions: CallerPermissions | null) => boolean
 }
 
+export interface ShellAction {
+  // unique across modules
+  key: string
+  // position among the actions, lower first. absent sorts last
+  order?: number
+  component: ComponentType
+}
+
 export interface FieldInputProps {
   field: FieldMeta
   value: unknown
@@ -214,6 +222,9 @@ export interface WasichaiModule {
   objectFlags?: ObjectFlagsHook
   // query keys the module caches per object. a record or field write makes them stale (gis: features)
   recordQueryKeys?: (objectName: string) => QueryKey[]
+  // drawn in the shell's user area, before the language and sign-out buttons (notifications: the bell).
+  // ADR-028 wants a second user for a slot: this one goes in ahead of it, the bell is the first.
+  shellActions?: ShellAction[]
   // wraps the whole app, outside the router: mounted for every route, including public ones like
   // login. modules wrap in order, so the first module's provider ends up outermost.
   providers?: ComponentType<{ children: ReactNode }>[]

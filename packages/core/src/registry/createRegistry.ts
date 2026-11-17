@@ -17,7 +17,8 @@ import type {
   PageComponentDefinition,
   RecordListActionProps,
   RecordPanelProps,
-  RouteChrome
+  RouteChrome,
+  ShellAction
 } from './contract'
 
 export class RegistryError extends Error {}
@@ -70,6 +71,7 @@ export interface WasichaiRegistry {
   auditFieldLabels: Readonly<Record<string, string>>
   objectFlags: readonly ObjectFlagsHook[]
   recordQueryKeys: readonly ((objectName: string) => QueryKey[])[]
+  shellActions: readonly ShellAction[]
   providers: readonly ComponentType<{ children: ReactNode }>[]
 }
 
@@ -110,8 +112,24 @@ export function createRegistry(modules: WasichaiModule[]): WasichaiRegistry {
     auditFieldLabels: claim(modules, 'audit field label', (module) => module.auditFieldLabels, []),
     objectFlags: modules.flatMap((module) => (module.objectFlags ? [module.objectFlags] : [])),
     recordQueryKeys: modules.flatMap((module) => (module.recordQueryKeys ? [module.recordQueryKeys] : [])),
+    shellActions: resolveShellActions(modules),
     providers: modules.flatMap((module) => module.providers ?? [])
   }
+}
+
+function resolveShellActions(modules: WasichaiModule[]): ShellAction[] {
+  const owners = new Map<string, string>()
+  const actions: ShellAction[] = []
+  for (const module of modules) {
+    for (const action of module.shellActions ?? []) {
+      const owner = owners.get(action.key)
+      if (owner) throw new RegistryError(`shell action '${action.key}' is declared by both '${owner}' and '${module.id}'`)
+      owners.set(action.key, module.id)
+      actions.push(action)
+    }
+  }
+  // key breaks ties so the order does not depend on module order
+  return actions.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || a.key.localeCompare(b.key))
 }
 
 function checkFieldRendererSections(modules: WasichaiModule[]) {
