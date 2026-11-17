@@ -1,6 +1,8 @@
 export { NOTIFICATIONS_MODULE_ID, notificationsModule, type NotificationsModuleOptions } from './module'
 export { notificationsMessages } from './i18n'
 export { InboxPage } from './pages/InboxPage'
+export { NotificationLinkView, type NotificationLinkViewProps } from './NotificationLinkView'
+export { defaultResolveLink } from './links'
 export { NotificationsProvider, type NotificationsProviderProps } from './NotificationsProvider'
 export { useDismiss, useMarkRead, useNotificationLinks, useNotifications, useNotificationSummary, useReadAll, useSnooze } from './hooks'
 export type { ListFilters } from './api'
