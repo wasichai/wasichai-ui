@@ -17,6 +17,7 @@ import { documentsModule } from '@wasichai/documents'
 | `@wasichai/ui` | primitives and the Tailwind theme |
 | `@wasichai/core` | the app shell, module registry, api client, auth, i18n and every screen that needs no module |
 | `@wasichai/{views,forms,pages,workflow,automation,documents,gis,agent}` | one package per backend module |
+| `@wasichai/notifications` | the Alertas bell and inbox page, mountable in an app with its own shell |
 | `@wasichai/testing` | render helpers and fetch mocks for tests |
 
 Install (`.npmrc`: `@wasichai:registry=https://npm.pkg.github.com` plus a token with `read:packages`):
