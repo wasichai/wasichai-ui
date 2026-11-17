@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/wasichai/wasichai-ui/compare/v2.1.0...v2.2.0) (2026-11-17)
+
+
+### Features
+
+* **notifications:** @wasichai/notifications, the Alertas bell and page ([#219](https://github.com/wasichai/wasichai-ui/issues/219)) ([8a45926](https://github.com/wasichai/wasichai-ui/commit/8a45926d9bd6d111f0d45bfe7bb16c65b18551f1))
+
 ## [2.1.0](https://github.com/wasichai/wasichai-ui/compare/v2.0.0...v2.1.0) (2026-11-16)
 
 

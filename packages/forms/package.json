@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/forms",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "description": "Wasichai form builder module",
     "type": "module",
     "files": [
