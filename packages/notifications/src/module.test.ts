@@ -20,9 +20,9 @@ describe('notificationsModule', () => {
     expect(items).toContainEqual(expect.objectContaining({ labelKey: 'notifications:nav.inbox', to: '/notifications' }))
   })
 
-  it('has neither providers nor shell actions yet', () => {
+  it('wraps the app in its provider, and has no shell action yet', () => {
     const module = notificationsModule()
-    expect(module.providers).toBeUndefined()
+    expect(module.providers).toHaveLength(1)
     expect(module.shellActions).toBeUndefined()
   })
 })
