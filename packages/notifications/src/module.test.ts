@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { coreModule, createLinks, createRegistry } from '@wasichai/core'
+import { NotificationBell } from './NotificationBell'
 import { notificationsModule } from './module'
 
 describe('notificationsModule', () => {
@@ -20,9 +21,9 @@ describe('notificationsModule', () => {
     expect(items).toContainEqual(expect.objectContaining({ labelKey: 'notifications:nav.inbox', to: '/notifications' }))
   })
 
-  it('wraps the app in its provider, and has no shell action yet', () => {
+  it('wraps the app in its provider, and draws the bell in the shell', () => {
     const module = notificationsModule()
     expect(module.providers).toHaveLength(1)
-    expect(module.shellActions).toBeUndefined()
+    expect(module.shellActions).toEqual([{ key: 'notifications', component: NotificationBell }])
   })
 })
