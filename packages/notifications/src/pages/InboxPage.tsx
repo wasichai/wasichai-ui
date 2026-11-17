@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
-import { EmptyState, PageHeader, QueryState } from '@wasichai/core'
+import { describeError, EmptyState, PageHeader, QueryState } from '@wasichai/core'
 import { Button, cn, PageSizePagination } from '@wasichai/ui'
 import { NotificationItem } from '../components/NotificationItem'
 import { useNotifications, useNotificationSummary, useReadAll } from '../hooks'
@@ -15,7 +15,7 @@ function useKindTab(): [NotificationKind, (kind: NotificationKind) => void] {
   const [params, setParams] = useSearchParams()
   const raw = params.get('tab')
   const kind = KINDS.find((k) => k === raw) ?? 'INFO'
-  return [kind, (next) => setParams({ tab: next }, { replace: true })]
+  return [kind, (next) => setParams((current) => new URLSearchParams({ ...Object.fromEntries(current), tab: next }), { replace: true })]
 }
 
 export function InboxPage() {
@@ -27,6 +27,17 @@ export function InboxPage() {
   const { summary } = useNotificationSummary()
   const readAll = useReadAll()
   const query = useNotifications({ kind, state, page, size })
+
+  const strip = useRef<HTMLDivElement>(null)
+  // WAI-ARIA tabs, automatic activation: the arrows, Home and End move the focus and select
+  const move = (event: KeyboardEvent, index: number) => {
+    const last = KINDS.length - 1
+    const keys: Record<string, number> = { ArrowRight: index === last ? 0 : index + 1, ArrowLeft: index === 0 ? last : index - 1, Home: 0, End: last }
+    if (!Object.hasOwn(keys, event.key)) return
+    event.preventDefault()
+    pick(KINDS[keys[event.key]])
+    strip.current?.querySelectorAll<HTMLElement>('[role="tab"]')[keys[event.key]]?.focus()
+  }
 
   const pick = (next: NotificationKind) => {
     setKind(next)
@@ -62,15 +73,23 @@ export function InboxPage() {
           </>
         }
       />
+      {readAll.error && (
+        <p role="alert" className="border-b border-border px-4 py-2 text-sm text-danger md:px-8">
+          {describeError(readAll.error)}
+        </p>
+      )}
       {/* Tabs from core's ui keeps its own state; this strip is driven by the URL instead */}
-      <div role="tablist" aria-label={t('notifications.title')} className="flex gap-1 overflow-x-auto border-b border-border px-4 md:px-8">
-        {KINDS.map((k) => {
+      <div ref={strip} role="tablist" aria-label={t('notifications.title')} className="flex gap-1 overflow-x-auto border-b border-border px-4 md:px-8">
+        {KINDS.map((k, index) => {
           const unread = summary?.kinds[k].unread ?? 0
           return (
             <button
               key={k}
               type="button"
               role="tab"
+              id={`inbox-tab-${k}`}
+              aria-controls="inbox-panel"
+              onKeyDown={(event) => move(event, index)}
               aria-selected={k === kind}
               tabIndex={k === kind ? 0 : -1}
               onClick={() => pick(k)}
@@ -85,7 +104,7 @@ export function InboxPage() {
           )
         })}
       </div>
-      <div role="tabpanel">
+      <div role="tabpanel" id="inbox-panel" aria-labelledby={`inbox-tab-${kind}`}>
         <QueryState query={query}>
           {(data) =>
             data.content.length === 0 ? (

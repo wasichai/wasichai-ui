@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useLocation } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '@wasichai/testing'
 import { notificationsModule } from '../module'
@@ -15,6 +16,7 @@ interface Call {
 let calls: Call[]
 let items: InboxItem[]
 let snoozeAnswer: { status: number; body?: unknown }
+let readAllAnswer: { status: number; body?: unknown }
 
 function item(over: Partial<InboxItem> & { id: string }): InboxItem {
   return {
@@ -38,6 +40,7 @@ beforeEach(() => {
   calls = []
   items = []
   snoozeAnswer = { status: 204 }
+  readAllAnswer = { status: 204 }
   localStorage.setItem('wasichai-test.token', 'tok')
   vi.stubGlobal(
     'fetch',
@@ -57,6 +60,9 @@ beforeEach(() => {
       if (path.endsWith('/snooze') && snoozeAnswer.status !== 204) {
         return new Response(JSON.stringify(snoozeAnswer.body), { status: snoozeAnswer.status, headers: { 'Content-Type': 'application/problem+json' } })
       }
+      if (path.endsWith('/read-all') && readAllAnswer.status !== 204) {
+        return new Response(JSON.stringify(readAllAnswer.body), { status: readAllAnswer.status, headers: { 'Content-Type': 'application/problem+json' } })
+      }
       return new Response(null, { status: 204 })
     })
   )
@@ -68,6 +74,9 @@ afterEach(() => {
 })
 
 const render = (route = '/') => renderWithProviders(<InboxPage />, { modules: [notificationsModule()], route })
+function Search() {
+  return <span data-testid="search">{useLocation().search}</span>
+}
 const listCalls = () => calls.filter((c) => c.method === 'GET')
 
 describe('InboxPage', () => {
@@ -148,5 +157,53 @@ describe('InboxPage', () => {
     const { container } = render()
     expect(await screen.findByText('Hola <b>mundo</b>')).toBeInTheDocument()
     expect(container.querySelector('b')).toBeNull()
+  })
+
+  it('moves between tabs with the arrow keys, Home and End', async () => {
+    render()
+    const info = await screen.findByRole('tab', { name: /Comunicados/ })
+    info.focus()
+    await userEvent.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: /Advertencias/ })).toHaveFocus()
+    expect(screen.getByRole('tab', { name: /Advertencias/ })).toHaveAttribute('aria-selected', 'true')
+    await userEvent.keyboard('{End}')
+    expect(screen.getByRole('tab', { name: /Pendientes/ })).toHaveFocus()
+    await userEvent.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: /Comunicados/ })).toHaveFocus()
+    await userEvent.keyboard('{ArrowLeft}')
+    expect(screen.getByRole('tab', { name: /Pendientes/ })).toHaveFocus()
+    await userEvent.keyboard('{Home}')
+    expect(screen.getByRole('tab', { name: /Comunicados/ })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('links tabs and panel for assistive tech', async () => {
+    render('/?tab=WARNING')
+    const tab = await screen.findByRole('tab', { name: /Advertencias/ })
+    const panel = screen.getByRole('tabpanel')
+    expect(tab.getAttribute('aria-controls')).toBe(panel.id)
+    expect(panel).toHaveAttribute('aria-labelledby', tab.id)
+  })
+
+  it('shows why "mark all as read" failed', async () => {
+    items = [item({ id: 'a' })]
+    readAllAnswer = { status: 500, body: { title: 'Server Error', detail: 'read-all broke' } }
+    render()
+    await screen.findByText('Título a')
+    await userEvent.click(screen.getByRole('button', { name: 'Marcar todo como leído' }))
+    expect(await screen.findByText(/read-all broke/)).toBeInTheDocument()
+    expect(screen.getAllByRole('alert').some((el) => el.textContent?.includes('read-all broke'))).toBe(true)
+  })
+
+  it("keeps the host app's other query params when the tab changes", async () => {
+    renderWithProviders(
+      <>
+        <InboxPage />
+        <Search />
+      </>,
+      { modules: [notificationsModule()], route: '/?foo=bar' }
+    )
+    await userEvent.click(await screen.findByRole('tab', { name: /Pendientes/ }))
+    expect(screen.getByTestId('search')).toHaveTextContent('foo=bar')
+    expect(screen.getByTestId('search')).toHaveTextContent('tab=ACTION')
   })
 })
