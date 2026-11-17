@@ -1,5 +1,5 @@
 import type { NotificationSummary } from '../types'
-import { openSummaryStream } from './sse'
+import { backoff, openSummaryStream, sleep } from './sse'
 
 export type SummaryStatus = 'live' | 'polling' | 'unavailable'
 
@@ -25,11 +25,10 @@ export interface SharedStreamOptions {
   getToken: () => string | null | Promise<string | null>
   // its removal in another tab is a sign-out
   tokenKey: string
-  // the floor while the stream retries
+  // through core's client: the floor while the stream retries, and the token refresh after a stream 401
   fetchSummary: () => Promise<NotificationSummary>
   onSummary: (summary: NotificationSummary) => void
   onStatus: (status: SummaryStatus) => void
-  onUnauthorized: () => void
   // undefined = the browser's; null = none, so this tab leads alone
   locks?: LockManagerLike | null
   channel?: ((name: string) => ChannelLike) | null
@@ -97,29 +96,47 @@ export function startSharedStream(options: SharedStreamOptions): () => void {
       channel?.postMessage({ type: 'status', userId, status: next })
     }
 
+    // stream 401s in a row; a summary off the stream ends the streak
+    let refused = 0
     try {
-      await openSummaryStream({
-        baseUrl: options.baseUrl,
-        getToken: options.getToken,
-        onUnauthorized: options.onUnauthorized,
-        signal: stopped.signal,
-        onSummary: publishSummary,
-        onStatus: (stream) => {
-          if (stream !== 'retrying') {
-            stopPolling()
-            return publishStatus(stream === 'open' ? 'live' : 'unavailable')
+      while (!stopped.signal.aborted) {
+        let unauthorized = false
+        await openSummaryStream({
+          baseUrl: options.baseUrl,
+          getToken: options.getToken,
+          onUnauthorized: () => (unauthorized = true),
+          signal: stopped.signal,
+          onSummary: (summary) => {
+            refused = 0
+            publishSummary(summary)
+          },
+          onStatus: (stream) => {
+            if (stream !== 'retrying') {
+              stopPolling()
+              return publishStatus(stream === 'open' ? 'live' : 'unavailable')
+            }
+            poll ??= setInterval(() => {
+              options.fetchSummary().then(
+                // an answer that lands after the stream reopened is older than the stream's
+                (summary) => poll && !stopped.signal.aborted && publishSummary(summary),
+                // the stream decides what a failure means; the next tick tries again
+                () => {}
+              )
+            }, POLL_MS)
+            publishStatus('polling')
           }
-          poll ??= setInterval(() => {
-            options.fetchSummary().then(
-              // an answer that lands after the stream reopened is older than the stream's
-              (summary) => poll && !stopped.signal.aborted && publishSummary(summary),
-              // the stream decides what a failure means; the next tick tries again
-              () => {}
-            )
-          }, POLL_MS)
-          publishStatus('polling')
+        })
+        if (!unauthorized || stopped.signal.aborted) break
+        // an access token lives minutes: a 401 is routine. core's client refreshes it on its own 401, or signs
+        // out when the realm refuses (and then the provider stops us). never sign out from here
+        try {
+          publishSummary(await options.fetchSummary())
+        } catch {
+          // a failed refresh: the backoff below keeps it from spinning
         }
-      })
+        // a second 401 right after a refresh must not loop tightly
+        if (refused++ > 0) await sleep(backoff(refused - 2), stopped.signal)
+      }
       // ended for good (unavailable, signed out): keep the lock so the waiting tabs do not try again
       if (!stopped.signal.aborted) await new Promise((resolve) => stopped.signal.addEventListener('abort', resolve))
     } finally {

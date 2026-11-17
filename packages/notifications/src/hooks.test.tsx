@@ -29,9 +29,11 @@ interface Call {
 }
 
 // the stream answers with a body the test feeds; every other call answers from `rest`
-function stubFetch(streamStatus = 200, rest: Record<string, { status: number; body?: unknown }> = {}) {
+// streamStatus: what each stream request answers in turn, the last one repeating
+function stubFetch(streamStatus: number | number[] = 200, rest: Record<string, { status: number; body?: unknown }> = {}) {
   const calls: Call[] = []
   const feeds: ((s: NotificationSummary) => void)[] = []
+  let streamCalls = 0
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
@@ -39,7 +41,9 @@ function stubFetch(streamStatus = 200, rest: Record<string, { status: number; bo
       const method = (init.method ?? 'GET').toUpperCase()
       calls.push({ method, path, body: typeof init.body === 'string' ? JSON.parse(init.body) : null })
       if (path === '/auth/me/notifications/stream') {
-        if (streamStatus !== 200) return new Response(null, { status: streamStatus })
+        const statuses = [streamStatus].flat()
+        const status = statuses[Math.min(streamCalls++, statuses.length - 1)]
+        if (status !== 200) return new Response(null, { status })
         let controller!: ReadableStreamDefaultController<Uint8Array>
         const body = new ReadableStream<Uint8Array>({
           start(c) {
@@ -139,11 +143,20 @@ describe('notifications provider and hooks', () => {
     ])
   })
 
-  it('signs out on a 401 from the stream', async () => {
-    stubFetch(401)
+  it('refreshes through the api client on a stream 401 and reopens it, without signing out', async () => {
+    const net = stubFetch([401, 200], { 'GET /auth/me/notifications/summary': { status: 200, body: summary(7) } })
+    const { result } = render(() => ({ auth: useAuth(), summary: useNotificationSummary() }))
+    await waitFor(() => expect(net.streams()).toBe(2))
+    expect(net.calls.filter((call) => call.path === '/auth/me/notifications/summary')).toHaveLength(1)
+    await waitFor(() => expect(result.current.summary.summary).toEqual(summary(7)))
+    expect(result.current.auth.user).not.toBeNull()
+    expect(localStorage.getItem('wasichai-test.token')).toBe('tok')
+  })
+
+  it("leaves the sign-out to core's client when the refresh is refused too", async () => {
+    stubFetch(401, { 'GET /auth/me/notifications/summary': { status: 401, body: { title: 'Unauthorized' } } })
     const { result } = render(() => useAuth())
     await waitFor(() => expect(result.current.user).toBeNull())
-    expect(localStorage.getItem('wasichai-test.token')).toBeNull()
   })
 
   it('reports unavailable when the module is not installed', async () => {

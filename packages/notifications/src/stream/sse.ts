@@ -18,11 +18,11 @@ const BACKOFF_BASE_MS = 1_000
 const BACKOFF_CAP_MS = 30_000
 
 // full jitter: a crowd of tabs reconnecting after an outage must not move in step
-function backoff(attempt: number): number {
+export function backoff(attempt: number): number {
   return Math.random() * Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** attempt)
 }
 
-function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
     if (signal?.aborted) return resolve()
     const finish = () => {

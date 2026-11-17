@@ -91,14 +91,12 @@ interface Tab {
   stop: () => void
   onSummary: ReturnType<typeof vi.fn<(s: NotificationSummary) => void>>
   onStatus: ReturnType<typeof vi.fn<(s: SummaryStatus) => void>>
-  onUnauthorized: ReturnType<typeof vi.fn<() => void>>
   fetchSummary: ReturnType<typeof vi.fn<() => Promise<NotificationSummary>>>
 }
 
 function openTab(overrides: Partial<SharedStreamOptions> = {}): Tab {
   const onSummary = vi.fn<(s: NotificationSummary) => void>()
   const onStatus = vi.fn<(s: SummaryStatus) => void>()
-  const onUnauthorized = vi.fn<() => void>()
   const fetchSummary = vi.fn<() => Promise<NotificationSummary>>().mockResolvedValue(summary(9))
   const stop = startSharedStream({
     name: NAME,
@@ -109,10 +107,9 @@ function openTab(overrides: Partial<SharedStreamOptions> = {}): Tab {
     fetchSummary,
     onSummary,
     onStatus,
-    onUnauthorized,
     ...overrides
   })
-  return { stop, onSummary, onStatus, onUnauthorized, fetchSummary }
+  return { stop, onSummary, onStatus, fetchSummary }
 }
 
 const settle = () => vi.advanceTimersByTimeAsync(0)
@@ -258,12 +255,40 @@ describe('startSharedStream', () => {
     tab.stop()
   })
 
-  it('calls onUnauthorized on a 401', async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 401 }))
+  it('answers a stream 401 with one summary through the api client, then reopens the stream', async () => {
+    let attempt = 0
+    fetchMock.mockImplementation(async (_input, init) => {
+      if (++attempt === 1) return new Response(null, { status: 401 })
+      const stream = streamResponse(init?.signal)
+      streams.push({ push: stream.push, signal: init?.signal })
+      return stream.response
+    })
     const tab = openTab({ locks: null, channel: null })
     await settle()
-    expect(tab.onUnauthorized).toHaveBeenCalledTimes(1)
+    expect(tab.fetchSummary).toHaveBeenCalledTimes(1)
+    expect(tab.onSummary).toHaveBeenLastCalledWith(summary(9))
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(tab.onStatus).toHaveBeenLastCalledWith('live')
     tab.stop()
+  })
+
+  it('backs off when the stream 401s again right after a refresh', async () => {
+    fetchMock.mockImplementation(async () => new Response(null, { status: 401 }))
+    vi.spyOn(Math, 'random').mockReturnValue(1)
+    const tab = openTab({ locks: null, channel: null })
+    await settle()
+    // the first 401 reopens at once; the second waits 1 s, the third 2 s
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(tab.fetchSummary).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(999)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    tab.stop()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(fetchMock).toHaveBeenCalledTimes(4)
   })
 
   it('aborts and releases the lock when another tab signs out', async () => {

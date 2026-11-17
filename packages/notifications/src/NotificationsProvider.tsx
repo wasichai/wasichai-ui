@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { createContext, use, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, use, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useAuth, useWasichai, useWasichaiLinks } from '@wasichai/core'
 import { getSummary } from './api'
 import { notificationKeys } from './queryKeys'
@@ -31,16 +31,12 @@ export interface NotificationsProviderProps {
 // streams the signed-in person's summary into the query cache, once per browser
 export function NotificationsProvider({ children, resolveLink, inboxPath }: NotificationsProviderProps) {
   const { config, apiClient } = useWasichai()
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const links = useWasichaiLinks()
   const queryClient = useQueryClient()
   const userId = user?.id
   // keyed by user, so a new session never shows the previous one's status
   const [state, setState] = useState<{ userId: string; status: SummaryStatus } | null>(null)
-  const signOutRef = useRef(signOut)
-  useEffect(() => {
-    signOutRef.current = signOut
-  }, [signOut])
 
   useEffect(() => {
     if (!userId) return
@@ -57,8 +53,7 @@ export function NotificationsProvider({ children, resolveLink, inboxPath }: Noti
         // the lists follow the counts: a change means something arrived, was read or expired
         if (previous && JSON.stringify(previous) !== JSON.stringify(summary)) void queryClient.invalidateQueries({ queryKey: notificationKeys.lists })
       },
-      onStatus: (status) => setState({ userId, status }),
-      onUnauthorized: () => signOutRef.current()
+      onStatus: (status) => setState({ userId, status })
     })
   }, [userId, config.storagePrefix, apiClient, queryClient])
 
