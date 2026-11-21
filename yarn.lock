@@ -1050,12 +1050,12 @@
   dependencies:
     "@types/d3-color" "*"
 
-"@types/d3-selection@*", "@types/d3-selection@^3.0.10":
+"@types/d3-selection@*", "@types/d3-selection@^3.0.11":
   version "3.0.12"
   resolved "https://registry.yarnpkg.com/@types/d3-selection/-/d3-selection-3.0.12.tgz#bb207aec0b20bbe62466781c07e74212e9f5c0b1"
   integrity sha512-Qe/KWYhEiIIxGs7HrAAjMfShxKldx19SJtr5zu53f3afPsdZNz7HHtdTLXo/kqeiWNXVycI24kSnfzBYkTzpgw==
 
-"@types/d3-transition@^3.0.8":
+"@types/d3-transition@^3.0.9":
   version "3.0.9"
   resolved "https://registry.yarnpkg.com/@types/d3-transition/-/d3-transition-3.0.9.tgz#1136bc57e9ddb3c390dccc9b5ff3b7d2b8d94706"
   integrity sha512-uZS5shfxzO3rGlu0cC3bjmMFKsXv+SmZZcgp0KD22ts4uGXp5EVYGzu/0YdwZeKmddhcAccYtREJKkPfXkZuCg==
@@ -1231,24 +1231,25 @@
   resolved "https://registry.yarnpkg.com/@vitest/spy/-/spy-5.1.1.tgz#9bdbcaf0b0d60486a10a03c3ba5a752ec80b3ca9"
   integrity sha512-6K8C6alQG1/Yc8/ZI22iJS7JEsxPdVzqtqDq+/xM4Z0mGVykemMVjLhqMy/q6/IHYG3kKD8hKSwRen/ZdyI9vQ==
 
-"@xyflow/react@12.12.1":
-  version "12.12.1"
-  resolved "https://registry.yarnpkg.com/@xyflow/react/-/react-12.12.1.tgz#2ac44b451729da76d32b678140b9932fc75d0674"
-  integrity sha512-g41OHmP+GL5wDBQKpgYt8AF6RlB4CrABtiStXhCMqdItK6gPdSpsuDk8V0YtdyvIvMPTjDJvkuLkz0JbSYu5Cw==
+"@xyflow/react@13.0.2":
+  version "13.0.2"
+  resolved "https://registry.yarnpkg.com/@xyflow/react/-/react-13.0.2.tgz#9ab56b56f2a71f6ff108e136e1c8a7b2ff695126"
+  integrity sha512-dURQCKhz4TEYc43pp9yY4LeEvC7rmHLPeit396VKA9wSNjda245nA4JTZV3ieekB2dx7kwGjvXQELmsZ0FpVAA==
   dependencies:
-    "@xyflow/system" "0.0.84"
-    classcat "^5.0.3"
-    zustand "^4.4.0"
+    "@xyflow/system" "1.0.0"
+    classcat "^5.0.5"
+    react-compiler-runtime "^1.0.0"
+    zustand "^5.0.15"
 
-"@xyflow/system@0.0.84":
-  version "0.0.84"
-  resolved "https://registry.yarnpkg.com/@xyflow/system/-/system-0.0.84.tgz#28d12e3982749bd441c90c04eca4678bbe5d7328"
-  integrity sha512-96zfGFjH3oZ3T0MRdH4gJ0SlXuCIxbBuHVevZ4xry5UTxqjzjt010+LRdholgepq7jhrcaz1JNtzrETscwnkEA==
+"@xyflow/system@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@xyflow/system/-/system-1.0.0.tgz#2476de9c5f4cb9c6a5bc4cc33465c31e20f86970"
+  integrity sha512-mOeG0ZIkEUY5V5XQS+LE3QKlJqL7gu5ukqxAniuDDpfxtkA4uagOmBiWKh3w59wZ5nBC7ojBcNrBukM3hUJBKg==
   dependencies:
     "@types/d3-drag" "^3.0.7"
     "@types/d3-interpolate" "^3.0.4"
-    "@types/d3-selection" "^3.0.10"
-    "@types/d3-transition" "^3.0.8"
+    "@types/d3-selection" "^3.0.11"
+    "@types/d3-transition" "^3.0.9"
     "@types/d3-zoom" "^3.0.8"
     d3-drag "^3.0.0"
     d3-interpolate "^3.0.1"
@@ -1357,7 +1358,7 @@ class-variance-authority@0.7.1:
   dependencies:
     clsx "^2.1.1"
 
-classcat@^5.0.3:
+classcat@^5.0.5:
   version "5.0.5"
   resolved "https://registry.yarnpkg.com/classcat/-/classcat-5.0.5.tgz#8c209f359a93ac302404a10161b501eba9c09c77"
   integrity sha512-JhZUT7JFcQy/EzW605k/ktHtncoo9vnyW/2GspNYwFlN1C/WmjuV/xtS04e9SOkL2sTdw0VAZ2UGCcQ9lR6p6w==
@@ -2156,6 +2157,11 @@ quickselect@^3.0.0:
   resolved "https://registry.yarnpkg.com/quickselect/-/quickselect-3.0.0.tgz#a37fc953867d56f095a20ac71c6d27063d2de603"
   integrity sha512-XdjUArbK4Bm5fLLvlm5KpTFOiOThgfWWI4axAZDWg4E/0mKdZyI9tNEfds27qCi1ze/vwTR16kvmmGhRra3c2g==
 
+react-compiler-runtime@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/react-compiler-runtime/-/react-compiler-runtime-1.0.0.tgz#ee565c2cd3437a41e7fc31d8ab6c662f6b568fc0"
+  integrity sha512-rRfjYv66HlG8896yPUDONgKzG5BxZD1nV9U6rkm+7VCuvQc903C4MjcoZR4zPw53IKSOX9wMQVpA1IAbRtzQ7w==
+
 react-dom@19.3.1:
   version "19.3.1"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-19.3.1.tgz#b384c53cfcbe9c2a5d09d863b98455de9d68afe2"
@@ -2470,7 +2476,7 @@ use-sidecar@^1.1.3:
     detect-node-es "^1.1.0"
     tslib "^2.0.0"
 
-use-sync-external-store@^1.2.2, use-sync-external-store@^1.4.0, use-sync-external-store@^1.6.0:
+use-sync-external-store@^1.4.0, use-sync-external-store@^1.6.0:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.7.0.tgz#6dcb66ef569e02f186af6b3d575f414ce746e18f"
   integrity sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==
@@ -2589,14 +2595,7 @@ zod@4.6.7, zod@^4.6.7:
   resolved "https://registry.yarnpkg.com/zod/-/zod-4.6.7.tgz#e806cf64a7f4e37635ce9f2f52c04c3766f75e5b"
   integrity sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==
 
-zustand@^4.4.0:
-  version "4.5.7"
-  resolved "https://registry.yarnpkg.com/zustand/-/zustand-4.5.7.tgz#7d6bb2026a142415dd8be8891d7870e6dbe65f55"
-  integrity sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==
-  dependencies:
-    use-sync-external-store "^1.2.2"
-
-zustand@^5.1.0:
+zustand@^5.0.15, zustand@^5.1.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/zustand/-/zustand-5.1.0.tgz#739f981fa5427f3d3704705726e9c821671b307f"
   integrity sha512-ciJZlP48M1PTQbVQq81CGVFxHTLpZNrFjKqwjtCU34AWuXTZT/jrF3p9+fI84Cf1eSCMLapxqBy/SNTfwOBuqA==
