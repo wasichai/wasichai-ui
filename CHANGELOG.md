@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/wasichai/wasichai-ui/compare/v2.4.0...v2.5.0) (2026-11-24)
+
+
+### Features
+
+* **agent:** AssistantConversation for a floating panel, and the question as a bubble on the right ([#237](https://github.com/wasichai/wasichai-ui/issues/237)) ([d56b068](https://github.com/wasichai/wasichai-ui/commit/d56b0686296f1e61434189a6ce7d0be975c73e8c))
+
 ## [2.4.0](https://github.com/wasichai/wasichai-ui/compare/v2.3.0...v2.4.0) (2026-11-24)
 
 
