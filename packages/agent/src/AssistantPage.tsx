@@ -36,38 +36,20 @@ export interface AssistantPageProps {
 }
 
 /**
- * The assistant as a consultation record, not a chat: each turn is the question, set as a heading line, and the
- * answer below it at a reading measure, closed by where its figures came from. The user's conversations sit in a side
- * list by day; the server keeps them (ADR-087).
+ * The assistant: each turn is the user's question, on the right, and the answer below it at a reading measure, closed
+ * by where its figures came from. The user's conversations sit in a side
+ * list by day; the server keeps them (ADR-087). The conversation itself is [AssistantConversation], which an app can
+ * also show elsewhere (a floating panel).
  */
-export function AssistantPage({ suggestions: own, scope, placeholder }: AssistantPageProps = {}) {
-  // the assistant's strings live in its own namespace; common.loading stays core's
-  const { t } = useTranslation(['agent', 'common'])
+export function AssistantPage({ suggestions, scope, placeholder }: AssistantPageProps = {}) {
+  const { t } = useTranslation('agent')
   const status = useAgentStatus()
   const [params, setParams] = useSearchParams()
   const conversationId = params.get(CONVERSATION_PARAM)
   // missing endpoint counts as off: the page still renders, the input does not.
   const enabled = status.data?.enabled === true
   const conversations = useConversations(enabled)
-  const conversation = useConversation(conversationId)
-  const create = useCreateConversation()
-  const send = useSendMessage()
   const archive = useArchiveConversation()
-  // the turns the server does not have: the one being asked, and the ones that failed (the server keeps nothing of them)
-  const [local, setLocal] = useState<Turn[]>([])
-  const [question, setQuestion] = useState('')
-  const nextId = useRef(0)
-  const end = useRef<HTMLDivElement>(null)
-
-  const stored = useMemo(() => turnsFromMessages(conversation.data?.messages ?? []), [conversation.data])
-  const turns = [...stored, ...local]
-  const pending = local.some((turn) => turnStatus(turn) === 'pending')
-  const suggestions = own ?? [t('assistant.suggestionObjects'), t('assistant.suggestionRecords'), t('assistant.suggestionGeometry')]
-
-  useEffect(() => {
-    // jsdom has no scrollIntoView
-    end.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' })
-  }, [turns.length])
 
   const select = (id: string | null) =>
     setParams(
@@ -80,11 +62,77 @@ export function AssistantPage({ suggestions: own, scope, placeholder }: Assistan
       { replace: id === null }
     )
 
-  // switching conversations drops what was only on this page
-  const open = (id: string | null) => {
-    setLocal([])
-    select(id)
+  return (
+    <>
+      <PageHeader title={t('assistant.title')} subtitle={scope ?? t('assistant.scope')} actions={enabled ? <ModelPicker /> : null} />
+
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-x-8 gap-y-4 px-4 py-6 md:px-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <ConversationList
+          conversations={conversations.data ?? []}
+          current={conversationId}
+          canStart={conversationId !== null}
+          onOpen={select}
+          onArchive={async (id) => {
+            await archive.mutateAsync(id)
+            if (id === conversationId) select(null)
+          }}
+        />
+
+        <section className="flex min-h-[calc(100dvh-14rem)] min-w-0 flex-col" aria-label={t('assistant.title')}>
+          <AssistantConversation conversationId={conversationId} onConversation={select} suggestions={suggestions} placeholder={placeholder} />
+        </section>
+      </div>
+    </>
+  )
+}
+
+export interface AssistantConversationProps {
+  // the conversation shown; null starts a new one with the first question
+  conversationId: string | null
+  // told the id of the conversation the first question opened
+  onConversation: (id: string) => void
+  suggestions?: string[]
+  placeholder?: string
+  // a narrow place (a floating panel): the transcript scrolls inside it, suggestions in one column
+  compact?: boolean
+}
+
+/**
+ * One conversation: its turns, as the server keeps them plus the one being asked, and the composer. Asking with no
+ * conversation opens one, named after the question, and tells [AssistantConversationProps.onConversation].
+ */
+export function AssistantConversation({ conversationId, onConversation, suggestions: own, placeholder, compact = false }: AssistantConversationProps) {
+  // the assistant's strings live in its own namespace; common.loading stays core's
+  const { t } = useTranslation(['agent', 'common'])
+  const status = useAgentStatus()
+  const enabled = status.data?.enabled === true
+  const conversation = useConversation(conversationId)
+  const create = useCreateConversation()
+  const send = useSendMessage()
+  // the turns the server does not have: the one being asked, and the ones that failed (the server keeps nothing of them)
+  const [local, setLocal] = useState<Turn[]>([])
+  const [question, setQuestion] = useState('')
+  const nextId = useRef(0)
+  const end = useRef<HTMLDivElement>(null)
+  // the conversation this component opened itself: following it keeps the turn being asked
+  const opened = useRef<string | null>(null)
+
+  // another conversation drops what was only on this page
+  const [shown, setShown] = useState(conversationId)
+  if (shown !== conversationId) {
+    setShown(conversationId)
+    if (conversationId === null || conversationId !== opened.current) setLocal([])
   }
+
+  const stored = useMemo(() => turnsFromMessages(conversation.data?.messages ?? []), [conversation.data])
+  const turns = [...stored, ...local]
+  const pending = local.some((turn) => turnStatus(turn) === 'pending')
+  const suggestions = own ?? [t('assistant.suggestionObjects'), t('assistant.suggestionRecords'), t('assistant.suggestionGeometry')]
+
+  useEffect(() => {
+    // jsdom has no scrollIntoView
+    end.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' })
+  }, [turns.length])
 
   const ask = async (text: string) => {
     if (!text || !enabled || pending) return
@@ -92,10 +140,13 @@ export function AssistantPage({ suggestions: own, scope, placeholder }: Assistan
     setLocal((current) => [...current, turn])
     setQuestion('')
     try {
-      // the first question opens a conversation, named after it at once (the side list shows it while the answer comes)
-      const id = conversationId ?? (await create.mutateAsync(titleOf(text))).id
-      // the turn being asked stays on the page while the url follows the new conversation
-      if (id !== conversationId) select(id)
+      // the first question opens a conversation, named after it at once (a side list shows it while the answer comes)
+      let id = conversationId
+      if (id === null) {
+        id = (await create.mutateAsync(titleOf(text))).id
+        opened.current = id
+        onConversation(id)
+      }
       await send.mutateAsync({ conversationId: id, question: text })
       // refetched by the mutation: the server's copy replaces ours
       setLocal((current) => current.filter((item) => item.id !== turn.id))
@@ -111,47 +162,30 @@ export function AssistantPage({ suggestions: own, scope, placeholder }: Assistan
   }
 
   return (
-    <>
-      <PageHeader title={t('assistant.title')} subtitle={scope ?? t('assistant.scope')} actions={enabled ? <ModelPicker /> : null} />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className={cn('flex-1', compact && 'min-h-0 overflow-y-auto px-4 pt-3')}>
+        {status.isLoading ? <p className="text-sm text-ink-muted">{t('common.loading')}</p> : enabled ? null : <Disabled />}
 
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-x-8 gap-y-4 px-4 py-6 md:px-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
-        <ConversationList
-          conversations={conversations.data ?? []}
-          current={conversationId}
-          canStart={conversationId !== null || local.length > 0}
-          onOpen={open}
-          onArchive={async (id) => {
-            await archive.mutateAsync(id)
-            if (id === conversationId) open(null)
-          }}
-        />
+        {conversation.isError ? (
+          <p className="mb-4 text-sm text-danger" role="alert">
+            {t('assistant.conversationMissing')}
+          </p>
+        ) : null}
 
-        <section className="flex min-h-[calc(100dvh-14rem)] min-w-0 flex-col" aria-label={t('assistant.title')}>
-          {status.isLoading ? <p className="text-sm text-ink-muted">{t('common.loading')}</p> : enabled ? null : <Disabled />}
-
-          {conversation.isError ? (
-            <p className="mb-4 text-sm text-danger" role="alert">
-              {t('assistant.conversationMissing')}
-            </p>
-          ) : null}
-
-          <div className="flex-1">
-            {turns.length === 0 ? (
-              <Empty suggestions={suggestions} disabled={!enabled} onPick={(text) => void ask(text)} />
-            ) : (
-              <ol data-testid="assistant-transcript" className="max-w-5xl divide-y divide-line">
-                {turns.map((turn) => (
-                  <TurnView key={turn.id} turn={turn} />
-                ))}
-              </ol>
-            )}
-            <div ref={end} />
-          </div>
-
-          <Composer value={question} onChange={setQuestion} onSubmit={submit} disabled={!enabled} pending={pending} placeholder={placeholder} />
-        </section>
+        {turns.length === 0 ? (
+          <Empty suggestions={suggestions} disabled={!enabled} onPick={(text) => void ask(text)} compact={compact} />
+        ) : (
+          <ol data-testid="assistant-transcript" className="max-w-5xl divide-y divide-line">
+            {turns.map((turn) => (
+              <TurnView key={turn.id} turn={turn} compact={compact} />
+            ))}
+          </ol>
+        )}
+        <div ref={end} />
       </div>
-    </>
+
+      <Composer value={question} onChange={setQuestion} onSubmit={submit} disabled={!enabled} pending={pending} placeholder={placeholder} compact={compact} />
+    </div>
   )
 }
 
@@ -169,13 +203,13 @@ function Disabled() {
 }
 
 // an empty conversation is an invitation to ask: the app's own questions, sent as they are with one click
-function Empty({ suggestions, disabled, onPick }: { suggestions: string[]; disabled: boolean; onPick: (text: string) => void }) {
+function Empty({ suggestions, disabled, onPick, compact }: { suggestions: string[]; disabled: boolean; onPick: (text: string) => void; compact: boolean }) {
   const { t } = useTranslation('agent')
   return (
-    <div className="max-w-3xl py-6">
-      <h2 className="text-xl font-semibold text-ink">{t('assistant.emptyTitle')}</h2>
+    <div className={cn('max-w-3xl', compact ? 'py-2' : 'py-6')}>
+      <h2 className={cn('font-semibold text-ink', compact ? 'text-base' : 'text-xl')}>{t('assistant.emptyTitle')}</h2>
       <p className="mt-1 max-w-2xl text-sm text-ink-muted">{t('assistant.emptyHint')}</p>
-      <ul className="mt-6 grid gap-2 sm:grid-cols-2">
+      <ul className={cn('grid gap-2', compact ? 'mt-4' : 'mt-6 sm:grid-cols-2')}>
         {suggestions.map((suggestion) => (
           <li key={suggestion}>
             <button
@@ -266,16 +300,21 @@ function ConversationList({
   )
 }
 
-function TurnView({ turn }: { turn: Turn }) {
+function TurnView({ turn, compact }: { turn: Turn; compact: boolean }) {
   const { t } = useTranslation('agent')
   const state = turnStatus(turn)
 
   return (
-    <li className="py-6 first:pt-2">
-      {/* the question heads its answer: a thin brand rule marks who asked */}
-      <p className="max-w-[75ch] border-l-2 border-brand pl-3 text-base font-semibold whitespace-pre-wrap text-ink">{turn.question}</p>
+    <li className={cn('first:pt-2', compact ? 'py-4' : 'py-6')}>
+      {/* the user's question on the right, in the theme's border grey, softened (the table-head grey is the page's own
+          in some themes); the answer below, across the column */}
+      <div className="flex justify-end">
+        <p data-ui="agent-question" className="max-w-[85%] rounded-lg rounded-br-sm bg-border/60 px-4 py-2 text-sm whitespace-pre-wrap text-ink">
+          {turn.question}
+        </p>
+      </div>
 
-      <div className="mt-3 pl-3.5">
+      <div className="mt-3">
         {state === 'pending' ? <Waiting /> : null}
 
         {state === 'failed' && turn.error ? (
@@ -401,7 +440,8 @@ function Composer({
   onSubmit,
   disabled,
   pending,
-  placeholder
+  placeholder,
+  compact
 }: {
   value: string
   onChange: (value: string) => void
@@ -409,6 +449,7 @@ function Composer({
   disabled: boolean
   pending: boolean
   placeholder?: string
+  compact: boolean
 }) {
   const { t } = useTranslation('agent')
   const area = useRef<HTMLTextAreaElement>(null)
@@ -429,7 +470,10 @@ function Composer({
   }
 
   return (
-    <form onSubmit={onSubmit} className="sticky -bottom-6 mt-4 max-w-5xl bg-surface-muted pt-2 pb-10">
+    <form
+      onSubmit={onSubmit}
+      className={cn(compact ? 'border-t border-line bg-surface px-3 pt-2 pb-3' : 'sticky -bottom-6 mt-4 max-w-5xl bg-surface-muted pt-2 pb-10')}
+    >
       <div className="flex items-end gap-2 rounded-lg border border-border-control bg-surface p-2 focus-within:border-brand">
         <textarea
           ref={area}
@@ -447,7 +491,7 @@ function Composer({
           <span className="max-sm:sr-only">{pending ? t('assistant.sending') : t('assistant.send')}</span>
         </Button>
       </div>
-      <p className="mt-1.5 px-1 text-xs text-ink-muted">{t('assistant.composerHint')}</p>
+      {compact ? null : <p className="mt-1.5 px-1 text-xs text-ink-muted">{t('assistant.composerHint')}</p>}
     </form>
   )
 }

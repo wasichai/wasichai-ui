@@ -47,6 +47,10 @@ button; a pending one counts the time.
 The page keeps the user's conversations on the server (a side list; the open one is `?c=<id>` in the url) and, when
 the backend offers more than one model, a model picker in its header (`ModelPicker`).
 
+`AssistantConversation` is the page's conversation alone (its turns and the composer), for an app that shows the assistant
+elsewhere, such as a floating panel: `conversationId` (null starts one), `onConversation(id)` (the one the first
+question opened), `suggestions`, `placeholder`, and `compact` (the transcript scrolls inside, suggestions in one column).
+
 For an app that builds its own chat screen it exports the hooks: `useAgentStatus`, `useAskAgent` (one question, no
 memory), `useConversations`, `useConversation(id)`, `useCreateConversation`, `useSendMessage`,
 `useRenameConversation`, `useArchiveConversation`, `useAgentSettings`, `useUpdateAgentSettings`, plus
