@@ -1,6 +1,6 @@
 {
     "name": "@wasichai/notifications",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "description": "Wasichai notifications module: the alerts inbox",
     "type": "module",
     "files": [

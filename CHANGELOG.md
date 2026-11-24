@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/wasichai/wasichai-ui/compare/v2.2.0...v2.3.0) (2026-11-24)
+
+
+### Features
+
+* **agent:** conversation list, follow-ups and a model picker on the assistant page ([#232](https://github.com/wasichai/wasichai-ui/issues/232)) ([90188e2](https://github.com/wasichai/wasichai-ui/commit/90188e20e4b33998d9e628831d5c41b1b2384673))
+
+
+### Bug Fixes
+
+* **documents:** align @tiptap/core with react and starter-kit 3.34.0 ([#233](https://github.com/wasichai/wasichai-ui/issues/233)) ([2757d46](https://github.com/wasichai/wasichai-ui/commit/2757d46257746c7faf313db04a4497d28d488e59))
+
 ## [2.2.0](https://github.com/wasichai/wasichai-ui/compare/v2.1.0...v2.2.0) (2026-11-17)
 
 
