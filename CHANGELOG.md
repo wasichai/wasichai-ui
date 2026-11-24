@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/wasichai/wasichai-ui/compare/v2.3.0...v2.4.0) (2026-11-24)
+
+
+### Features
+
+* **agent:** answers in markdown, a consultation-record layout and links into the app ([#235](https://github.com/wasichai/wasichai-ui/issues/235)) ([ea7d688](https://github.com/wasichai/wasichai-ui/commit/ea7d68890791e92d2052e46c77d9806c9b367a18))
+
 ## [2.3.0](https://github.com/wasichai/wasichai-ui/compare/v2.2.0...v2.3.0) (2026-11-24)
 
 
