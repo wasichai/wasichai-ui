@@ -1,6 +1,6 @@
 export { AGENT_MODULE_ID, agentModule, type AgentModuleOptions } from './module'
 export { agentMessages } from './i18n'
-export { AssistantPage, ModelPicker, type AssistantPageProps } from './AssistantPage'
+export { AssistantConversation, AssistantPage, ModelPicker, type AssistantConversationProps, type AssistantPageProps } from './AssistantPage'
 export {
   useAgentSettings,
   useAgentStatus,

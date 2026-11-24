@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { AssistantPage } from './AssistantPage'
+import { AssistantConversation, AssistantPage } from './AssistantPage'
 import { ApiError, coreModule } from '@wasichai/core'
 import { renderWithProviders } from '@wasichai/testing'
 import type { AgentAnswer, AgentConversation, AgentConversationDetail, AgentExchange, AgentStatus } from './types'
@@ -257,5 +258,32 @@ describe('AssistantPage', () => {
 
     expect(screen.getByRole('button', { name: '¿Cuántos omisos hay en 2026?' })).toBeInTheDocument()
     expect(screen.getByText('Solo datos de tu municipalidad.')).toBeInTheDocument()
+  })
+
+  it('a conversation alone, as a floating panel shows it, tells the conversation its first question opened', async () => {
+    const opened = vi.fn()
+    // the panel keeps the conversation it is on, as an app's floating panel does
+    function Panel() {
+      const [id, setId] = useState<string | null>(null)
+      return (
+        <AssistantConversation
+          conversationId={id}
+          onConversation={(next) => {
+            opened(next)
+            setId(next)
+          }}
+          compact
+        />
+      )
+    }
+    renderWithProviders(<Panel />, { modules: [coreModule, agentModule()] })
+
+    await askSomething('¿cuántos predios hay?')
+
+    expect(state.create).toHaveBeenCalledWith('¿cuántos predios hay?')
+    expect(opened).toHaveBeenCalledWith('c1')
+    expect(await screen.findByText('Hay 3 objetos con geometría.')).toBeInTheDocument()
+    // a narrow place: no keyboard hint under the composer
+    expect(screen.queryByText(/Enter envía/)).not.toBeInTheDocument()
   })
 })
