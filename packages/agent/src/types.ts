@@ -18,6 +18,8 @@ export interface AgentAnswer {
   // agent hit its step limit and stopped. the answer may be half a story.
   truncated: boolean
   usage?: AgentUsage
+  // the model that answered, when the server kept it
+  model?: string | null
 }
 
 export interface AgentStatus {

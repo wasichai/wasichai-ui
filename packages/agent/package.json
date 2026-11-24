@@ -27,12 +27,14 @@
         "build": "vite build && tsc -p tsconfig.build.json"
     },
     "dependencies": {
-        "lucide-react": "^1.75.0"
+        "lucide-react": "^1.75.0",
+        "react-markdown": "10.1.0",
+        "remark-gfm": "4.0.1"
     },
     "peerDependencies": {
+        "@tanstack/react-query": "^5.103.1",
         "@wasichai/core": "*",
         "@wasichai/ui": "*",
-        "@tanstack/react-query": "^5.103.1",
         "i18next": "^26.4.2",
         "react": "^19.3.0",
         "react-dom": "^19.3.0",

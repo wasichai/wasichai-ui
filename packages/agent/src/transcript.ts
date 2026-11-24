@@ -110,8 +110,43 @@ export function turnsFromMessages(messages: AgentMessage[]): Turn[] {
       return
     }
     const last = turns[turns.length - 1]
-    const answer: AgentAnswer = { answer: message.content, steps: message.steps ?? [], truncated: message.truncated }
+    const answer: AgentAnswer = {
+      answer: message.content,
+      steps: message.steps ?? [],
+      truncated: message.truncated,
+      ...(message.usage ? { usage: message.usage } : {}),
+      model: message.model
+    }
     if (last && last.answer === null && last.error === null) turns[turns.length - 1] = answeredTurn(last, answer)
   })
   return turns
+}
+
+export type ConversationGroup = 'today' | 'yesterday' | 'week' | 'earlier'
+
+// the side list's sections, by the day of the last answer in the user's own time zone
+export function groupOf(updatedAt: string, now: Date = new Date()): ConversationGroup {
+  const day = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+  const days = Math.round((day(now) - day(new Date(updatedAt))) / 86_400_000)
+  if (days <= 0) return 'today'
+  if (days === 1) return 'yesterday'
+  if (days < 7) return 'week'
+  return 'earlier'
+}
+
+// m:ss, for the wait of an answer that can take minutes
+export function elapsed(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
+
+const TITLE_LENGTH = 80
+
+// a new conversation's name: the first line of its first question, cut at a word (as the server would name it)
+export function titleOf(question: string): string {
+  const line = question.trim().split('\n')[0].trim()
+  if (line.length <= TITLE_LENGTH) return line
+  const cut = line.slice(0, TITLE_LENGTH)
+  const space = cut.lastIndexOf(' ')
+  return (space > 0 ? cut.slice(0, space) : cut).trimEnd() + '…'
 }

@@ -13,8 +13,8 @@ export const agentMessages = {
       you: 'Tú',
       agent: 'Asistente',
       thinking: 'Consultando los datos…',
-      emptyTitle: 'Todavía no has preguntado nada',
-      emptyHint: 'El asistente consulta la API de Wasichai con tu sesión y muestra las herramientas que usó.',
+      emptyTitle: '¿Qué quieres saber?',
+      emptyHint: 'Pregunta con tus palabras. El asistente consulta los datos con tu usuario y dice de dónde sale cada cifra.',
       suggestionsTitle: 'Para empezar',
       suggestionObjects: '¿Qué objetos hay definidos y cuántos campos tiene cada uno?',
       suggestionRecords: '¿Cuántos registros hay en cada objeto?',
@@ -35,8 +35,14 @@ export const agentMessages = {
       noConversations: 'Aquí aparecerán tus conversaciones.',
       untitled: 'Sin título',
       archive: 'Archivar «{{title}}»',
+      archiveShort: 'Archivar',
       conversationMissing: 'Esa conversación no existe o no es tuya.',
-      defaultModel: '{{model}} (predeterminado)'
+      defaultModel: '{{model}} (predeterminado)',
+      groups: { today: 'Hoy', yesterday: 'Ayer', week: 'Últimos 7 días', earlier: 'Anteriores' },
+      source: 'Fuente:',
+      copy: 'Copiar la respuesta',
+      copied: 'Respuesta copiada',
+      composerHint: 'Enter envía la pregunta; Mayús + Enter agrega una línea.'
     }
   },
   en: {
@@ -51,8 +57,8 @@ export const agentMessages = {
       you: 'You',
       agent: 'Assistant',
       thinking: 'Querying the data…',
-      emptyTitle: 'You have not asked anything yet',
-      emptyHint: 'The assistant queries the Wasichai API with your session and shows the tools it used.',
+      emptyTitle: 'What do you want to know?',
+      emptyHint: 'Ask in your own words. The assistant reads the data as you and says where each figure comes from.',
       suggestionsTitle: 'To get started',
       suggestionObjects: 'Which objects are defined and how many fields does each one have?',
       suggestionRecords: 'How many records are there in each object?',
@@ -73,8 +79,14 @@ export const agentMessages = {
       noConversations: 'Your conversations will show up here.',
       untitled: 'Untitled',
       archive: 'Archive “{{title}}”',
+      archiveShort: 'Archive',
       conversationMissing: 'That conversation does not exist or is not yours.',
-      defaultModel: '{{model}} (default)'
+      defaultModel: '{{model}} (default)',
+      groups: { today: 'Today', yesterday: 'Yesterday', week: 'Last 7 days', earlier: 'Earlier' },
+      source: 'Source:',
+      copy: 'Copy the answer',
+      copied: 'Answer copied',
+      composerHint: 'Enter sends the question; Shift + Enter adds a line.'
     }
   }
 }
