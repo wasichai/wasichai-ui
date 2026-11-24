@@ -816,11 +816,6 @@
   resolved "https://registry.yarnpkg.com/@testing-library/user-event/-/user-event-14.6.12.tgz#ccb1e808df007a1f504c67f92124a6dc2ef63562"
   integrity sha512-8yQV8v+eToBhsUO4oYrZY7fzhpTEMZx4IDx0/iuER/x0Xuy0NdqQOhsaaUNlvXE03N7vQ+4RCXUieKC0NJty9w==
 
-"@tiptap/core@3.33.1":
-  version "3.33.1"
-  resolved "https://registry.yarnpkg.com/@tiptap/core/-/core-3.33.1.tgz#59a462e086f3bbc291d48981b0f791d01ac98e5c"
-  integrity sha512-cWSLHe0Bp44SqEsNMpfSpJeeWenG9/g4pAMRjcEpm0IZN9cmY5fq7LEYZCpjBbVqpzjaT1q7HnkvbBOPTdhbrQ==
-
 "@tiptap/core@3.34.0":
   version "3.34.0"
   resolved "https://registry.yarnpkg.com/@tiptap/core/-/core-3.34.0.tgz#4f38b49425ca10a8476d4cddf38089279a34086e"
