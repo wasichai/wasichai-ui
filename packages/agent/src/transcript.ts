@@ -1,5 +1,5 @@
 import { ApiError } from '@wasichai/core'
-import type { AgentAnswer } from './types'
+import type { AgentAnswer, AgentMessage } from './types'
 
 export type TurnStatus = 'pending' | 'answered' | 'failed'
 
@@ -8,7 +8,7 @@ export interface TurnError {
   violations: string[]
 }
 
-// one question and whatever came back. the transcript lives in the page, the server keeps no session.
+// one question and whatever came back. kept by the server once answered (ADR-087); pending and failed ones live in the page.
 export interface Turn {
   id: string
   question: string
@@ -98,4 +98,20 @@ function truncate(text: string): string {
   const clean = text.replace(/\s+/g, ' ').trim()
   if (clean === '') return EMPTY
   return clean.length > MAX_TEXT ? `${clean.slice(0, MAX_TEXT)}…` : clean
+}
+
+// the server's messages as turns: each question with the answer after it. an unanswered question (a run
+// still going elsewhere) shows as pending.
+export function turnsFromMessages(messages: AgentMessage[]): Turn[] {
+  const turns: Turn[] = []
+  messages.forEach((message) => {
+    if (message.role === 'USER') {
+      turns.push(pendingTurn(message.id, message.content))
+      return
+    }
+    const last = turns[turns.length - 1]
+    const answer: AgentAnswer = { answer: message.content, steps: message.steps ?? [], truncated: message.truncated }
+    if (last && last.answer === null && last.error === null) turns[turns.length - 1] = answeredTurn(last, answer)
+  })
+  return turns
 }

@@ -38,7 +38,13 @@ Tailwind: the app's stylesheet already has `@import "@wasichai/ui/theme.css"` an
 | nav | "Asistente" / "Assistant" in core's automation group, order 40 |
 | i18n | namespace `agent` (es, en) |
 
-It also exports `useAgentStatus()` and `useAskAgent()`, for an app that wants to ask from its own screens.
+The page keeps the user's conversations on the server (a side list; the open one is `?c=<id>` in the url) and, when
+the backend offers more than one model, a model picker in its header (`ModelPicker`).
+
+For an app that builds its own chat screen it exports the hooks: `useAgentStatus`, `useAskAgent` (one question, no
+memory), `useConversations`, `useConversation(id)`, `useCreateConversation`, `useSendMessage`,
+`useRenameConversation`, `useArchiveConversation`, `useAgentSettings`, `useUpdateAgentSettings`, plus
+`turnsFromMessages`, `formatStepInput` and `describeError`.
 
 ## Options
 
@@ -51,6 +57,7 @@ It also exports `useAgentStatus()` and `useAskAgent()`, for an app that wants to
 Paths are the backend's routes. The frontend reaches them through `apiBaseUrl` (default `/api`), so a proxy that
 mounts the API elsewhere changes the prefix, not these paths.
 
-It needs the wasichai agent backend module (`GET /agent/status`, `POST /agent/ask` with `{ question }`). If the
+It needs the wasichai agent backend module (`GET /agent/status`, `POST /agent/ask` with `{ question }`, and from
+wasichai 2.3.0 `/agent/conversations` and `/agent/settings`, ADR-087). If the
 status endpoint answers an error or `enabled: false`, the page says the assistant is not configured and blocks
 the input. The rest of the app is unaffected.
