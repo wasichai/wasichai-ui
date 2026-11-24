@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError } from '@wasichai/core'
-import { answeredTurn, describeError, failedTurn, formatStepInput, formatValue, pendingTurn, replaceTurn, turnStatus, turnsFromMessages } from './transcript'
+import {
+  answeredTurn,
+  describeError,
+  failedTurn,
+  formatStepInput,
+  formatValue,
+  pendingTurn,
+  replaceTurn,
+  turnStatus,
+  turnsFromMessages,
+  groupOf,
+  elapsed,
+  titleOf
+} from './transcript'
 import type { AgentAnswer } from './types'
 
 const answer: AgentAnswer = {
@@ -117,5 +130,30 @@ describe('turnsFromMessages', () => {
     const turns = turnsFromMessages([message('1', 'USER', 'q1')])
 
     expect(turnStatus(turns[0])).toBe('pending')
+  })
+})
+
+describe('groupOf and elapsed', () => {
+  const now = new Date(2026, 10, 24, 15, 0)
+
+  it('puts a conversation in the section of its last day', () => {
+    expect(groupOf(new Date(2026, 10, 24, 1, 0).toISOString(), now)).toBe('today')
+    expect(groupOf(new Date(2026, 10, 23, 23, 0).toISOString(), now)).toBe('yesterday')
+    expect(groupOf(new Date(2026, 10, 19).toISOString(), now)).toBe('week')
+    expect(groupOf(new Date(2026, 9, 1).toISOString(), now)).toBe('earlier')
+  })
+
+  it('counts the wait in minutes and seconds', () => {
+    expect(elapsed(0)).toBe('0:00')
+    expect(elapsed(72.6)).toBe('1:12')
+  })
+})
+
+describe('titleOf', () => {
+  it('names a conversation after the first line of its question, cut at a word', () => {
+    expect(titleOf('  ¿Cuántos omisos hay?\nen 2026 ')).toBe('¿Cuántos omisos hay?')
+    const long = 'palabra '.repeat(20)
+    expect(titleOf(long).length).toBeLessThanOrEqual(81)
+    expect(titleOf(long).endsWith('…')).toBe(true)
   })
 })

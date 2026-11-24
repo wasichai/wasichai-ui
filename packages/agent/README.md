@@ -38,6 +38,12 @@ Tailwind: the app's stylesheet already has `@import "@wasichai/ui/theme.css"` an
 | nav | "Asistente" / "Assistant" in core's automation group, order 40 |
 | i18n | namespace `agent` (es, en) |
 
+Answers are rendered as GitHub-flavoured markdown (`react-markdown` + `remark-gfm`, no raw HTML): tables take the
+column's width with figures right-aligned in tabular digits, prose keeps a reading measure, and a link to a path of the
+app (`/predios/<id>`) is followed with the router, so it opens where the app opens it; any other link opens in a new
+browser tab. Each answer closes with its source (the tools' summaries, their arguments on demand), the model and a copy
+button; a pending one counts the time.
+
 The page keeps the user's conversations on the server (a side list; the open one is `?c=<id>` in the url) and, when
 the backend offers more than one model, a model picker in its header (`ModelPicker`).
 

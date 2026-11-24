@@ -148,13 +148,16 @@ describe('AssistantPage', () => {
     expect(await screen.findByTestId('turn-answer')).toBeInTheDocument()
     expect(screen.queryByTestId('turn-steps')).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: /Ver los pasos \(1\)/ }))
+    // the source line says where the answer came from, in the tools' own summaries
+    const source = screen.getByRole('button', { name: /Fuente:.*Devolvió 3 objetos/ })
+    expect(source).toHaveAttribute('aria-expanded', 'false')
+
+    await userEvent.click(source)
 
     expect(screen.getByTestId('turn-steps')).toBeInTheDocument()
     expect(screen.getByText('list_objects')).toBeInTheDocument()
     expect(screen.getByText('withGeometry')).toBeInTheDocument()
     expect(screen.getByText('true')).toBeInTheDocument()
-    expect(screen.getByText('Devolvió 3 objetos')).toBeInTheDocument()
   })
 
   it('warns that a truncated answer may be incomplete', async () => {
@@ -195,12 +198,50 @@ describe('AssistantPage', () => {
     expect(screen.getByRole('textbox')).toBeDisabled()
   })
 
-  it('fills the input with a suggested question', async () => {
+  it('asks a suggested question with one click', async () => {
     renderWithProviders(<AssistantPage />, { modules: [coreModule, agentModule()] })
 
     await userEvent.click(screen.getByRole('button', { name: '¿Cuántos registros hay en cada objeto?' }))
 
-    expect(screen.getByRole('textbox')).toHaveValue('¿Cuántos registros hay en cada objeto?')
+    expect(state.ask).toHaveBeenCalledWith('¿Cuántos registros hay en cada objeto?')
+  })
+
+  it('sends with enter and breaks the line with shift+enter', async () => {
+    renderWithProviders(<AssistantPage />, { modules: [coreModule, agentModule()] })
+
+    await userEvent.type(screen.getByRole('textbox'), 'primera{Shift>}{Enter}{/Shift}segunda{Enter}')
+
+    expect(state.ask).toHaveBeenCalledWith('primera\nsegunda')
+  })
+
+  it('renders the answer as markdown: a table with its figures right-aligned, and app links followed in the app', async () => {
+    const markdown = '| Predio | Autoavalúo |\n|---|---|\n| [P-001](/predios/abc) | S/ 1,234.50 |\n\nVer [la norma](https://example.org).'
+    state.ask = vi.fn().mockImplementation(async (question: string) => stored(question, { ...answer, answer: markdown }))
+    renderWithProviders(<AssistantPage />, { modules: [coreModule, agentModule()] })
+
+    await askSomething()
+
+    const table = await screen.findByRole('table')
+    expect(table).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'S/ 1,234.50' })).toHaveClass('text-right', 'tabular-nums')
+    expect(screen.getByRole('cell', { name: 'P-001' })).not.toHaveClass('text-right')
+    const app = screen.getByRole('link', { name: 'P-001' })
+    expect(app).toHaveAttribute('href', '/predios/abc')
+    expect(app).not.toHaveAttribute('target')
+    expect(screen.getByRole('link', { name: 'la norma' })).toHaveAttribute('target', '_blank')
+  })
+
+  it('groups the conversations by day', () => {
+    const today = new Date().toISOString()
+    const old = new Date(Date.now() - 30 * 86_400_000).toISOString()
+    state.conversations = [
+      { id: 'c1', title: 'Omisos de hoy', createdAt: today, updatedAt: today },
+      { id: 'c2', title: 'Brecha de octubre', createdAt: old, updatedAt: old }
+    ]
+    renderWithProviders(<AssistantPage />, { modules: [coreModule, agentModule()] })
+
+    expect(screen.getByRole('heading', { name: 'Hoy' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Anteriores' })).toBeInTheDocument()
   })
 
   it('states that the assistant only sees what the user may see', () => {
