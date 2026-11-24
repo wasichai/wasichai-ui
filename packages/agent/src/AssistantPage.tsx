@@ -36,8 +36,8 @@ export interface AssistantPageProps {
 }
 
 /**
- * The assistant as a consultation record, not a chat: each turn is the question, set as a heading line, and the
- * answer below it at a reading measure, closed by where its figures came from. The user's conversations sit in a side
+ * The assistant: each turn is the user's question, on the right, and the answer below it at a reading measure, closed
+ * by where its figures came from. The user's conversations sit in a side
  * list by day; the server keeps them (ADR-087). The conversation itself is [AssistantConversation], which an app can
  * also show elsewhere (a floating panel).
  */
@@ -306,10 +306,15 @@ function TurnView({ turn, compact }: { turn: Turn; compact: boolean }) {
 
   return (
     <li className={cn('first:pt-2', compact ? 'py-4' : 'py-6')}>
-      {/* the question heads its answer: a thin brand rule marks who asked */}
-      <p className="max-w-[75ch] border-l-2 border-brand pl-3 text-base font-semibold whitespace-pre-wrap text-ink">{turn.question}</p>
+      {/* the user's question on the right, in the theme's border grey, softened (the table-head grey is the page's own
+          in some themes); the answer below, across the column */}
+      <div className="flex justify-end">
+        <p data-ui="agent-question" className="max-w-[85%] rounded-lg rounded-br-sm bg-border/60 px-4 py-2 text-sm whitespace-pre-wrap text-ink">
+          {turn.question}
+        </p>
+      </div>
 
-      <div className="mt-3 pl-3.5">
+      <div className="mt-3">
         {state === 'pending' ? <Waiting /> : null}
 
         {state === 'failed' && turn.error ? (

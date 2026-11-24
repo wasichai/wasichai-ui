@@ -286,4 +286,14 @@ describe('AssistantPage', () => {
     // a narrow place: no keyboard hint under the composer
     expect(screen.queryByText(/Enter envía/)).not.toBeInTheDocument()
   })
+
+  it('sets the question apart, on the right, in the theme grey', async () => {
+    renderWithProviders(<AssistantPage />, { modules: [coreModule, agentModule()] })
+
+    await askSomething('¿cuántos registros hay?')
+
+    const question = screen.getByText('¿cuántos registros hay?')
+    expect(question).toHaveClass('bg-border/60')
+    expect(question.parentElement).toHaveClass('justify-end')
+  })
 })
