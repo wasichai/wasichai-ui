@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError } from '@wasichai/core'
-import { answeredTurn, describeError, failedTurn, formatStepInput, formatValue, pendingTurn, replaceTurn, turnStatus } from './transcript'
+import { answeredTurn, describeError, failedTurn, formatStepInput, formatValue, pendingTurn, replaceTurn, turnStatus, turnsFromMessages } from './transcript'
 import type { AgentAnswer } from './types'
 
 const answer: AgentAnswer = {
@@ -89,5 +89,33 @@ describe('formatStepInput', () => {
 
     expect(value).toHaveLength(81)
     expect(value.endsWith('…')).toBe(true)
+  })
+})
+
+describe('turnsFromMessages', () => {
+  const message = (id: string, role: 'USER' | 'ASSISTANT', content: string) => ({
+    id,
+    role,
+    content,
+    steps: [],
+    truncated: false,
+    usage: null,
+    model: null,
+    createdAt: '2026-11-24T10:00:00Z'
+  })
+
+  it('pairs each question with the answer after it', () => {
+    const turns = turnsFromMessages([message('1', 'USER', 'q1'), message('2', 'ASSISTANT', 'a1'), message('3', 'USER', 'q2'), message('4', 'ASSISTANT', 'a2')])
+
+    expect(turns.map((turn) => [turn.question, turn.answer?.answer])).toEqual([
+      ['q1', 'a1'],
+      ['q2', 'a2']
+    ])
+  })
+
+  it('leaves a question without an answer pending', () => {
+    const turns = turnsFromMessages([message('1', 'USER', 'q1')])
+
+    expect(turnStatus(turns[0])).toBe('pending')
   })
 })

@@ -29,7 +29,14 @@ export const agentMessages = {
       truncatedHint: 'El asistente alcanzó su límite de pasos y se detuvo. Revisa las herramientas usadas antes de dar el resultado por bueno.',
       failed: 'La consulta falló',
       disabled: 'El asistente no está configurado',
-      disabledHint: 'Falta la configuración del modelo en el servidor. El resto de Wasichai sigue funcionando con normalidad.'
+      disabledHint: 'Falta la configuración del modelo en el servidor. El resto de Wasichai sigue funcionando con normalidad.',
+      conversations: 'Conversaciones',
+      newConversation: 'Nueva conversación',
+      noConversations: 'Aquí aparecerán tus conversaciones.',
+      untitled: 'Sin título',
+      archive: 'Archivar «{{title}}»',
+      conversationMissing: 'Esa conversación no existe o no es tuya.',
+      defaultModel: '{{model}} (predeterminado)'
     }
   },
   en: {
@@ -60,7 +67,14 @@ export const agentMessages = {
       truncatedHint: 'The assistant hit its step limit and stopped. Check the tools it used before taking the result as final.',
       failed: 'The request failed',
       disabled: 'The assistant is not configured',
-      disabledHint: 'The model configuration is missing on the server. The rest of Wasichai keeps working normally.'
+      disabledHint: 'The model configuration is missing on the server. The rest of Wasichai keeps working normally.',
+      conversations: 'Conversations',
+      newConversation: 'New conversation',
+      noConversations: 'Your conversations will show up here.',
+      untitled: 'Untitled',
+      archive: 'Archive “{{title}}”',
+      conversationMissing: 'That conversation does not exist or is not yours.',
+      defaultModel: '{{model}} (default)'
     }
   }
 }
