@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { AlertTriangle, Archive, BotOff, Loader2, Plus, Send, ShieldCheck, Wrench } from 'lucide-react'
 import { PageHeader } from '@wasichai/core'
-import { Badge, Button, Card, CardBody, Input } from '@wasichai/ui'
+import { Badge, Button, Card, CardBody, cn, Input } from '@wasichai/ui'
 import { useAgentStatus, useArchiveConversation, useConversation, useConversations, useCreateConversation, useSendMessage, useUpdateAgentSettings } from './api'
 import { failedTurn, formatStepInput, pendingTurn, turnStatus, turnsFromMessages, type Turn } from './transcript'
 
@@ -109,9 +109,10 @@ export function AssistantPage({ suggestions: own, scope }: AssistantPageProps = 
                     type="button"
                     onClick={() => open(item.id)}
                     aria-current={item.id === conversationId ? 'page' : undefined}
-                    className={`flex-1 truncate rounded-md px-2 py-1.5 text-left text-sm ${
+                    className={cn(
+                      'flex-1 truncate rounded-md px-2 py-1.5 text-left text-sm',
                       item.id === conversationId ? 'bg-brand-soft font-medium text-brand-strong' : 'text-ink hover:bg-surface-muted'
-                    }`}
+                    )}
                   >
                     {item.title ?? t('assistant.untitled')}
                   </button>
