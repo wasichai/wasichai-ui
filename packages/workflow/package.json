@@ -28,7 +28,7 @@
     },
     "dependencies": {
         "lucide-react": "^1.80.0",
-        "@xyflow/react": "12.12.1"
+        "@xyflow/react": "13.0.3"
     },
     "peerDependencies": {
         "@wasichai/core": "*",
