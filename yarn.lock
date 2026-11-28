@@ -836,10 +836,10 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-bold/-/extension-bold-3.35.0.tgz#8ba216f1bddf4e5b241f19416aa5f8dd7388bbed"
   integrity sha512-jRLo/b2o8x6XVNQXZLHFgpjD7ibaVgCZjvGxlbT9POeuHgVgveJUYluLukXVxFQGvcPmEKHN2ZOyN10nZlcmlw==
 
-"@tiptap/extension-bubble-menu@3.34.0":
-  version "3.34.0"
-  resolved "https://registry.yarnpkg.com/@tiptap/extension-bubble-menu/-/extension-bubble-menu-3.34.0.tgz#4cab736370c13790af84bfa681b8e98e5cdf4453"
-  integrity sha512-Q6+/RxlaYLsF+hm9MFY//wwVFA4Apfjn2EAnbjaBlaiIs1LtB/s5t5fSjRwCBzadTf9ysMvGh7parpN1hT0tug==
+"@tiptap/extension-bubble-menu@3.35.0":
+  version "3.35.0"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-bubble-menu/-/extension-bubble-menu-3.35.0.tgz#92c84e7ef223acb6cca0d97def2b3044e0c85089"
+  integrity sha512-sJJQrbnXKHf/nvD8jXrIWgRjjEusb0BcCsfbE2+9drOsHnP/0doNp6kFNxfqA8rJaktozNkmh/PpLJuUECvLzA==
   dependencies:
     "@floating-ui/dom" "^1.0.0"
 
@@ -868,10 +868,10 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-dropcursor/-/extension-dropcursor-3.35.0.tgz#ab01bfd674306faff1c133032eada77bc1598188"
   integrity sha512-xWUKpYFCZTevhoDxDKWMLGMaWWp13ZQNf3EBI28b65vHfYKFB8Sp3kzoUD1G4EjHieP/qvwgdH9Cwr37507++w==
 
-"@tiptap/extension-floating-menu@3.34.0":
-  version "3.34.0"
-  resolved "https://registry.yarnpkg.com/@tiptap/extension-floating-menu/-/extension-floating-menu-3.34.0.tgz#a664c321b52e089d08d6ef0feb6081ecefe5d401"
-  integrity sha512-3D/cYVi4T5SzgMQR9A5cKSSDspVty92/o/+xnON5+buPSD/7+EVVa0XubCoRl/zNqo8jGapZX3JboslQO4Q7ng==
+"@tiptap/extension-floating-menu@3.35.0":
+  version "3.35.0"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-floating-menu/-/extension-floating-menu-3.35.0.tgz#3447db63fded218b7b0391f5062c5bb5f889496f"
+  integrity sha512-R0UUXceRdqDrh7inAH5CGK7izsb0Ks5jO2JwglFOqpRb1cUN4jOiJ+O4+xDzy07zohFXlt8fAuBSjvf/dcwltw==
 
 "@tiptap/extension-gapcursor@3.35.0":
   version "3.35.0"
@@ -969,17 +969,17 @@
     prosemirror-transform "^1.12.2"
     prosemirror-view "^1.42.6"
 
-"@tiptap/react@3.34.0":
-  version "3.34.0"
-  resolved "https://registry.yarnpkg.com/@tiptap/react/-/react-3.34.0.tgz#d1be270c9b6ea8354b185ffdccb98e15880afa4f"
-  integrity sha512-DDqcnPZ0pVeU9E3hvQcK4rA5AWRe7PHDeFAGL6lW/aniYkJ1W2kKimjny3Lz43TxplvbH67f03Wey5l0GrKk8A==
+"@tiptap/react@3.35.0":
+  version "3.35.0"
+  resolved "https://registry.yarnpkg.com/@tiptap/react/-/react-3.35.0.tgz#0ba9e393405a0896f88fa3d777129370f01a4fda"
+  integrity sha512-9aCpTU1YjpZDYhCN3fioFgdKok8k2VNqwdQq8cirzJ5ZC354zu26rn7wtFWVoDz/NIu1sCL5RzS1EF2vM0l+jQ==
   dependencies:
     "@types/use-sync-external-store" "^0.0.6"
     fast-equals "^5.3.3"
     use-sync-external-store "^1.4.0"
   optionalDependencies:
-    "@tiptap/extension-bubble-menu" "3.34.0"
-    "@tiptap/extension-floating-menu" "3.34.0"
+    "@tiptap/extension-bubble-menu" "3.35.0"
+    "@tiptap/extension-floating-menu" "3.35.0"
 
 "@tiptap/starter-kit@3.35.0":
   version "3.35.0"
