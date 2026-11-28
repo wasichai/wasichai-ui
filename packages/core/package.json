@@ -28,7 +28,7 @@
     },
     "dependencies": {
         "@wasichai/ui": "*",
-        "@hookform/resolvers": "7.0.7",
+        "@hookform/resolvers": "7.0.9",
         "lucide-react": "^1.80.0",
         "oidc-client-ts": "3.5.0",
         "react-hook-form": "^7.92.0",
